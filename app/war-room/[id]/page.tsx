@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge, TrendBadge } from "@/components/ui/Badge";
 import { MissionBriefForm } from "@/components/war-room/MissionBriefForm";
@@ -61,11 +60,20 @@ export default async function WarRoomDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`War Room — ${game.homeAway === "HOME" ? "vs" : "@"} ${game.opponent}`}
-        subtitle={`${format(game.date, "MMMM d, yyyy")} · ${game.homeAway === "HOME" ? "Home" : "Away"}`}
-        actions={game.isCompleted ? <Badge tone="accent">Game Completed</Badge> : <Badge tone="neutral">Upcoming</Badge>}
-      />
+      <div className="rounded-xl border-2 border-accent bg-black px-4 sm:px-6 py-4">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Game Day</p>
+        <div className="flex flex-wrap items-start justify-between gap-3 mt-1">
+          <div>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">
+              {game.homeAway === "HOME" ? "vs" : "@"} {game.opponent}
+            </p>
+            <p className="text-sm text-muted mt-1">
+              {format(game.date, "MMMM d, yyyy")} · {game.homeAway === "HOME" ? "Home" : "Away"}
+            </p>
+          </div>
+          {game.isCompleted ? <Badge tone="accent">Game Completed</Badge> : <Badge tone="neutral">Upcoming</Badge>}
+        </div>
+      </div>
 
       {game.isCompleted && (
         <Card>
@@ -106,7 +114,10 @@ export default async function WarRoomDetailPage({ params }: { params: Promise<{ 
       )}
 
       <Card>
-        <CardTitle>Mission Brief</CardTitle>
+        <div className="flex items-center gap-2 mb-2">
+          <Badge tone="accent">Pre-Game</Badge>
+          <p className="text-base font-bold uppercase tracking-wide text-foreground">Mission Brief</p>
+        </div>
         <MissionBriefForm
           gameId={game.id}
           defaults={{
@@ -121,7 +132,10 @@ export default async function WarRoomDetailPage({ params }: { params: Promise<{ 
 
       {game.isCompleted && (
         <Card>
-          <CardTitle>After Action Report</CardTitle>
+          <div className="flex items-center gap-2 mb-2">
+            <Badge tone="accent">Post-Game</Badge>
+            <p className="text-base font-bold uppercase tracking-wide text-foreground">After Action Report</p>
+          </div>
           <AfterActionForm
             gameId={game.id}
             teamTotals={teamTotals}

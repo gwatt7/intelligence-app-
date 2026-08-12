@@ -1,17 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0e14;
-  --surface: #10161f;
-  --surface-raised: #161d29;
-  --border: #232c3a;
-  --foreground: #e8ecf1;
-  --muted: #8b98a9;
-  --muted-2: #5c6b80;
+  /* Neutral scale — a true near-black base, matching the UWS mark's black field
+     (no blue/navy tint) so the gold accent reads as the one brand color. */
+  --background: #0a0a0a;
+  --surface: #131313;
+  --surface-raised: #1a1a1a;
+  --border: #2a2a28;
+  --foreground: #f3f3ee;
+  --muted: #9c9c94;
+  --muted-2: #68685f;
 
-  --accent: #3aa8ff;
-  --accent-strong: #63bcff;
+  /* UWS Gold — sampled directly from the uploaded logo (public/uws-logo.png),
+     not approximated. Used sparingly: primary actions, active states, key
+     numbers. --accent-contrast is the text color for gold surfaces (buttons). */
+  --accent: #fcd306;
+  --accent-strong: #ffe14d;
+  --accent-contrast: #0a0a0a;
 
+  /* Functional indicators stay universal green/red/amber, independent of
+     brand color, per the win/loss and trend-arrow requirements. */
   --positive: #2fbf71;
   --positive-bg: rgba(47, 191, 113, 0.12);
   --negative: #f0554a;
@@ -31,6 +39,7 @@
 
   --color-accent: var(--accent);
   --color-accent-strong: var(--accent-strong);
+  --color-accent-contrast: var(--accent-contrast);
 
   --color-positive: var(--positive);
   --color-positive-bg: var(--positive-bg);
@@ -72,4 +81,26 @@ input,
 select,
 textarea {
   color-scheme: dark;
+}
+
+/* UWS accent tick on every page title and section/card heading — one place
+   to apply the brand gold to "important headings" consistently, instead of
+   hand-editing every h1/h2/h3 across the app. */
+main h1,
+main h2,
+main h3 {
+  position: relative;
+  padding-left: 0.7rem;
+}
+main h1::before,
+main h2::before,
+main h3::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  bottom: 0.15em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
 }

@@ -77,7 +77,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         </Card>
         <Card>
           <CardTitle>Zone Exit % Over Time</CardTitle>
-          <TrendChart data={exitPctSeries} unit="%" color="#63bcff" />
+          <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
         </Card>
       </div>
     </div>

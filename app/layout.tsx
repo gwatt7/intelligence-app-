@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hockey Intelligence Platform",
   description: "Coaching analytics and game-management platform",
+  icons: {
+    icon: "/uws-logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
