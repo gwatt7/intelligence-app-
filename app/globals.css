@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0a0e14;
+  --surface: #10161f;
+  --surface-raised: #161d29;
+  --border: #232c3a;
+  --foreground: #e8ecf1;
+  --muted: #8b98a9;
+  --muted-2: #5c6b80;
+
+  --accent: #3aa8ff;
+  --accent-strong: #63bcff;
+
+  --positive: #2fbf71;
+  --positive-bg: rgba(47, 191, 113, 0.12);
+  --negative: #f0554a;
+  --negative-bg: rgba(240, 85, 74, 0.12);
+  --warning: #e7b93f;
+  --warning-bg: rgba(231, 185, 63, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+
+  --color-positive: var(--positive);
+  --color-positive-bg: var(--positive-bg);
+  --color-negative: var(--negative);
+  --color-negative-bg: var(--negative-bg);
+  --color-warning: var(--warning);
+  --color-warning-bg: var(--warning-bg);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 8px;
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}

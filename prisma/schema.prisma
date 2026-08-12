@@ -1,0 +1,363 @@
+// Hockey Intelligence Platform — Version 1
+// Core data model. Kept simple and relational so future versions
+// (opponent intelligence, advanced reports, AI, video/Instat, predictive
+// analytics) can extend it without restructuring the foundation.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ---------------------------------------------------------------------------
+// SEASON / TEAM
+// ---------------------------------------------------------------------------
+
+model Season {
+  id        String   @id @default(cuid())
+  name      String   @unique // e.g. "2026-2027"
+  isCurrent Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  team      Team?
+  players   Player[]
+  practices Practice[]
+  games     Game[]
+  activities Activity[]
+}
+
+model Team {
+  id               String @id @default(cuid())
+  name             String
+  league           String?
+  division         String?
+  headCoach        String?
+  assistantCoaches String? // comma-separated for V1; normalize in a future version
+
+  seasonId String @unique
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// PLAYERS
+// ---------------------------------------------------------------------------
+
+enum Position {
+  FORWARD
+  DEFENSE
+  GOALIE
+}
+
+enum Shoots {
+  LEFT
+  RIGHT
+}
+
+enum PlayerStatus {
+  ACTIVE
+  INJURED
+  UNAVAILABLE
+}
+
+model Player {
+  id           String       @id @default(cuid())
+  firstName    String
+  lastName     String
+  jerseyNumber Int
+  position     Position
+  shoots       Shoots
+  status       PlayerStatus @default(ACTIVE)
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  // Simple, configurable Performance Index weights (see lib/performance-index.ts).
+  // Stored per-player so future versions can tune weighting per role without a migration.
+
+  practiceStats PracticePlayerStat[]
+  gameStats     GamePlayerStat[]
+  highlights    PlayerHighlight[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seasonId, jerseyNumber])
+}
+
+// ---------------------------------------------------------------------------
+// SHARED STAT SHAPE (Practices + Games use identical categories)
+// ---------------------------------------------------------------------------
+// Zone entry/exit percentages and other derived fields are computed on read
+// (lib/stats.ts) from raw counts, never stored as manually-entered percentages,
+// so numbers can never drift from their source counts.
+
+model Practice {
+  id       String   @id @default(cuid())
+  week     Int
+  number   Int // Practice # within the season (1, 2, 3 …)
+  date     DateTime
+  location String?
+  focus    String?
+  notes    String?
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  playerStats PracticePlayerStat[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([seasonId, number])
+}
+
+model PracticePlayerStat {
+  id String @id @default(cuid())
+
+  practiceId String
+  practice   Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  // Transition
+  zoneEntries             Int @default(0)
+  successfulZoneEntries   Int @default(0)
+  zoneExits               Int @default(0)
+  successfulZoneExits     Int @default(0)
+
+  // Offense
+  goals            Int @default(0)
+  assists          Int @default(0)
+  shots            Int @default(0)
+  scoringChances   Int @default(0)
+  goodOpportunities Int @default(0)
+  badOpportunities  Int @default(0)
+
+  // Defense
+  disruptions Int @default(0)
+  hits        Int @default(0)
+  blocks      Int @default(0)
+  takeaways   Int @default(0)
+  giveaways   Int @default(0)
+
+  // Goaltending (only meaningful when player.position === GOALIE)
+  shotsAgainst Int @default(0)
+  goalsAgainst Int @default(0)
+  saves        Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([practiceId, playerId])
+}
+
+// ---------------------------------------------------------------------------
+// GAMES
+// ---------------------------------------------------------------------------
+
+enum GameType {
+  PRESEASON
+  REGULAR_SEASON
+  PLAYOFFS
+}
+
+enum HomeAway {
+  HOME
+  AWAY
+}
+
+model Game {
+  id       String   @id @default(cuid())
+  gameType GameType
+  opponent String
+  date     DateTime
+  homeAway HomeAway
+  location String?
+
+  ourScore      Int?
+  opponentScore Int?
+  isCompleted   Boolean @default(false)
+
+  whatWentWell  String?
+  whatWentWrong String?
+  coachNotes    String?
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  playerStats GamePlayerStat[]
+  warRoom     WarRoom?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GamePlayerStat {
+  id String @id @default(cuid())
+
+  gameId String
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  // Transition
+  zoneEntries           Int @default(0)
+  successfulZoneEntries Int @default(0)
+  zoneExits             Int @default(0)
+  successfulZoneExits   Int @default(0)
+
+  // Offense
+  goals             Int @default(0)
+  assists           Int @default(0)
+  shots             Int @default(0)
+  scoringChances    Int @default(0)
+  goodOpportunities Int @default(0)
+  badOpportunities  Int @default(0)
+
+  // Defense
+  disruptions Int @default(0)
+  hits        Int @default(0)
+  blocks      Int @default(0)
+  takeaways   Int @default(0)
+  giveaways   Int @default(0)
+
+  // Goaltending
+  shotsAgainst Int @default(0)
+  goalsAgainst Int @default(0)
+  saves        Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, playerId])
+}
+
+// ---------------------------------------------------------------------------
+// WAR ROOM — Pre-game Mission Brief + Post-game After Action Report
+// ---------------------------------------------------------------------------
+
+model WarRoom {
+  id String @id @default(cuid())
+
+  gameId String @unique
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  // Pre-game: Mission Brief
+  opponentStrengths String? // newline-separated list, V1
+  opponentWeaknesses String?
+  opponentHabits     String?
+  keysToVictory      String? // newline-separated, up to 5
+
+  missionBriefSavedAt DateTime?
+
+  // Post-game: After Action Report
+  whatWentWell  String?
+  whatWentWrong String?
+  lessonsLearned  String? // "What did we learn?"
+  changesToMake   String? // "What should we change?"
+  keepDoing       String? // "What should we repeat?"
+
+  afterActionSavedAt DateTime?
+
+  objectives Objective[]
+  highlights PlayerHighlight[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Objective {
+  id String @id @default(cuid())
+
+  warRoomId String
+  warRoom   WarRoom @relation(fields: [warRoomId], references: [id], onDelete: Cascade)
+
+  text  String
+  order Int    @default(0)
+
+  // If a stat metric is linked, the After Action Report can auto-evaluate it.
+  metric   ObjectiveMetric?
+  target   Float? // threshold to compare the metric against
+  comparator ObjectiveComparator?
+
+  // Manual override when there's no linked metric (or coach wants to decide)
+  manualStatus ObjectiveStatus?
+
+  createdAt DateTime @default(now())
+}
+
+enum ObjectiveMetric {
+  GIVEAWAYS
+  TAKEAWAYS
+  ZONE_ENTRY_PCT
+  ZONE_EXIT_PCT
+  SCORING_CHANCES
+  GOALS
+  SHOTS
+  HITS
+  BLOCKS
+  DISRUPTIONS
+}
+
+enum ObjectiveComparator {
+  LESS_THAN_OR_EQUAL
+  GREATER_THAN_OR_EQUAL
+}
+
+enum ObjectiveStatus {
+  ACHIEVED
+  PARTIALLY_ACHIEVED
+  NOT_ACHIEVED
+}
+
+enum HighlightCategory {
+  PLAYER_OF_THE_GAME
+  BEST_OFFENSIVE_PERFORMANCE
+  BEST_DEFENSIVE_PERFORMANCE
+  UNSUNG_HERO
+  GOALIE_PERFORMANCE
+}
+
+model PlayerHighlight {
+  id String @id @default(cuid())
+
+  warRoomId String
+  warRoom   WarRoom @relation(fields: [warRoomId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  category HighlightCategory
+
+  @@unique([warRoomId, category])
+}
+
+// ---------------------------------------------------------------------------
+// ACTIVITY FEED (Dashboard "Recent Activity")
+// ---------------------------------------------------------------------------
+
+enum ActivityType {
+  PRACTICE_LOGGED
+  GAME_LOGGED
+  PLAYER_UPDATED
+  WAR_ROOM_MISSION_BRIEF
+  WAR_ROOM_AFTER_ACTION
+}
+
+model Activity {
+  id      String       @id @default(cuid())
+  type    ActivityType
+  message String
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
