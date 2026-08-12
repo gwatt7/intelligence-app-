@@ -9,8 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge, TrendBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { CategoryBubbles } from "@/components/dashboard/CategoryBubbles";
-import { BrandWatermark } from "@/components/dashboard/BrandWatermark";
+import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import Link from "next/link";
 import { format, formatDistanceToNow, differenceInCalendarDays } from "date-fns";
 
@@ -65,15 +64,11 @@ export default async function DashboardPage() {
       : null;
 
   return (
-    <div className="relative">
-      <BrandWatermark />
-
-      <div className="relative space-y-4">
-        <PageHeader title="Dashboard" subtitle={`${team?.name ?? "Team"} · Season ${season.name}`} compact />
-
+    <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
+      <div className="space-y-6">
         {/* Game context: next + last, compact side-by-side */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <Card className="!p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="!p-5">
             <CardTitle className="!mb-1.5">Next Game</CardTitle>
             {nextGame ? (
               <div className="flex items-center justify-between gap-3">
@@ -95,7 +90,7 @@ export default async function DashboardPage() {
             )}
           </Card>
 
-          <Card className="!p-4">
+          <Card className="!p-5">
             <CardTitle className="!mb-1.5">Last Game</CardTitle>
             {lastGame ? (
               <div className="flex items-center justify-between gap-3">
@@ -122,19 +117,16 @@ export default async function DashboardPage() {
           </Card>
         </div>
 
-        {/* Primary navigation, front and center */}
-        <CategoryBubbles />
-
         {/* Performance snapshot */}
         <div>
           <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <Card className="!p-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Card className="!p-5">
               <CardTitle className="!mb-1.5">Team Trend</CardTitle>
               <TrendBadge value={teamTrend} />
               <p className="text-xs text-muted mt-1.5">Zone entry/exit, last 5 vs. season</p>
             </Card>
-            <Card className="!p-4">
+            <Card className="!p-5">
               <CardTitle className="!mb-1.5">Top Performer</CardTitle>
               {topPerformer ? (
                 <>
@@ -147,7 +139,7 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted">No data yet.</p>
               )}
             </Card>
-            <Card className="!p-4">
+            <Card className="!p-5">
               <CardTitle className="!mb-1.5">Most Improved</CardTitle>
               {mostImproved ? (
                 <>
@@ -160,7 +152,7 @@ export default async function DashboardPage() {
                 <p className="text-sm text-muted">No data yet.</p>
               )}
             </Card>
-            <Card className="!p-4">
+            <Card className="!p-5">
               <CardTitle className="!mb-1.5">Needs Attention</CardTitle>
               {needsAttention ? (
                 <>
@@ -177,8 +169,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* Upcoming + recent activity */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <Card className="!p-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="!p-5">
             <CardTitle className="!mb-1.5">Next Practice</CardTitle>
             {nextPractice ? (
               <Link href={`/practices/${nextPractice.id}`} className="text-sm text-foreground hover:text-accent-strong">
@@ -189,7 +181,7 @@ export default async function DashboardPage() {
             )}
           </Card>
 
-          <Card className="!p-4">
+          <Card className="!p-5">
             <CardTitle className="!mb-1.5">Recent Activity</CardTitle>
             {activities.length === 0 ? (
               <p className="text-sm text-muted">Nothing logged yet.</p>
@@ -208,6 +200,6 @@ export default async function DashboardPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </DashboardHero>
   );
 }
