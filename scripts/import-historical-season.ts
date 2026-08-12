@@ -1,5 +1,5 @@
 /**
- * One-time historical import: University of Wisconsin–Superior Hockey,
+ * Historical import: University of Wisconsin–Superior Hockey,
  * 2025-2026 season roster + report-card statistics.
  *
  * Source: Report Cards.xlsx (parsed offline into
@@ -10,9 +10,12 @@
  * nothing legitimate to attach them to.
  *
  * Idempotent — safe to re-run. Existing players are matched by
- * (season, jersey number) and updated in place rather than duplicated.
+ * (season, jersey number) and updated in place rather than duplicated, so
+ * this runs as part of every `npm run build` (see package.json) to keep the
+ * deployed site's 2025-2026 season in sync automatically — no manual step
+ * after the first deploy.
  *
- * Usage: npx tsx scripts/import-historical-season.ts
+ * Manual usage: npx tsx scripts/import-historical-season.ts
  */
 import "dotenv/config";
 import { readFileSync } from "node:fs";
