@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
-import { buildRankings } from "@/lib/rankings";
+import { buildRankings, buildWeeklyPerformers } from "@/lib/rankings";
 import { formatChange } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -11,7 +11,7 @@ import { Badge, TrendBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import Link from "next/link";
-import { format, formatDistanceToNow, differenceInCalendarDays } from "date-fns";
+import { format, differenceInCalendarDays } from "date-fns";
 
 export default async function DashboardPage() {
   const season = await getCurrentSeason();
@@ -31,14 +31,13 @@ export default async function DashboardPage() {
 
   const now = new Date();
 
-  const [nextGame, lastGame, nextPractice, activities, team] = await Promise.all([
+  const [nextGame, lastGame, nextPractice, team] = await Promise.all([
     prisma.game.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
     prisma.game.findFirst({
       where: { seasonId: season.id, isCompleted: true, date: { lte: now } },
       orderBy: { date: "desc" },
     }),
     prisma.practice.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
-    prisma.activity.findMany({ where: { seasonId: season.id }, orderBy: { createdAt: "desc" }, take: 4 }),
     prisma.team.findUnique({ where: { seasonId: season.id } }),
   ]);
 
@@ -50,6 +49,7 @@ export default async function DashboardPage() {
     entryTrend !== null && exitTrend !== null ? (entryTrend + exitTrend) / 2 : entryTrend ?? exitTrend;
 
   const rankings = await buildRankings(season.id);
+  const weeklyPerformers = await buildWeeklyPerformers(season.id);
   const topPerformer = rankings.topPerformanceIndex[0];
   const mostImproved = rankings.mostImproved[0];
   const needsAttention = [...rankings.topPerformanceIndex].sort((a, b) => a.value - b.value)[0];
@@ -182,20 +182,38 @@ export default async function DashboardPage() {
           </Card>
 
           <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Recent Activity</CardTitle>
-            {activities.length === 0 ? (
-              <p className="text-sm text-muted">Nothing logged yet.</p>
+            <CardTitle className="!mb-1.5">Weekly Performers</CardTitle>
+            {weeklyPerformers.top.length === 0 ? (
+              <p className="text-sm text-muted">No practice or game stats logged yet.</p>
             ) : (
-              <ul className="space-y-1.5 text-sm">
-                {activities.map((a) => (
-                  <li key={a.id} className="flex justify-between gap-3">
-                    <span className="text-foreground truncate">{a.message}</span>
-                    <span className="text-xs text-muted-2 whitespace-nowrap">
-                      {formatDistanceToNow(a.createdAt, { addSuffix: true })}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-medium text-positive mb-1">Top 3</p>
+                  <ul className="space-y-1">
+                    {weeklyPerformers.top.map((p) => (
+                      <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="text-foreground truncate">
+                          #{p.jerseyNumber} {p.name}
+                        </span>
+                        <span className="text-xs text-muted-2 shrink-0">{p.value.toFixed(1)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-negative mb-1">Bottom 3</p>
+                  <ul className="space-y-1">
+                    {weeklyPerformers.bottom.map((p) => (
+                      <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
+                        <span className="text-foreground truncate">
+                          #{p.jerseyNumber} {p.name}
+                        </span>
+                        <span className="text-xs text-muted-2 shrink-0">{p.value.toFixed(1)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             )}
           </Card>
         </div>
