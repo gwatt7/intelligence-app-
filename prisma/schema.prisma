@@ -1,4 +1,4 @@
-// Hockey Intelligence Platform — Version 1
+// NORTHSTAR — Version 1
 // Core data model. Kept simple and relational so future versions
 // (opponent intelligence, advanced reports, AI, video/Instat, predictive
 // analytics) can extend it without restructuring the foundation.

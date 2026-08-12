@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hockey Intelligence Platform",
+  title: "NORTHSTAR",
   description: "Coaching analytics and game-management platform",
   icons: {
     icon: "/uws-logo.png",

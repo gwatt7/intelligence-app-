@@ -32,7 +32,7 @@ export function PrimaryNav() {
               priority
             />
             <span className="hidden sm:inline text-sm font-semibold tracking-wide text-foreground">
-              Hockey Intelligence
+              NORTHSTAR
             </span>
           </Link>
           <nav className="flex flex-1 gap-1 overflow-x-auto">

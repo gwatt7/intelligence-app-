@@ -20,7 +20,7 @@ export default async function DashboardPage() {
       <div>
         <PageHeader title="Dashboard" />
         <EmptyState
-          title="Welcome to your Hockey Intelligence Platform"
+          title="Welcome to NORTHSTAR"
           description="Start by creating your season and team."
           action={<ButtonLink href="/team">Set Up Season & Team</ButtonLink>}
         />
