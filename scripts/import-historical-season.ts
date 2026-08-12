@@ -14,10 +14,11 @@
  *
  * Usage: npx tsx scripts/import-historical-season.ts
  */
+import "dotenv/config";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaClient } from "../app/generated/prisma/client";
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 const SEASON_NAME = "2025-2026";
 const TEAM_NAME = "University of Wisconsin–Superior Hockey";
@@ -32,7 +33,7 @@ interface MappedPlayer {
   coachNotes: string | null;
 }
 
-const adapter = new PrismaLibSql({ url: process.env.DATABASE_URL ?? "file:./prisma/dev.db" });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
