@@ -15,7 +15,7 @@ type Player = {
   lastName: string;
   jerseyNumber: number;
   position: "FORWARD" | "DEFENSE" | "GOALIE";
-  shoots: "LEFT" | "RIGHT";
+  shoots: "LEFT" | "RIGHT" | null;
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
 };
 
@@ -83,7 +83,7 @@ export function RosterSection({ seasonId, players }: { seasonId: string; players
                     </Link>
                   </Td>
                   <Td className="text-muted">{POSITION_LABEL[p.position]}</Td>
-                  <Td className="text-muted">{p.shoots === "LEFT" ? "Left" : "Right"}</Td>
+                  <Td className="text-muted">{p.shoots ? (p.shoots === "LEFT" ? "Left" : "Right") : "—"}</Td>
                   <Td>
                     <StatusBadge status={p.status} />
                   </Td>

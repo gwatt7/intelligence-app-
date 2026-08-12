@@ -12,7 +12,7 @@ type PlayerDefaults = {
   lastName: string;
   jerseyNumber: number;
   position: "FORWARD" | "DEFENSE" | "GOALIE";
-  shoots: "LEFT" | "RIGHT";
+  shoots: "LEFT" | "RIGHT" | null;
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
 };
 

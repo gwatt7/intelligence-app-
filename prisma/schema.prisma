@@ -22,15 +22,16 @@ model Season {
   isCurrent Boolean  @default(false)
   createdAt DateTime @default(now())
 
-  team      Team?
-  players   Player[]
-  practices Practice[]
-  games     Game[]
-  activities Activity[]
+  team              Team?
+  players           Player[]
+  practices         Practice[]
+  games             Game[]
+  activities        Activity[]
+  playerSeasonStats PlayerSeasonStat[]
 }
 
 model Team {
-  id               String @id @default(cuid())
+  id               String  @id @default(cuid())
   name             String
   league           String?
   division         String?
@@ -70,7 +71,7 @@ model Player {
   lastName     String
   jerseyNumber Int
   position     Position
-  shoots       Shoots
+  shoots       Shoots? // nullable: unknown for historically-imported rosters where the source data doesn't record it
   status       PlayerStatus @default(ACTIVE)
 
   seasonId String
@@ -82,11 +83,87 @@ model Player {
   practiceStats PracticePlayerStat[]
   gameStats     GamePlayerStat[]
   highlights    PlayerHighlight[]
+  seasonStats   PlayerSeasonStat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([seasonId, jerseyNumber])
+}
+
+// ---------------------------------------------------------------------------
+// HISTORICAL SEASON TOTALS
+// ---------------------------------------------------------------------------
+// For imported/historical seasons where the source data is season aggregates
+// rather than individual practices or games (so there's nothing to attach a
+// PracticePlayerStat/GamePlayerStat to without inventing a game that never
+// happened). One row per player per season. Fields cover the metrics that
+// map confidently onto a clear meaning; anything imported but not confidently
+// mapped is preserved verbatim in rawStats rather than discarded or guessed.
+// Deliberately NOT part of the practice/game trend pipeline — a season total
+// must never be plotted as if it were a single-game data point.
+
+model PlayerSeasonStat {
+  id String @id @default(cuid())
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  source String? // provenance note, e.g. "Imported from Report Cards.xlsx"
+
+  gamesPlayed      Int?
+  timeOnIceSeconds Int?
+
+  // Skater metrics
+  corsiForPct            Float?
+  puckTouches            Int?
+  faceoffWinPct          Float?
+  faceoffWinPctDZ        Float?
+  faceoffWinPctNZ        Float?
+  faceoffWinPctOZ        Float?
+  goals                  Int?
+  assists                Int?
+  takeaways              Int?
+  giveaways              Int?
+  scoringChances         Int?
+  shots                  Int?
+  shotsOnGoal            Int?
+  expectedGoals          Float?
+  accuratePassPct        Float?
+  zoneEntries            Int? // total entries; source data has no success/fail split
+  breakouts              Int? // total breakouts; source data has no success/fail split
+  hits                   Int?
+  blocks                 Int?
+  plusMinus              Int?
+  powerPlayOpportunities Int?
+  powerPlaySuccessful    Int?
+  powerPlayTimeSeconds   Int?
+
+  // Goaltending metrics
+  goalsAgainst          Int?
+  shotsAgainst          Int?
+  saves                 Int?
+  savePct               Float?
+  shootoutSaves         Int?
+  shootoutsAllowed      Int?
+  scoringChancesAgainst Int?
+  scoringChanceSaves    Int?
+  scoringChanceSavePct  Float?
+
+  // Every original label/value pair from the source, including anything not
+  // confidently mapped above — nothing from the import is ever discarded.
+  rawStats Json?
+
+  // Free-text coaching notes/comments captured alongside the stats, if present.
+  coachNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([playerId, seasonId])
 }
 
 // ---------------------------------------------------------------------------
@@ -126,16 +203,16 @@ model PracticePlayerStat {
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   // Transition
-  zoneEntries             Int @default(0)
-  successfulZoneEntries   Int @default(0)
-  zoneExits               Int @default(0)
-  successfulZoneExits     Int @default(0)
+  zoneEntries           Int @default(0)
+  successfulZoneEntries Int @default(0)
+  zoneExits             Int @default(0)
+  successfulZoneExits   Int @default(0)
 
   // Offense
-  goals            Int @default(0)
-  assists          Int @default(0)
-  shots            Int @default(0)
-  scoringChances   Int @default(0)
+  goals             Int @default(0)
+  assists           Int @default(0)
+  shots             Int @default(0)
+  scoringChances    Int @default(0)
   goodOpportunities Int @default(0)
   badOpportunities  Int @default(0)
 
@@ -202,7 +279,7 @@ model GamePlayerStat {
   id String @id @default(cuid())
 
   gameId String
-  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   playerId String
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
@@ -250,7 +327,7 @@ model WarRoom {
   game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   // Pre-game: Mission Brief
-  opponentStrengths String? // newline-separated list, V1
+  opponentStrengths  String? // newline-separated list, V1
   opponentWeaknesses String?
   opponentHabits     String?
   keysToVictory      String? // newline-separated, up to 5
@@ -258,11 +335,11 @@ model WarRoom {
   missionBriefSavedAt DateTime?
 
   // Post-game: After Action Report
-  whatWentWell  String?
-  whatWentWrong String?
-  lessonsLearned  String? // "What did we learn?"
-  changesToMake   String? // "What should we change?"
-  keepDoing       String? // "What should we repeat?"
+  whatWentWell   String?
+  whatWentWrong  String?
+  lessonsLearned String? // "What did we learn?"
+  changesToMake  String? // "What should we change?"
+  keepDoing      String? // "What should we repeat?"
 
   afterActionSavedAt DateTime?
 
@@ -283,8 +360,8 @@ model Objective {
   order Int    @default(0)
 
   // If a stat metric is linked, the After Action Report can auto-evaluate it.
-  metric   ObjectiveMetric?
-  target   Float? // threshold to compare the metric against
+  metric     ObjectiveMetric?
+  target     Float? // threshold to compare the metric against
   comparator ObjectiveComparator?
 
   // Manual override when there's no linked metric (or coach wants to decide)

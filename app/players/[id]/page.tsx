@@ -10,6 +10,7 @@ import { PerformanceIndexCard } from "@/components/stats/PerformanceIndexCard";
 import { TrendChart, type TrendPoint } from "@/components/charts/TrendChart";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
+import { HistoricalSeasonStatsCard } from "@/components/stats/HistoricalSeasonStatsCard";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
 
@@ -17,6 +18,11 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const { id } = await params;
   const player = await prisma.player.findUnique({ where: { id } });
   if (!player) notFound();
+
+  const [season, seasonStat] = await Promise.all([
+    prisma.season.findUnique({ where: { id: player.seasonId } }),
+    prisma.playerSeasonStat.findUnique({ where: { playerId_seasonId: { playerId: id, seasonId: player.seasonId } } }),
+  ]);
 
   const entries = await getPlayerStatEntries(id);
   const totals = sumStatLines(entries.map((e) => e.stat));
@@ -36,7 +42,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     <div className="space-y-6">
       <PageHeader
         title={`${player.firstName} ${player.lastName}`}
-        subtitle={`#${player.jerseyNumber} · ${POSITION_LABEL[player.position]} · Shoots ${player.shoots === "LEFT" ? "Left" : "Right"}`}
+        subtitle={`#${player.jerseyNumber} · ${POSITION_LABEL[player.position]}${player.shoots ? ` · Shoots ${player.shoots === "LEFT" ? "Left" : "Right"}` : ""}`}
         actions={
           <>
             <StatusBadge status={player.status} />
@@ -44,6 +50,14 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           </>
         }
       />
+
+      {seasonStat && (
+        <HistoricalSeasonStatsCard
+          stat={seasonStat}
+          isGoalie={player.position === "GOALIE"}
+          seasonName={season?.name ?? "Season"}
+        />
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <PerformanceIndexCard breakdown={index} />
@@ -63,23 +77,34 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         </Card>
       </div>
 
-      <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
-      <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
-      <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
-      {player.position === "GOALIE" && (
-        <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
-      )}
+      {entries.length > 0 ? (
+        <>
+          <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
+          <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
+          <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
+          {player.position === "GOALIE" && (
+            <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
+          )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card>
+              <CardTitle>Zone Entry % Over Time</CardTitle>
+              <TrendChart data={entryPctSeries} unit="%" />
+            </Card>
+            <Card>
+              <CardTitle>Zone Exit % Over Time</CardTitle>
+              <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
+            </Card>
+          </div>
+        </>
+      ) : (
         <Card>
-          <CardTitle>Zone Entry % Over Time</CardTitle>
-          <TrendChart data={entryPctSeries} unit="%" />
+          <p className="text-sm text-muted">
+            No practices or games logged for {player.firstName} yet this season. Category breakdowns and trend
+            charts will appear here once stats are entered.
+          </p>
         </Card>
-        <Card>
-          <CardTitle>Zone Exit % Over Time</CardTitle>
-          <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
-        </Card>
-      </div>
+      )}
     </div>
   );
 }
