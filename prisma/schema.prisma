@@ -24,7 +24,7 @@ model Season {
 
   team              Team?
   players           Player[]
-  practices         Practice[]
+  miniGames         MiniGame[]
   games             Game[]
   activities        Activity[]
   playerSeasonStats PlayerSeasonStat[]
@@ -81,7 +81,7 @@ model Player {
   // Simple, configurable Performance Index weights (see lib/performance-index.ts).
   // Stored per-player so future versions can tune weighting per role without a migration.
 
-  practiceStats PracticePlayerStat[]
+  miniGameStats MiniGamePlayerStat[]
   gameStats     GamePlayerStat[]
   highlights    PlayerHighlight[]
   seasonStats   PlayerSeasonStat[]
@@ -169,37 +169,35 @@ model PlayerSeasonStat {
 }
 
 // ---------------------------------------------------------------------------
-// SHARED STAT SHAPE (Practices + Games use identical categories)
+// SHARED STAT SHAPE (Mini Games + Official Games use identical categories,
+// but are stored in completely separate tables and are NEVER combined,
+// summed, or averaged together in any calculation. See lib/player-analytics.ts
+// (Official Games only) vs lib/mini-game-analytics.ts (Mini Games only) — two
+// fully independent read paths, deliberately not sharing a query.)
 // ---------------------------------------------------------------------------
 // Zone entry/exit percentages and other derived fields are computed on read
 // (lib/stats.ts) from raw counts, never stored as manually-entered percentages,
 // so numbers can never drift from their source counts.
 
-model Practice {
-  id       String   @id @default(cuid())
-  week     Int
-  number   Int // Practice # within the season (1, 2, 3 …)
-  date     DateTime
-  location String?
-  focus    String?
-  notes    String?
+model MiniGame {
+  id    String   @id @default(cuid())
+  date  DateTime
+  notes String?
 
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
-  playerStats PracticePlayerStat[]
+  playerStats MiniGamePlayerStat[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([seasonId, number])
 }
 
-model PracticePlayerStat {
+model MiniGamePlayerStat {
   id String @id @default(cuid())
 
-  practiceId String
-  practice   Practice @relation(fields: [practiceId], references: [id], onDelete: Cascade)
+  miniGameId String
+  miniGame   MiniGame @relation(fields: [miniGameId], references: [id], onDelete: Cascade)
 
   playerId String
   player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
@@ -233,7 +231,7 @@ model PracticePlayerStat {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([practiceId, playerId])
+  @@unique([miniGameId, playerId])
 }
 
 // ---------------------------------------------------------------------------
@@ -437,7 +435,7 @@ model PlayerHighlight {
 // ---------------------------------------------------------------------------
 
 enum ActivityType {
-  PRACTICE_LOGGED
+  MINI_GAME_LOGGED
   GAME_LOGGED
   PLAYER_UPDATED
   WAR_ROOM_MISSION_BRIEF

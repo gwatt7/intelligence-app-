@@ -62,7 +62,7 @@ export async function updateTeamInfo(seasonId: string, formData: FormData): Prom
  * intact. Carries forward team identity and the roster (profile fields only:
  * name, jersey number, position, shoots) from the season that was current.
  * Every carried-over player starts the new season with zero stats, since no
- * Practice/Game/PlayerSeasonStat rows are copied — stat calculations already
+ * MiniGame/Game/PlayerSeasonStat rows are copied — stat calculations already
  * treat "no logged rows" as the zero/empty state everywhere else in the app.
  */
 export async function createNewSeason(formData: FormData): Promise<ActionResult> {

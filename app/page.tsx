@@ -34,13 +34,13 @@ export default async function DashboardPage() {
 
   const now = new Date();
 
-  const [nextGame, lastGame, nextPractice, team] = await Promise.all([
+  const [nextGame, lastGame, nextMiniGame, team] = await Promise.all([
     prisma.game.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
     prisma.game.findFirst({
       where: { seasonId: season.id, isCompleted: true, date: { lte: now } },
       orderBy: { date: "desc" },
     }),
-    prisma.practice.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
+    prisma.miniGame.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
     prisma.team.findUnique({ where: { seasonId: season.id } }),
   ]);
 
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
   return (
     <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
       <div className="space-y-6">
-        {/* Game + practice context, compact side-by-side */}
+        {/* Game + Mini Game context, compact side-by-side */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="!p-5">
             <CardTitle className="!mb-1.5">Next Game</CardTitle>
@@ -121,10 +121,10 @@ export default async function DashboardPage() {
           </Card>
 
           <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Next Practice</CardTitle>
-            {nextPractice ? (
-              <Link href={`/practices/${nextPractice.id}`} className="text-sm text-foreground hover:text-accent-strong">
-                Practice {nextPractice.number} — {format(nextPractice.date, "MMM d, yyyy")}
+            <CardTitle className="!mb-1.5">Next Mini Game</CardTitle>
+            {nextMiniGame ? (
+              <Link href={`/mini-games/${nextMiniGame.id}`} className="text-sm text-foreground hover:text-accent-strong">
+                {format(nextMiniGame.date, "MMM d, yyyy")}
               </Link>
             ) : (
               <p className="text-sm text-muted">None scheduled</p>

@@ -37,7 +37,7 @@ export default async function WeeklyRankingsPage() {
           <p className="text-xs text-muted-2">Live — recalculates as stats are entered. Archives automatically Sunday night.</p>
         </div>
         {!current || (current.top.length === 0 && current.bottom.length === 0) ? (
-          <p className="text-sm text-muted">No practice or game stats logged yet this week.</p>
+          <p className="text-sm text-muted">No official game stats logged yet this week.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

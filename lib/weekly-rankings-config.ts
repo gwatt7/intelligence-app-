@@ -11,10 +11,10 @@
 export const WEEKLY_RANKING_TIMEZONE = "America/Chicago";
 
 /**
- * Minimum number of logged practice/game stat rows a player must have within
+ * Minimum number of logged official-game stat rows a player must have within
  * a week to qualify for that week's Top 3 / Bottom 3. Players below this are
  * shown as "Insufficient Data" instead of being ranked. Raise this if a
- * single logged practice shouldn't be enough to land someone in the
+ * single logged game shouldn't be enough to land someone in the
  * rankings; lower it (minimum 1) to rank on any data at all.
  */
 export const MIN_WEEKLY_ENTRIES_FOR_RANKING = 2;

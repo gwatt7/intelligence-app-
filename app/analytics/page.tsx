@@ -44,8 +44,6 @@ export default async function AnalyticsPage({
 
   const allEntries = await getTeamStatEntries(season.id);
   const periodEntries = filterEntries(allEntries, filter);
-  const practiceEntries = allEntries.filter((e) => e.source === "PRACTICE");
-  const gameEntries = allEntries.filter((e) => e.source === "GAME");
 
   const rankings = await buildRankings(season.id);
 
@@ -55,7 +53,7 @@ export default async function AnalyticsPage({
         <PageHeader title="Analytics" subtitle={`Season ${season.name}`} />
         <EmptyState
           title="No data yet"
-          description="Log a practice or game to see team trends here."
+          description="Log a game to see team trends here. (Mini Game trends live on the Mini Games tab, kept separate from official game analytics.)"
         />
       </div>
     );
@@ -93,43 +91,6 @@ export default async function AnalyticsPage({
                 <div
                   className={cn(
                     "p-3 text-right font-medium",
-                    delta !== null && delta > 0 && "text-positive",
-                    delta !== null && delta < 0 && "text-negative"
-                  )}
-                >
-                  {formatChange(delta)}
-                </div>
-              </div>
-            );
-          })}
-        </Card>
-      </div>
-
-      <div>
-        <h2 className="text-sm font-medium text-muted mb-3">Practice vs. Game</h2>
-        <Card padded={false}>
-          <div className="grid grid-cols-4 border-b border-border text-xs text-muted uppercase tracking-wide">
-            <div className="p-3">Metric</div>
-            <div className="p-3 text-right">Practice</div>
-            <div className="p-3 text-right">Games</div>
-            <div className="p-3 text-right">Difference</div>
-          </div>
-          {TREND_METRICS.map((m) => {
-            const practiceVal = metricValue(practiceEntries, m.key, m.isPct);
-            const gameVal = metricValue(gameEntries, m.key, m.isPct);
-            const delta = change(gameVal, practiceVal);
-            return (
-              <div key={m.key} className="grid grid-cols-4 border-b border-border last:border-b-0 text-sm">
-                <div className="p-3 text-muted">{m.label}</div>
-                <div className="p-3 text-right font-medium">
-                  {m.isPct ? formatPct(practiceVal) : practiceVal?.toFixed(1) ?? "—"}
-                </div>
-                <div className="p-3 text-right font-medium">
-                  {m.isPct ? formatPct(gameVal) : gameVal?.toFixed(1) ?? "—"}
-                </div>
-                <div
-                  className={cn(
-                    "p-3 text-right",
                     delta !== null && delta > 0 && "text-positive",
                     delta !== null && delta < 0 && "text-negative"
                   )}

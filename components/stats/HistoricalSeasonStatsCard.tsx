@@ -82,7 +82,7 @@ export function HistoricalSeasonStatsCard({
         {stat.source && <span className="text-xs text-muted-2">{stat.source}</span>}
       </div>
       <p className="text-xs text-muted mb-4 -mt-2">
-        Imported season aggregate — not tied to individual practices or games, so it isn&apos;t plotted as a
+        Imported season aggregate — not tied to individual games, so it isn&apos;t plotted as a
         game-by-game trend.
       </p>
 

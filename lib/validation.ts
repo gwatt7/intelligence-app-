@@ -57,12 +57,8 @@ export const statLineSchema = z
     path: ["saves"],
   });
 
-export const practiceSchema = z.object({
-  week: z.coerce.number().int().min(1, "Week must be 1 or greater"),
-  number: z.coerce.number().int().min(1, "Practice number must be 1 or greater"),
+export const miniGameSchema = z.object({
   date: z.string().min(1, "Date is required"),
-  location: z.string().trim().optional(),
-  focus: z.string().trim().optional(),
   notes: z.string().trim().optional(),
 });
 
@@ -120,5 +116,5 @@ export const afterActionSchema = z.object({
 
 export type PlayerInput = z.infer<typeof playerSchema>;
 export type StatLineInput = z.infer<typeof statLineSchema>;
-export type PracticeInput = z.infer<typeof practiceSchema>;
+export type MiniGameInput = z.infer<typeof miniGameSchema>;
 export type GameInput = z.infer<typeof gameSchema>;

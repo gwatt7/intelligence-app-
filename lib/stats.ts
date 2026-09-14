@@ -1,4 +1,4 @@
-// Shared stat math for Practices and Games.
+// Shared stat math for Mini Games and official Games.
 //
 // Percentages and other derived numbers are ALWAYS computed from raw counts
 // here, never stored in the database. This guarantees a percentage can never

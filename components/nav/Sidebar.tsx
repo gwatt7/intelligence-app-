@@ -9,7 +9,7 @@ const TABS = [
   { href: "/", label: "Dashboard", icon: "🏠" },
   { href: "/team", label: "Team", icon: "👥" },
   { href: "/players", label: "Players", icon: "👤" },
-  { href: "/practices", label: "Practices", icon: "🏒" },
+  { href: "/mini-games", label: "Mini Games", icon: "🎮" },
   { href: "/games", label: "Games", icon: "🥅" },
   { href: "/analytics", label: "Analytics", icon: "📈" },
   { href: "/weekly-rankings", label: "Weekly Rankings", icon: "🏆" },

@@ -17,7 +17,7 @@ type Player = {
 
 const initialState: ActionResult = { ok: true };
 
-/** Shared "select a player, enter their stat line" UI for both Practices and Games — the save action is bound to the practice/game id by the caller and only needs a playerId + FormData. */
+/** Shared "select a player, enter their stat line" UI for Mini Games and official Games — the save action is bound to the mini-game/game id by the caller and only needs a playerId + FormData. Purely presentational: it never mixes the two, since each caller binds its own action against its own separate table. */
 export function StatEntryList({
   saveAction,
   players,

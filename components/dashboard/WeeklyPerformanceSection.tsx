@@ -17,7 +17,9 @@ export function WeeklyPerformanceSection({
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
           <CardTitle className="!mb-0.5">{result ? `Week ${result.weekNumber} — Current` : "This Week's Performers"}</CardTitle>
-          <p className="text-xs text-muted-2">Auto-updates as stats are logged · archives every Sunday night</p>
+          <p className="text-xs text-muted-2">
+            Official games only · auto-updates as stats are logged · archives every Sunday night
+          </p>
         </div>
         <ButtonLink href={historyHref} variant="secondary" className="!px-3 !py-1.5 text-xs shrink-0">
           View Full Rankings
@@ -28,7 +30,7 @@ export function WeeklyPerformanceSection({
         <p className="text-sm text-muted">
           {result && result.insufficientData.length > 0
             ? `Not enough data yet this week — ${result.insufficientData.length} player(s) below the ${result.minEntriesRequired}-entry minimum.`
-            : "No practice or game stats logged yet this week."}
+            : "No official game stats logged yet this week."}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

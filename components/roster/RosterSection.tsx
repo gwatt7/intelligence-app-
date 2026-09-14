@@ -31,7 +31,7 @@ export function RosterSection({ seasonId, players }: { seasonId: string; players
   const [pending, startTransition] = useTransition();
 
   function handleDelete(player: Player) {
-    if (!confirm(`Remove ${player.firstName} ${player.lastName} (#${player.jerseyNumber}) from the roster? This also removes their practice and game stats.`)) {
+    if (!confirm(`Remove ${player.firstName} ${player.lastName} (#${player.jerseyNumber}) from the roster? This also removes their Mini Game and official game stats.`)) {
       return;
     }
     startTransition(async () => {

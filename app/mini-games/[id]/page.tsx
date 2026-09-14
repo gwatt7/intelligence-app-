@@ -3,43 +3,41 @@ import { notFound } from "next/navigation";
 import { format } from "date-fns";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { PracticeNotesForm } from "@/components/forms/PracticeNotesForm";
+import { MiniGameNotesForm } from "@/components/forms/MiniGameNotesForm";
 import { StatEntryList } from "@/components/stats/StatEntryList";
 import { CsvImportPanel } from "@/components/shared/CsvImportPanel";
-import { importPracticeStatsFromCsv, savePracticePlayerStat } from "@/lib/actions/practices";
+import { importMiniGameStatsFromCsv, saveMiniGamePlayerStat } from "@/lib/actions/mini-games";
 import type { RawStatLine } from "@/lib/stats";
 
-export default async function PracticeDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MiniGameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const practice = await prisma.practice.findUnique({
+  const miniGame = await prisma.miniGame.findUnique({
     where: { id },
     include: { playerStats: true },
   });
-  if (!practice) notFound();
+  if (!miniGame) notFound();
 
   const players = await prisma.player.findMany({
-    where: { seasonId: practice.seasonId },
+    where: { seasonId: miniGame.seasonId },
     orderBy: { jerseyNumber: "asc" },
   });
 
-  const statsByPlayer = new Map<string, RawStatLine>(practice.playerStats.map((s) => [s.playerId, s]));
+  const statsByPlayer = new Map<string, RawStatLine>(miniGame.playerStats.map((s) => [s.playerId, s]));
 
-  const boundImport = importPracticeStatsFromCsv.bind(null, practice.id, practice.seasonId);
-  const boundSave = savePracticePlayerStat.bind(null, practice.id);
+  const boundImport = importMiniGameStatsFromCsv.bind(null, miniGame.id, miniGame.seasonId);
+  const boundSave = saveMiniGamePlayerStat.bind(null, miniGame.id);
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Practice ${practice.number}`} subtitle={`Week ${practice.week} · ${format(practice.date, "MMMM d, yyyy")}`} />
+      <PageHeader
+        title={`Mini Game — ${format(miniGame.date, "MMMM d, yyyy")}`}
+        subtitle="Tracked completely separately from official game stats"
+      />
 
       <Card>
         <CardTitle>Details</CardTitle>
-        <PracticeNotesForm
-          practiceId={practice.id}
-          location={practice.location}
-          focus={practice.focus}
-          notes={practice.notes}
-        />
+        <MiniGameNotesForm miniGameId={miniGame.id} date={miniGame.date} notes={miniGame.notes} />
       </Card>
 
       <Card>

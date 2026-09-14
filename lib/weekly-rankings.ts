@@ -8,20 +8,23 @@
 // by calendar week, rank players against each other, and persist a frozen
 // historical record once a week has ended.
 //
+// Official Games only — see lib/player-analytics.ts's header comment for why
+// Mini Game stats are never included here (Mini Games have their own,
+// completely separate weekly trend — see lib/mini-game-analytics.ts).
+//
 // "Current week" is always computed live, on read, straight from
-// PracticePlayerStat/GamePlayerStat — there is no stored/cached "current
-// week" row, so editing a stat mid-week is reflected the next time anything
-// asks for the current week's rankings. A week only becomes a permanent,
-// unchanging WeeklyRanking row once archiveCompletedWeeksForSeason() runs
-// (via the Sunday-night cron) and that week has fully ended.
+// GamePlayerStat — there is no stored/cached "current week" row, so editing
+// a stat mid-week is reflected the next time anything asks for the current
+// week's rankings. A week only becomes a permanent, unchanging WeeklyRanking
+// row once archiveCompletedWeeksForSeason() runs (via the Sunday-night
+// cron) and that week has fully ended.
 
 import { prisma } from "@/lib/db";
-import { toZonedTime, fromZonedTime } from "date-fns-tz";
-import { startOfWeek, endOfWeek, addWeeks } from "date-fns";
 import { getSeasonStatEntriesByPlayer, type StatEntry } from "@/lib/player-analytics";
 import { calculatePerformanceIndex, type PerformanceIndexBreakdown } from "@/lib/performance-index";
 import { sumStatLines, zoneEntryPct, zoneExitPct, points, savePct, type RawStatLine } from "@/lib/stats";
 import { WEEKLY_RANKING_TIMEZONE, MIN_WEEKLY_ENTRIES_FOR_RANKING, WEEKLY_SCORING_VERSION } from "@/lib/weekly-rankings-config";
+import { getWeekBounds as getCalendarWeekBounds, nextWeekStart, weekNumberFor as calendarWeekNumberFor } from "@/lib/calendar-week";
 import { Prisma } from "@/app/generated/prisma/client";
 import type { WeeklyRankCategory } from "@/app/generated/prisma/enums";
 
@@ -68,27 +71,12 @@ export interface WeeklyRankingResult {
 
 /** Monday 00:00:00.000 through Sunday 23:59:59.999, in WEEKLY_RANKING_TIMEZONE, for the week containing `date`. */
 export function getWeekBounds(date: Date, timeZone: string = WEEKLY_RANKING_TIMEZONE): { weekStart: Date; weekEnd: Date } {
-  const zoned = toZonedTime(date, timeZone);
-  const zonedStart = startOfWeek(zoned, { weekStartsOn: 1 });
-  const zonedEnd = endOfWeek(zoned, { weekStartsOn: 1 });
-  return {
-    weekStart: fromZonedTime(zonedStart, timeZone),
-    weekEnd: fromZonedTime(zonedEnd, timeZone),
-  };
+  return getCalendarWeekBounds(date, timeZone);
 }
 
-function nextWeekStart(weekStart: Date, timeZone: string = WEEKLY_RANKING_TIMEZONE): Date {
-  const zoned = toZonedTime(weekStart, timeZone);
-  return fromZonedTime(addWeeks(zoned, 1), timeZone);
-}
-
-/** 1-based week number within the season, for display (e.g. "Week 4"). Week 1 is the calendar week of the season's first logged practice/game. */
+/** 1-based week number within the season, for display (e.g. "Week 4"). Week 1 is the calendar week of the season's first logged official game. */
 function weekNumberFor(weekStart: Date, seasonFirstWeekStart: Date, timeZone: string = WEEKLY_RANKING_TIMEZONE): number {
-  const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-  // Compare zoned wall-clock instants so DST transitions never round to the wrong week.
-  const a = toZonedTime(weekStart, timeZone).getTime();
-  const b = toZonedTime(seasonFirstWeekStart, timeZone).getTime();
-  return Math.round((a - b) / msPerWeek) + 1;
+  return calendarWeekNumberFor(weekStart, seasonFirstWeekStart, timeZone);
 }
 
 // ---------------------------------------------------------------------------
@@ -330,7 +318,7 @@ export async function archiveCompletedWeeksForSeason(seasonId: string): Promise<
       archived.push(result);
     }
 
-    cursor = nextWeekStart(cursor);
+    cursor = nextWeekStart(cursor, WEEKLY_RANKING_TIMEZONE);
     weekNumber += 1;
   }
 
