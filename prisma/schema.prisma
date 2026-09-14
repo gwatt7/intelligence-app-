@@ -28,6 +28,7 @@ model Season {
   games             Game[]
   activities        Activity[]
   playerSeasonStats PlayerSeasonStat[]
+  weeklyRankings    WeeklyRanking[]
 }
 
 model Team {
@@ -84,6 +85,7 @@ model Player {
   gameStats     GamePlayerStat[]
   highlights    PlayerHighlight[]
   seasonStats   PlayerSeasonStat[]
+  weeklyRankingEntries WeeklyRankingEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -437,4 +439,67 @@ model Activity {
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// WEEKLY PERFORMANCE RANKINGS
+// ---------------------------------------------------------------------------
+// One row per (season, calendar week). The *current* week is never stored
+// here — it's always computed live from PracticePlayerStat/GamePlayerStat so
+// edits show up immediately (see lib/weekly-rankings.ts). A row is written
+// here only once a week has ended and been archived, and is never rewritten
+// after that — it's the permanent historical record of what the rankings
+// were, including the exact stat totals and score that produced them, so a
+// later edit to an old practice/game never silently changes history.
+
+model WeeklyRanking {
+  id String @id @default(cuid())
+
+  seasonId String
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
+  weekStart DateTime // Monday 00:00:00 of the ranking week (see WEEKLY_RANKING_TIMEZONE)
+  weekEnd   DateTime // Sunday 23:59:59.999 of the ranking week
+  weekNumber Int // 1-based week number within the season, for display (e.g. "Week 4")
+
+  scoringVersion      String // which version of the Performance Index produced this — see lib/weekly-rankings-config.ts
+  minEntriesRequired  Int // the minimum-data threshold in effect when this was computed
+
+  archivedAt DateTime @default(now()) // when the Sunday-night job (or a manual run) finalized this week
+
+  entries WeeklyRankingEntry[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([seasonId, weekStart])
+}
+
+enum WeeklyRankCategory {
+  TOP
+  BOTTOM
+}
+
+model WeeklyRankingEntry {
+  id String @id @default(cuid())
+
+  weeklyRankingId String
+  weeklyRanking   WeeklyRanking @relation(fields: [weeklyRankingId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  category WeeklyRankCategory
+  rank     Int // 1-3 within its category
+
+  performanceScore Float
+  entriesCount     Int // how many practice/game stat rows contributed this week
+
+  // Frozen at archive time so the historical record never drifts if the
+  // underlying practice/game rows are edited later.
+  statsSnapshot Json // the week's summed RawStatLine totals
+  breakdown     Json // ordered [{ label, detail }] — the top contributing stats, for the "why" explanation
+
+  createdAt DateTime @default(now())
+
+  @@unique([weeklyRankingId, playerId])
 }

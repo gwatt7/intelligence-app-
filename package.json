@@ -9,13 +9,15 @@
     "start": "next start",
     "lint": "eslint",
     "import:uws-2025-2026": "tsx scripts/import-historical-season.ts",
-    "create:2026-2027": "tsx scripts/create-2026-2027-season.ts"
+    "create:2026-2027": "tsx scripts/create-2026-2027-season.ts",
+    "archive:weekly-rankings": "tsx scripts/archive-weekly-rankings.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
+    "date-fns-tz": "^3.2.0",
     "next": "16.3.0",
     "papaparse": "^5.5.4",
     "pg": "^8.23.0",

@@ -80,6 +80,7 @@ export async function savePracticePlayerStat(
   revalidatePath(`/practices/${practiceId}`);
   revalidatePath("/players");
   revalidatePath("/analytics");
+  revalidatePath("/weekly-rankings");
   revalidatePath("/");
   return { ok: true };
 }
@@ -124,6 +125,7 @@ export async function importPracticeStatsFromCsv(
   revalidatePath(`/practices/${practiceId}`);
   revalidatePath("/players");
   revalidatePath("/analytics");
+  revalidatePath("/weekly-rankings");
   revalidatePath("/");
   return { ok: true, imported, skipped };
 }

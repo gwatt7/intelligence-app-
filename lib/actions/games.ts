@@ -98,6 +98,7 @@ export async function saveGamePlayerStat(gameId: string, playerId: string, formD
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/players");
   revalidatePath("/analytics");
+  revalidatePath("/weekly-rankings");
   revalidatePath("/");
   return { ok: true };
 }
@@ -141,6 +142,7 @@ export async function importGameStatsFromCsv(
   revalidatePath(`/games/${gameId}`);
   revalidatePath("/players");
   revalidatePath("/analytics");
+  revalidatePath("/weekly-rankings");
   revalidatePath("/");
   return { ok: true, imported, skipped };
 }

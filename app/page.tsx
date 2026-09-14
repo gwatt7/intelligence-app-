@@ -2,7 +2,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
-import { buildRankings, buildWeeklyPerformers } from "@/lib/rankings";
+import { buildRankings } from "@/lib/rankings";
+import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
 import { formatChange } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -10,6 +11,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { Badge, TrendBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
+import { WeeklyPerformanceSection } from "@/components/dashboard/WeeklyPerformanceSection";
 import Link from "next/link";
 import { format, differenceInCalendarDays } from "date-fns";
 
@@ -49,7 +51,7 @@ export default async function DashboardPage() {
     entryTrend !== null && exitTrend !== null ? (entryTrend + exitTrend) / 2 : entryTrend ?? exitTrend;
 
   const rankings = await buildRankings(season.id);
-  const weeklyPerformers = await buildWeeklyPerformers(season.id);
+  const weeklyRankings = await getCurrentWeekRankings(season.id);
   const topPerformer = rankings.topPerformanceIndex[0];
   const mostImproved = rankings.mostImproved[0];
   const needsAttention = [...rankings.topPerformanceIndex].sort((a, b) => a.value - b.value)[0];
@@ -66,8 +68,8 @@ export default async function DashboardPage() {
   return (
     <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
       <div className="space-y-6">
-        {/* Game context: next + last, compact side-by-side */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Game + practice context, compact side-by-side */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="!p-5">
             <CardTitle className="!mb-1.5">Next Game</CardTitle>
             {nextGame ? (
@@ -113,6 +115,17 @@ export default async function DashboardPage() {
               </div>
             ) : (
               <p className="text-sm text-muted">No games completed yet.</p>
+            )}
+          </Card>
+
+          <Card className="!p-5">
+            <CardTitle className="!mb-1.5">Next Practice</CardTitle>
+            {nextPractice ? (
+              <Link href={`/practices/${nextPractice.id}`} className="text-sm text-foreground hover:text-accent-strong">
+                Practice {nextPractice.number} — {format(nextPractice.date, "MMM d, yyyy")}
+              </Link>
+            ) : (
+              <p className="text-sm text-muted">None scheduled</p>
             )}
           </Card>
         </div>
@@ -168,55 +181,8 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Upcoming + recent activity */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Next Practice</CardTitle>
-            {nextPractice ? (
-              <Link href={`/practices/${nextPractice.id}`} className="text-sm text-foreground hover:text-accent-strong">
-                Practice {nextPractice.number} — {format(nextPractice.date, "MMM d, yyyy")}
-              </Link>
-            ) : (
-              <p className="text-sm text-muted">None scheduled</p>
-            )}
-          </Card>
-
-          <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Weekly Performers</CardTitle>
-            {weeklyPerformers.top.length === 0 ? (
-              <p className="text-sm text-muted">No practice or game stats logged yet.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs font-medium text-positive mb-1">Top 3</p>
-                  <ul className="space-y-1">
-                    {weeklyPerformers.top.map((p) => (
-                      <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="text-foreground truncate">
-                          #{p.jerseyNumber} {p.name}
-                        </span>
-                        <span className="text-xs text-muted-2 shrink-0">{p.value.toFixed(1)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-negative mb-1">Bottom 3</p>
-                  <ul className="space-y-1">
-                    {weeklyPerformers.bottom.map((p) => (
-                      <li key={p.playerId} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="text-foreground truncate">
-                          #{p.jerseyNumber} {p.name}
-                        </span>
-                        <span className="text-xs text-muted-2 shrink-0">{p.value.toFixed(1)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </Card>
-        </div>
+        {/* Weekly Performance Rankings — Top 3 / Bottom 3 of the current week */}
+        <WeeklyPerformanceSection result={weeklyRankings} historyHref="/weekly-rankings" />
       </div>
     </DashboardHero>
   );
