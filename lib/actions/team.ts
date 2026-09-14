@@ -57,7 +57,14 @@ export async function updateTeamInfo(seasonId: string, formData: FormData): Prom
   return { ok: true };
 }
 
-/** Adds a new season without touching any prior season's data — history stays intact. */
+/**
+ * Adds a new season without touching any prior season's data — history stays
+ * intact. Carries forward team identity and the roster (profile fields only:
+ * name, jersey number, position, shoots) from the season that was current.
+ * Every carried-over player starts the new season with zero stats, since no
+ * Practice/Game/PlayerSeasonStat rows are copied — stat calculations already
+ * treat "no logged rows" as the zero/empty state everywhere else in the app.
+ */
 export async function createNewSeason(formData: FormData): Promise<ActionResult> {
   const parsed = seasonSchema.safeParse({ name: formData.get("seasonName") });
   if (!parsed.success) {
@@ -68,24 +75,39 @@ export async function createNewSeason(formData: FormData): Promise<ActionResult>
     return { ok: false, error: `Season "${parsed.data.name}" already exists` };
   }
 
-  const previous = await prisma.team.findFirst({
-    where: { season: { isCurrent: true } },
-  });
+  const previousSeason = await prisma.season.findFirst({ where: { isCurrent: true } });
+  const [previousTeam, previousPlayers] = await Promise.all([
+    previousSeason ? prisma.team.findUnique({ where: { seasonId: previousSeason.id } }) : null,
+    previousSeason ? prisma.player.findMany({ where: { seasonId: previousSeason.id } }) : [],
+  ]);
 
   await prisma.$transaction(async (tx) => {
     await tx.season.updateMany({ data: { isCurrent: false }, where: { isCurrent: true } });
     const season = await tx.season.create({ data: { name: parsed.data.name, isCurrent: true } });
-    // Carry forward team identity (name/league/division/coaches) into the new season; roster starts fresh.
+    // Carry forward team identity (name/league/division/coaches) into the new season.
     await tx.team.create({
       data: {
         seasonId: season.id,
-        name: previous?.name ?? "New Team",
-        league: previous?.league,
-        division: previous?.division,
-        headCoach: previous?.headCoach,
-        assistantCoaches: previous?.assistantCoaches,
+        name: previousTeam?.name ?? "New Team",
+        league: previousTeam?.league,
+        division: previousTeam?.division,
+        headCoach: previousTeam?.headCoach,
+        assistantCoaches: previousTeam?.assistantCoaches,
       },
     });
+    // Carry forward the roster — profile fields only, no stats.
+    if (previousPlayers.length > 0) {
+      await tx.player.createMany({
+        data: previousPlayers.map((p) => ({
+          seasonId: season.id,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          jerseyNumber: p.jerseyNumber,
+          position: p.position,
+          shoots: p.shoots,
+        })),
+      });
+    }
   });
 
   revalidatePath("/", "layout");
