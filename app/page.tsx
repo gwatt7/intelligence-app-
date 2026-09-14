@@ -12,6 +12,7 @@ import { Badge, TrendBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { WeeklyPerformanceSection } from "@/components/dashboard/WeeklyPerformanceSection";
+import { gameMatchupLabel, gameArenaLabel, gameTimeLabel } from "@/lib/game-display";
 import Link from "next/link";
 import { format, differenceInCalendarDays } from "date-fns";
 
@@ -74,11 +75,14 @@ export default async function DashboardPage() {
             <CardTitle className="!mb-1.5">Next Game</CardTitle>
             {nextGame ? (
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {nextGame.homeAway === "HOME" ? "vs" : "@"} {nextGame.opponent}
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground truncate">{gameMatchupLabel(nextGame)}</p>
+                  <p className="text-xs text-muted mt-0.5">
+                    {format(nextGame.date, "EEE, MMM d")} · {gameTimeLabel(nextGame)}
                   </p>
-                  <p className="text-xs text-muted mt-0.5">{format(nextGame.date, "EEE, MMM d")}</p>
+                  {gameArenaLabel(nextGame) && (
+                    <p className="text-xs text-muted-2 mt-0.5 truncate">{gameArenaLabel(nextGame)}</p>
+                  )}
                 </div>
                 <div className="text-right shrink-0">
                   <Badge tone="accent">In {Math.max(differenceInCalendarDays(nextGame.date, now), 0)}d</Badge>
@@ -96,10 +100,8 @@ export default async function DashboardPage() {
             <CardTitle className="!mb-1.5">Last Game</CardTitle>
             {lastGame ? (
               <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-foreground">
-                    {lastGame.homeAway === "HOME" ? "vs" : "@"} {lastGame.opponent}
-                  </p>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground truncate">{gameMatchupLabel(lastGame)}</p>
                   <p className="text-xs text-muted mt-0.5">{format(lastGame.date, "MMM d")}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">

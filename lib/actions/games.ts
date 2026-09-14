@@ -9,12 +9,21 @@ import type { ActionResult } from "./team";
 export type { ActionResult };
 
 export async function createGame(seasonId: string, formData: FormData): Promise<ActionResult> {
+  const timeTBA = formData.get("timeTBA") === "on";
+  const timeValue = (formData.get("time") as string) || "19:00"; // default 7:00 PM, ignored entirely when timeTBA
+
   const parsed = gameSchema.safeParse({
     gameType: formData.get("gameType"),
     opponent: formData.get("opponent"),
     date: formData.get("date"),
     homeAway: formData.get("homeAway"),
     location: formData.get("location") || undefined,
+    arena: formData.get("arena") || undefined,
+    city: formData.get("city") || undefined,
+    state: formData.get("state") || undefined,
+    tournamentName: formData.get("tournamentName") || undefined,
+    specialEvent: formData.get("specialEvent") || undefined,
+    timeTBA,
     ourScore: formData.get("ourScore") || undefined,
     opponentScore: formData.get("opponentScore") || undefined,
   });
@@ -24,11 +33,12 @@ export async function createGame(seasonId: string, formData: FormData): Promise<
 
   const { date, ourScore, opponentScore, ...rest } = parsed.data;
   const isCompleted = ourScore !== null && ourScore !== undefined && opponentScore !== null && opponentScore !== undefined;
+  const dateTime = timeTBA ? new Date(`${date}T00:00:00`) : new Date(`${date}T${timeValue}:00`);
 
   const game = await prisma.game.create({
     data: {
       ...rest,
-      date: new Date(date),
+      date: dateTime,
       ourScore: ourScore ?? null,
       opponentScore: opponentScore ?? null,
       isCompleted,

@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { format } from "date-fns";
+import { gameMatchupLabel } from "@/lib/game-display";
 
 export default async function WarRoomPage() {
   const season = await getCurrentSeason();
@@ -59,9 +60,7 @@ export default async function WarRoomPage() {
           return (
             <Link key={g.id} href={`/war-room/${g.id}`}>
               <Card className="hover:border-accent/50 transition-colors h-full">
-                <p className="font-medium text-foreground">
-                  {g.homeAway === "HOME" ? "vs" : "@"} {g.opponent}
-                </p>
+                <p className="font-medium text-foreground">{gameMatchupLabel(g)}</p>
                 <p className="text-xs text-muted mt-1">{format(g.date, "MMM d, yyyy")}</p>
                 <Badge tone={status.tone} className="mt-2">
                   {status.label}

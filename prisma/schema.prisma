@@ -249,6 +249,7 @@ enum GameType {
 enum HomeAway {
   HOME
   AWAY
+  NEUTRAL
 }
 
 model Game {
@@ -258,6 +259,17 @@ model Game {
   date     DateTime
   homeAway HomeAway
   location String?
+
+  // Structured schedule fields (rink/arena, city, state, tournament/event
+  // name, special-event designation like "Senior Day", and whether the
+  // game time is still TBA). All nullable/optional — nothing here is
+  // required, so a game can be entered with only what's actually known.
+  arena          String?
+  city           String?
+  state          String?
+  tournamentName String?
+  specialEvent   String?
+  timeTBA        Boolean @default(false)
 
   ourScore      Int?
   opponentScore Int?
@@ -275,6 +287,8 @@ model Game {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([seasonId, date, opponent])
 }
 
 model GamePlayerStat {

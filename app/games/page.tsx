@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { format } from "date-fns";
+import { gameMatchupLabel, gameArenaLabel, gameCityStateLabel, gameTimeLabel } from "@/lib/game-display";
 
 const GAME_TYPE_LABEL = { PRESEASON: "Preseason", REGULAR_SEASON: "Regular Season", PLAYOFFS: "Playoffs" } as const;
 const GAME_TYPE_ORDER = ["PRESEASON", "REGULAR_SEASON", "PLAYOFFS"] as const;
@@ -58,25 +59,29 @@ export default async function GamesPage() {
                         ? "L"
                         : "T"
                       : null;
+                  const arena = gameArenaLabel(g);
+                  const cityState = gameCityStateLabel(g);
                   return (
                     <Link key={g.id} href={`/games/${g.id}`}>
                       <Card className="hover:border-accent/50 transition-colors h-full">
-                        <div className="flex items-center justify-between">
-                          <p className="font-medium text-foreground">
-                            {g.homeAway === "HOME" ? "vs" : "@"} {g.opponent}
-                          </p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium text-foreground">{gameMatchupLabel(g)}</p>
                           {result && (
                             <Badge tone={result === "W" ? "positive" : result === "L" ? "negative" : "neutral"}>
                               {result} {g.ourScore}-{g.opponentScore}
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted mt-1">{format(g.date, "MMM d, yyyy")}</p>
-                        {!g.isCompleted && (
-                          <Badge tone="accent" className="mt-2">
-                            Upcoming
-                          </Badge>
-                        )}
+                        <p className="text-xs text-muted mt-1">
+                          {format(g.date, "EEE, MMM d, yyyy")} · {gameTimeLabel(g)}
+                        </p>
+                        {arena && <p className="text-xs text-muted-2 mt-0.5 truncate">{arena}</p>}
+                        {cityState && <p className="text-xs text-muted-2 truncate">{cityState}</p>}
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {!g.isCompleted && <Badge tone="accent">Upcoming</Badge>}
+                          {g.tournamentName && <Badge tone="neutral">{g.tournamentName}</Badge>}
+                          {g.specialEvent && <Badge tone="warning">{g.specialEvent}</Badge>}
+                        </div>
                       </Card>
                     </Link>
                   );

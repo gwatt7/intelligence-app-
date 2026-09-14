@@ -9,6 +9,7 @@ import { sumStatLines, formatPct, EMPTY_STAT_LINE } from "@/lib/stats";
 import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import type { ObjectiveDraft } from "@/lib/actions/war-room";
+import { gameMatchupLabel, gameHomeAwayLabel } from "@/lib/game-display";
 
 export default async function WarRoomDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,11 +65,9 @@ export default async function WarRoomDetailPage({ params }: { params: Promise<{ 
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Game Day</p>
         <div className="flex flex-wrap items-start justify-between gap-3 mt-1">
           <div>
-            <p className="text-xl sm:text-2xl font-bold text-foreground">
-              {game.homeAway === "HOME" ? "vs" : "@"} {game.opponent}
-            </p>
+            <p className="text-xl sm:text-2xl font-bold text-foreground">{gameMatchupLabel(game)}</p>
             <p className="text-sm text-muted mt-1">
-              {format(game.date, "MMMM d, yyyy")} · {game.homeAway === "HOME" ? "Home" : "Away"}
+              {format(game.date, "MMMM d, yyyy")} · {gameHomeAwayLabel(game.homeAway)}
             </p>
           </div>
           {game.isCompleted ? <Badge tone="accent">Game Completed</Badge> : <Badge tone="neutral">Upcoming</Badge>}

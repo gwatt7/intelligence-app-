@@ -10,6 +10,13 @@ import { CsvImportPanel } from "@/components/shared/CsvImportPanel";
 import { importGameStatsFromCsv, saveGamePlayerStat } from "@/lib/actions/games";
 import { ButtonLink } from "@/components/ui/Button";
 import type { RawStatLine } from "@/lib/stats";
+import {
+  gameMatchupLabel,
+  gameHomeAwayLabel,
+  gameArenaLabel,
+  gameCityStateLabel,
+  gameTimeLabel,
+} from "@/lib/game-display";
 
 const GAME_TYPE_LABEL = { PRESEASON: "Preseason", REGULAR_SEASON: "Regular Season", PLAYOFFS: "Playoffs" } as const;
 
@@ -29,11 +36,14 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const boundImport = importGameStatsFromCsv.bind(null, game.id, game.seasonId);
   const boundSave = saveGamePlayerStat.bind(null, game.id);
 
+  const arena = gameArenaLabel(game);
+  const cityState = gameCityStateLabel(game);
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`${game.homeAway === "HOME" ? "vs" : "@"} ${game.opponent}`}
-        subtitle={`${GAME_TYPE_LABEL[game.gameType]} · ${format(game.date, "MMMM d, yyyy")}`}
+        title={gameMatchupLabel(game)}
+        subtitle={`${GAME_TYPE_LABEL[game.gameType]} · ${format(game.date, "EEEE, MMMM d, yyyy")}`}
         actions={
           <>
             {game.isCompleted && <Badge tone="accent">Completed</Badge>}
@@ -43,6 +53,41 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
           </>
         }
       />
+
+      <Card>
+        <CardTitle>Schedule</CardTitle>
+        <dl className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <dt className="text-xs text-muted uppercase tracking-wide">Date</dt>
+            <dd className="mt-0.5">{format(game.date, "MMM d, yyyy")}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted uppercase tracking-wide">Home / Away</dt>
+            <dd className="mt-0.5">{gameHomeAwayLabel(game.homeAway)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted uppercase tracking-wide">Game Time</dt>
+            <dd className="mt-0.5">{gameTimeLabel(game)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted uppercase tracking-wide">Rink / Arena</dt>
+            <dd className="mt-0.5">{arena || "—"}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted uppercase tracking-wide">City, State</dt>
+            <dd className="mt-0.5">{cityState || "—"}</dd>
+          </div>
+          {(game.tournamentName || game.specialEvent) && (
+            <div>
+              <dt className="text-xs text-muted uppercase tracking-wide">Event</dt>
+              <dd className="mt-0.5 flex flex-wrap gap-1.5">
+                {game.tournamentName && <Badge tone="neutral">{game.tournamentName}</Badge>}
+                {game.specialEvent && <Badge tone="warning">{game.specialEvent}</Badge>}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </Card>
 
       <Card>
         <CardTitle>Result & Notes</CardTitle>

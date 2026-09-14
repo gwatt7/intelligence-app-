@@ -1,0 +1,33 @@
+{
+  "_comment": "UW-Superior Men's Hockey 2026-27 official schedule, as provided by the coach from https://uwsyellowjackets.com/sports/mens-ice-hockey/schedule/2026-27 (this environment cannot reach that URL directly to fetch it itself). Home/Away is exactly the site's 'vs'/'at' designation; tournament games marked 'Neutral' on the site are homeAway: NEUTRAL. Dates omit a year on the source page — Oct/Nov/Dec entries are 2026, Jan/Feb/Mar entries are 2027, consistent with the WIAC entries which explicitly say 2027. Game times are stored as the literal local time given (e.g. '7:00 PM' -> ...T19:00:00.000Z) rather than a true UTC conversion, matching how this app already treats DateTime fields (its server runs in UTC, so formatting this value directly reproduces the given time on screen without needing timezone-conversion logic anywhere else in the app). Fields left null (mostly city/state for away games, and opponent/arena/time for still-TBA postseason games) were not given on the source page and are NOT guessed.",
+  "games": [
+    { "date": "2026-10-30T19:00:00.000Z", "opponent": "Bethel", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-10-31T19:00:00.000Z", "opponent": "Bethel", "homeAway": "AWAY", "arena": "National Sports Center", "city": "Blaine", "state": "MN", "gameType": "REGULAR_SEASON" },
+    { "date": "2026-11-06T19:00:00.000Z", "opponent": "Saint John's (Minn.)", "homeAway": "AWAY", "arena": "Herb Brooks National Hockey Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-11-07T19:00:00.000Z", "opponent": "St. Scholastica", "homeAway": "AWAY", "arena": "MARS Lakeview Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-11-20T19:00:00.000Z", "opponent": "UW-Eau Claire", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-11-21T19:00:00.000Z", "opponent": "UW-Stevens Point", "homeAway": "AWAY", "arena": "K.B. Willett Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-11-27T19:00:00.000Z", "opponent": "Superior Showdown", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON", "tournamentName": "Superior Showdown", "_homeAwayNote": "Source page gave no vs/at marker for this entry; inferred HOME because it's hosted at UWS's own arena (Siinto S. Wessman Arena, same as every confirmed 'vs' game). Flagged for the coach to correct if wrong." },
+    { "date": "2026-11-28T00:00:00.000Z", "opponent": "Superior Showdown", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON", "tournamentName": "Superior Showdown", "timeTBA": true, "_homeAwayNote": "Same inference as Nov 27 — hosted at UWS's own arena." },
+    { "date": "2026-12-04T19:00:00.000Z", "opponent": "UW-River Falls", "homeAway": "AWAY", "arena": "Hunt Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-12-05T19:00:00.000Z", "opponent": "UW-Stout Polytechnic", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2026-12-11T19:00:00.000Z", "opponent": "Beloit", "homeAway": "AWAY", "arena": "Woodman's Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-02T16:00:00.000Z", "opponent": "Hamline", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-05T19:00:00.000Z", "opponent": "Hamline", "homeAway": "AWAY", "arena": "TRIA Rink", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-08T19:00:00.000Z", "opponent": "Augsburg", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-09T19:00:00.000Z", "opponent": "Augsburg", "homeAway": "AWAY", "arena": "Ed Saugestad Rink", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-15T19:00:00.000Z", "opponent": "UW-Eau Claire", "homeAway": "AWAY", "arena": "Hobbs Ice Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-16T19:00:00.000Z", "opponent": "UW-Eau Claire", "homeAway": "AWAY", "arena": "Hobbs Ice Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-22T19:30:00.000Z", "opponent": "Beloit", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-23T19:00:00.000Z", "opponent": "Beloit", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-29T19:00:00.000Z", "opponent": "UW-Stout Polytechnic", "homeAway": "AWAY", "arena": "Fanetti Community Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-01-30T19:00:00.000Z", "opponent": "UW-Stout Polytechnic", "homeAway": "AWAY", "arena": "Fanetti Community Center", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-02-05T19:00:00.000Z", "opponent": "UW-Stevens Point", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-02-06T19:00:00.000Z", "opponent": "UW-Stevens Point", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-02-12T19:00:00.000Z", "opponent": "UW-River Falls", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON" },
+    { "date": "2027-02-13T19:00:00.000Z", "opponent": "UW-River Falls", "homeAway": "HOME", "arena": "Siinto S. Wessman Arena", "city": null, "state": null, "gameType": "REGULAR_SEASON", "specialEvent": "Senior Day" },
+    { "date": "2027-02-20T00:00:00.000Z", "opponent": "TBA", "homeAway": "NEUTRAL", "arena": null, "city": null, "state": null, "gameType": "PLAYOFFS", "tournamentName": "WIAC First Round", "timeTBA": true },
+    { "date": "2027-02-27T00:00:00.000Z", "opponent": "TBA", "homeAway": "NEUTRAL", "arena": null, "city": null, "state": null, "gameType": "PLAYOFFS", "tournamentName": "WIAC Semifinal", "timeTBA": true },
+    { "date": "2027-03-06T00:00:00.000Z", "opponent": "TBA", "homeAway": "NEUTRAL", "arena": null, "city": null, "state": null, "gameType": "PLAYOFFS", "tournamentName": "WIAC Championship", "timeTBA": true }
+  ]
+}
