@@ -10,7 +10,7 @@ import {
 } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
-import { formatPct, formatChange } from "@/lib/stats";
+import { formatPct, formatChange, getStatValue } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
@@ -18,6 +18,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { TimeFilterSelector } from "@/components/analytics/TimeFilterSelector";
 import { RankingCard } from "@/components/analytics/RankingCard";
 import { cn } from "@/lib/cn";
+import { format } from "date-fns";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -100,6 +101,43 @@ export default async function AnalyticsPage({
               </div>
             );
           })}
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="text-sm font-medium text-muted mb-3">Per-Game Breakdown</h2>
+        <Card padded={false}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs text-muted uppercase tracking-wide text-left">
+                  <th className="p-3 whitespace-nowrap">Date</th>
+                  <th className="p-3 whitespace-nowrap">Game</th>
+                  {TREND_METRICS.map((m) => (
+                    <th key={m.key} className="p-3 text-right whitespace-nowrap">
+                      {m.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[...allEntries].reverse().map((e) => (
+                  <tr key={e.id} className="border-b border-border last:border-b-0">
+                    <td className="p-3 text-muted whitespace-nowrap">{format(e.date, "MMM d, yyyy")}</td>
+                    <td className="p-3 font-medium text-foreground whitespace-nowrap">{e.label}</td>
+                    {TREND_METRICS.map((m) => {
+                      const value = getStatValue(e.stat, m.key);
+                      return (
+                        <td key={m.key} className="p-3 text-right">
+                          {m.isPct ? formatPct(value) : value ?? 0}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       </div>
 
