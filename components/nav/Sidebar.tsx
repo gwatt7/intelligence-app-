@@ -15,7 +15,7 @@ const TABS = [
   { href: "/war-room", label: "War Room", icon: "⚔️" },
 ] as const;
 
-export function Sidebar() {
+export function Sidebar({ buildSha, buildEnv }: { buildSha?: string; buildEnv?: string }) {
   const pathname = usePathname();
 
   return (
@@ -54,6 +54,12 @@ export function Sidebar() {
           );
         })}
       </nav>
+      {buildSha && (
+        <div className="hidden md:block shrink-0 border-t border-border px-3 py-2 text-[10px] text-muted-2">
+          Build {buildSha}
+          {buildEnv ? ` · ${buildEnv}` : ""}
+        </div>
+      )}
     </aside>
   );
 }
