@@ -9,11 +9,13 @@ import { StatusBadge, TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
 import { PerformanceIndexCard } from "@/components/stats/PerformanceIndexCard";
 import { MiniGameProgressionCard } from "@/components/mini-games/MiniGameProgressionCard";
+import { PlayerMiniGameStatForm } from "@/components/forms/PlayerMiniGameStatForm";
 import { TrendChart, type TrendPoint } from "@/components/charts/TrendChart";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoricalSeasonStatsCard } from "@/components/stats/HistoricalSeasonStatsCard";
 import { format } from "date-fns";
+import type { RawStatLine } from "@/lib/stats";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
 
@@ -55,6 +57,15 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
   const miniGameTotals = sumStatLines(miniGameEntries.map((e) => e.stat));
   const miniGameProgression = miniGameStatProgression(miniGameEntries);
   const miniGameWeekly = miniGameWeeklyTrend(miniGameEntries);
+
+  const seasonMiniGames = await prisma.miniGame.findMany({
+    where: { seasonId: player.seasonId },
+    orderBy: { date: "desc" },
+  });
+  const miniGameOptions = seasonMiniGames.map((mg) => ({ id: mg.id, label: format(mg.date, "MMM d, yyyy") }));
+  const statsByMiniGame: Record<string, RawStatLine> = Object.fromEntries(
+    miniGameEntries.map((e) => [e.miniGameId, e.stat])
+  );
 
   return (
     <div className="space-y-6">
@@ -137,15 +148,26 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
           ================================================================= */}
       <div>
         <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Mini Game Stats</h2>
-        {miniGameEntries.length === 0 ? (
+        <div className="space-y-4">
           <Card>
-            <p className="text-sm text-muted">
-              No Mini Games logged for {player.firstName} yet. Mini Game totals, progression, and weekly trend will
-              appear here once stats are entered on the Mini Games tab.
-            </p>
+            <CardTitle>Log / Edit {player.firstName}&apos;s Mini Game Stats</CardTitle>
+            <PlayerMiniGameStatForm
+              playerId={player.id}
+              isGoalie={player.position === "GOALIE"}
+              miniGames={miniGameOptions}
+              statsByMiniGame={statsByMiniGame}
+            />
           </Card>
-        ) : (
-          <div className="space-y-4">
+
+          {miniGameEntries.length === 0 ? (
+            <Card>
+              <p className="text-sm text-muted">
+                No Mini Games logged for {player.firstName} yet. Totals, progression, and weekly trend will appear
+                here once stats are entered above (or from the Mini Games tab).
+              </p>
+            </Card>
+          ) : (
+            <>
             <Card>
               <CardTitle>Mini Game Sample Size</CardTitle>
               <p className="text-3xl font-bold text-foreground">{miniGameEntries.length}</p>
@@ -208,8 +230,9 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                 </table>
               </div>
             </Card>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

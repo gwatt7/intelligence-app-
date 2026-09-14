@@ -17,6 +17,7 @@ const STAT_KEYS = Object.keys(EMPTY_STAT_LINE) as (keyof RawStatLine)[];
 
 export interface MiniGameStatEntry {
   id: string;
+  miniGameId: string;
   playerId: string;
   date: Date;
   label: string;
@@ -34,6 +35,7 @@ export async function getSeasonMiniGameEntriesByPlayer(seasonId: string): Promis
   for (const s of stats) {
     const entry: MiniGameStatEntry = {
       id: s.id,
+      miniGameId: s.miniGameId,
       playerId: s.playerId,
       date: s.miniGame.date,
       label: format(s.miniGame.date, "MMM d, yyyy"),
@@ -51,6 +53,7 @@ export async function getPlayerMiniGameEntries(playerId: string): Promise<MiniGa
   const stats = await prisma.miniGamePlayerStat.findMany({ where: { playerId }, include: { miniGame: true } });
   const entries: MiniGameStatEntry[] = stats.map((s) => ({
     id: s.id,
+    miniGameId: s.miniGameId,
     playerId: s.playerId,
     date: s.miniGame.date,
     label: format(s.miniGame.date, "MMM d, yyyy"),
