@@ -31,18 +31,19 @@ export function Sidebar({
 
   return (
     <aside className="relative sticky top-0 z-30 flex h-screen w-16 md:w-56 shrink-0 flex-col overflow-hidden border-r border-border bg-background">
-      {/* Subtle arena/ice texture low in the sidebar, purely CSS — no stock
-          photography is used anywhere in this project (see PlayerPhoto). */}
+      {/* Arena/stadium-seating photo low in the sidebar — the supplied
+          decorative crop, generic stadium imagery with nothing identifying,
+          faded into the sidebar's dark background. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 opacity-[0.05]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] opacity-30"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(70deg, #f3f3ee 0px, #f3f3ee 1px, transparent 1px, transparent 38px)",
-          maskImage: "linear-gradient(to top, black, transparent)",
-          WebkitMaskImage: "linear-gradient(to top, black, transparent)",
+          maskImage: "linear-gradient(to top, black 40%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to top, black 40%, transparent 100%)",
         }}
-      />
+      >
+        <Image src="/dashboard/sidebar-arena-photo.png" alt="" fill className="object-cover" />
+      </div>
       <div
         aria-hidden
         className="pointer-events-none absolute -left-10 top-1/3 h-40 w-40 rounded-full opacity-[0.10] blur-3xl"
@@ -75,7 +76,7 @@ export function Sidebar({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-accent/15 text-accent-strong ring-1 ring-inset ring-accent/40 shadow-[0_0_16px_rgba(252,211,6,0.15)]"
+                  ? "bg-gradient-to-r from-accent to-accent/50 text-accent-contrast shadow-[0_0_16px_rgba(252,211,6,0.25)]"
                   : "text-muted hover:text-foreground hover:bg-surface-raised"
               )}
             >

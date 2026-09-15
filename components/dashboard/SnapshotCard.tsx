@@ -34,7 +34,7 @@ export function SnapshotCard({
   children: ReactNode;
 }) {
   return (
-    <div className={`${glassPanel} p-4 sm:p-5 min-h-[128px]`}>
+    <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`}>
       {backgroundGlyph && (
         <span
           aria-hidden

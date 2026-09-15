@@ -87,7 +87,7 @@ export default async function DashboardPage() {
     <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
       <div className="space-y-6">
         {/* Game + Mini Game context — Next Game is the visually dominant card */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
           <NextGameCard game={nextGame} now={now} />
           <LastGameCard game={lastGame} result={lastGameResult} />
           <NextMiniGameCard miniGame={nextMiniGame} />
@@ -96,7 +96,7 @@ export default async function DashboardPage() {
         {/* Performance snapshot */}
         <div>
           <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
             <SnapshotCard
               icon="📊"
               label="Team Trend"
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
                 shape, matching the reference. Still the real ranked player
                 and their real photo (or the same blank silhouette used
                 everywhere else when none is set). */}
-            <div className={`${glassPanel} p-4 sm:p-5 min-h-[128px]`}>
+            <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`}>
               {topPerformer && (
                 <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-24">
                   <div className="absolute inset-0 z-10 bg-gradient-to-r from-surface via-surface/70 to-transparent" />

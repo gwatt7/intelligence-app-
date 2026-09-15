@@ -2,12 +2,11 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 
 /**
- * Dashboard-only hero banner. There is no licensed hockey action photo or
- * separate NORTHSTAR graphic asset in this project (see PlayerPhoto.tsx and
- * the project's standing rule against fabricating imagery), so the
- * cinematic look is built entirely from CSS gradients plus one hand-authored
- * SVG hockey-stick-and-puck silhouette instead of a stock photo — same
- * "real assets only" rule already applied to player headshots.
+ * Dashboard-only hero banner. The atmospheric photo (public/dashboard/hero-photo.png)
+ * is a decorative crop supplied by the user — generic hockey-gear imagery,
+ * not depicting any specific identifiable person or trademark, so it's used
+ * directly per their request. All real identity/text content (NORTHSTAR,
+ * team, season) stays as live HTML on top, not baked into the image.
  */
 export function DashboardHero({
   children,
@@ -23,11 +22,20 @@ export function DashboardHero({
       <div className="relative isolate overflow-hidden rounded-2xl border border-border h-[300px] sm:h-[360px] md:h-[420px]">
         {/* Backdrop, back to front */}
         <div aria-hidden className="pointer-events-none absolute inset-0 select-none">
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #0a0a0a 0%, #14120a 60%, #0a0a0a 100%)" }} />
+          <div className="absolute inset-0 bg-background" />
 
-          {/* Diagonal gold light rays, upper right */}
+          <Image
+            src="/dashboard/hero-photo.png"
+            alt=""
+            fill
+            className="object-cover"
+            style={{ objectPosition: "60% 35%" }}
+            priority
+          />
+
+          {/* Diagonal gold light ray accent, matching the reference */}
           <div
-            className="absolute inset-0 opacity-[0.16]"
+            className="absolute inset-0 opacity-[0.12]"
             style={{
               background:
                 "repeating-linear-gradient(115deg, transparent 0px, transparent 60px, rgba(252,211,6,0.5) 61px, transparent 90px)",
@@ -36,44 +44,14 @@ export function DashboardHero({
             }}
           />
 
-          {/* UWS crest watermark, upper right */}
-          <div className="absolute -top-6 right-6 sm:right-10 h-40 w-40 sm:h-52 sm:w-52 opacity-[0.16]">
-            <Image
-              src="/uws-logo.png"
-              alt=""
-              fill
-              className="object-contain"
-              style={{ filter: "drop-shadow(0 0 35px rgba(252,211,6,0.4))" }}
-              priority
-            />
-          </div>
-
-          {/* Hockey-stick-and-puck silhouette, bleeding off the bottom-right */}
-          <svg
-            aria-hidden
-            viewBox="0 0 520 420"
-            className="absolute -right-6 -bottom-10 h-[280px] w-[340px] sm:h-[340px] sm:w-[420px] md:h-[400px] md:w-[480px] opacity-90"
-            style={{ filter: "drop-shadow(0 0 24px rgba(0,0,0,0.6))" }}
-          >
-            <g transform="rotate(-18 260 210)">
-              <rect x="150" y="40" width="26" height="300" rx="10" fill="#0f0f0d" stroke="#fcd306" strokeOpacity="0.35" strokeWidth="2" />
-              <path d="M150 300 L176 300 L230 360 Q236 372 224 376 L150 376 Z" fill="#0f0f0d" stroke="#fcd306" strokeOpacity="0.35" strokeWidth="2" />
-            </g>
-            <circle cx="360" cy="330" r="26" fill="#0f0f0d" stroke="#fcd306" strokeOpacity="0.35" strokeWidth="2" />
-            <g stroke="#fcd306" strokeOpacity="0.25" strokeWidth="3" strokeLinecap="round">
-              <line x1="300" y1="300" x2="340" y2="280" />
-              <line x1="310" y1="330" x2="355" y2="315" />
-            </g>
-          </svg>
-
-          {/* Left-to-right vignette so the title stays legible over the graphic */}
+          {/* Left-to-right vignette so the title stays legible over the photo */}
           <div
             className="absolute inset-0"
-            style={{ background: "linear-gradient(90deg, var(--background) 0%, rgba(10,10,10,0.85) 30%, transparent 65%)" }}
+            style={{ background: "linear-gradient(90deg, var(--background) 0%, rgba(10,10,10,0.9) 34%, rgba(10,10,10,0.35) 60%, transparent 78%)" }}
           />
           <div
             className="absolute inset-x-0 bottom-0 h-16"
-            style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.5))" }}
+            style={{ background: "linear-gradient(to bottom, transparent, rgba(0,0,0,0.55))" }}
           />
         </div>
 
