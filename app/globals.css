@@ -53,6 +53,20 @@
   --negative-glow: rgba(240, 85, 74, 0.35);
   --accent-border: rgba(252, 211, 6, 0.35);
   --accent-glow: rgba(252, 211, 6, 0.3);
+
+  /* Dashboard "Last Game" result accent — deliberately brighter/more
+     saturated than the app-wide --positive/--negative tones above (which
+     stay muted everywhere else, e.g. Games list W/L badges), so a win or
+     loss on this one card reads as an unmistakable, celebratory result at
+     a glance. Used only by LastGameCard. */
+  --result-win: #22ff8c;
+  --result-win-bg: rgba(34, 255, 140, 0.16);
+  --result-win-border: rgba(34, 255, 140, 0.55);
+  --result-win-glow: rgba(34, 255, 140, 0.4);
+  --result-loss: #ff4436;
+  --result-loss-bg: rgba(255, 68, 54, 0.16);
+  --result-loss-border: rgba(255, 68, 54, 0.55);
+  --result-loss-glow: rgba(255, 68, 54, 0.4);
 }
 
 @theme inline {
