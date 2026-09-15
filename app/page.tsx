@@ -7,14 +7,15 @@ import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
 import { formatChange } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Card, CardTitle } from "@/components/ui/Card";
-import { Badge, TrendBadge } from "@/components/ui/Badge";
+import { TrendBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { WeeklyPerformanceSection } from "@/components/dashboard/WeeklyPerformanceSection";
-import { gameMatchupLabel, gameArenaLabel, gameTimeLabel } from "@/lib/game-display";
-import Link from "next/link";
-import { format, differenceInCalendarDays } from "date-fns";
+import { NextGameCard } from "@/components/dashboard/NextGameCard";
+import { LastGameCard } from "@/components/dashboard/LastGameCard";
+import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
+import { SnapshotCard } from "@/components/dashboard/SnapshotCard";
+import { PlayerPhoto } from "@/components/players/PlayerPhoto";
 
 export default async function DashboardPage() {
   const season = await getCurrentSeason();
@@ -69,109 +70,55 @@ export default async function DashboardPage() {
   return (
     <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
       <div className="space-y-6">
-        {/* Game + Mini Game context, compact side-by-side */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Next Game</CardTitle>
-            {nextGame ? (
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground truncate">{gameMatchupLabel(nextGame)}</p>
-                  <p className="text-xs text-muted mt-0.5">
-                    {format(nextGame.date, "EEE, MMM d")} · {gameTimeLabel(nextGame)}
-                  </p>
-                  {gameArenaLabel(nextGame) && (
-                    <p className="text-xs text-muted-2 mt-0.5 truncate">{gameArenaLabel(nextGame)}</p>
-                  )}
-                </div>
-                <div className="text-right shrink-0">
-                  <Badge tone="accent">In {Math.max(differenceInCalendarDays(nextGame.date, now), 0)}d</Badge>
-                  <Link href={`/games/${nextGame.id}`} className="block text-xs text-accent-strong hover:underline mt-1.5">
-                    View →
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted">No upcoming game scheduled.</p>
-            )}
-          </Card>
-
-          <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Last Game</CardTitle>
-            {lastGame ? (
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground truncate">{gameMatchupLabel(lastGame)}</p>
-                  <p className="text-xs text-muted mt-0.5">{format(lastGame.date, "MMM d")}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <p className="font-mono text-lg text-foreground">
-                    {lastGame.ourScore}-{lastGame.opponentScore}
-                  </p>
-                  {lastGameResult && (
-                    <Badge tone={lastGameResult === "W" ? "positive" : lastGameResult === "L" ? "negative" : "neutral"}>
-                      {lastGameResult}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted">No games completed yet.</p>
-            )}
-          </Card>
-
-          <Card className="!p-5">
-            <CardTitle className="!mb-1.5">Next Mini Game</CardTitle>
-            {nextMiniGame ? (
-              <Link href={`/mini-games/${nextMiniGame.id}`} className="text-sm text-foreground hover:text-accent-strong">
-                {format(nextMiniGame.date, "MMM d, yyyy")}
-              </Link>
-            ) : (
-              <p className="text-sm text-muted">None scheduled</p>
-            )}
-          </Card>
+        {/* Game + Mini Game context — Next Game is the visually dominant card */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <NextGameCard game={nextGame} now={now} />
+          <LastGameCard game={lastGame} result={lastGameResult} />
+          <NextMiniGameCard miniGame={nextMiniGame} />
         </div>
 
         {/* Performance snapshot */}
         <div>
           <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <Card className="!p-5">
-              <CardTitle className="!mb-1.5">Team Trend</CardTitle>
+            <SnapshotCard icon="📊" label="Team Trend" tone="accent">
               <TrendBadge value={teamTrend} />
-              <p className="text-xs text-muted mt-1.5">Zone entry/exit, last 5 vs. season</p>
-            </Card>
-            <Card className="!p-5">
-              <CardTitle className="!mb-1.5">Top Performer</CardTitle>
+              <p className="text-xs text-muted mt-2">Zone entry/exit, last 5 vs. season</p>
+            </SnapshotCard>
+
+            <SnapshotCard icon="⭐" label="Top Performer" tone="accent">
               {topPerformer ? (
-                <>
-                  <p className="font-medium text-foreground text-sm">
-                    #{topPerformer.jerseyNumber} {topPerformer.name}
-                  </p>
-                  <p className="text-xs text-muted mt-1">Index {topPerformer.value.toFixed(1)}</p>
-                </>
+                <div className="flex items-center gap-3">
+                  <PlayerPhoto photoUrl={topPerformer.photoUrl} size="sm" variant="boxed" className="!h-12 !w-12 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground text-sm truncate">
+                      #{topPerformer.jerseyNumber} {topPerformer.name}
+                    </p>
+                    <p className="text-xs text-muted mt-0.5">Index {topPerformer.value.toFixed(1)}</p>
+                  </div>
+                </div>
               ) : (
                 <p className="text-sm text-muted">No data yet.</p>
               )}
-            </Card>
-            <Card className="!p-5">
-              <CardTitle className="!mb-1.5">Most Improved</CardTitle>
+            </SnapshotCard>
+
+            <SnapshotCard icon="↑" label="Most Improved" tone="positive">
               {mostImproved ? (
                 <>
-                  <p className="font-medium text-foreground text-sm">
+                  <p className="text-2xl font-bold text-positive">{formatChange(mostImproved.value)}</p>
+                  <p className="text-sm text-foreground mt-1 truncate">
                     #{mostImproved.jerseyNumber} {mostImproved.name}
                   </p>
-                  <p className="text-xs text-positive mt-1">{formatChange(mostImproved.value)}</p>
                 </>
               ) : (
                 <p className="text-sm text-muted">No data yet.</p>
               )}
-            </Card>
-            <Card className="!p-5">
-              <CardTitle className="!mb-1.5">Needs Attention</CardTitle>
+            </SnapshotCard>
+
+            <SnapshotCard icon="◎" label="Needs Attention" tone="negative">
               {needsAttention ? (
                 <>
-                  <p className="font-medium text-foreground text-sm">
+                  <p className="text-sm font-semibold text-foreground truncate">
                     #{needsAttention.jerseyNumber} {needsAttention.name}
                   </p>
                   <p className="text-xs text-muted mt-1">Index {needsAttention.value.toFixed(1)}</p>
@@ -179,7 +126,7 @@ export default async function DashboardPage() {
               ) : (
                 <p className="text-sm text-muted">No data yet.</p>
               )}
-            </Card>
+            </SnapshotCard>
           </div>
         </div>
 
