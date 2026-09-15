@@ -3,7 +3,8 @@ import { format, differenceInCalendarDays } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { gameMatchupLabel, gameArenaLabel, gameCityStateLabel, gameTimeLabel } from "@/lib/game-display";
-import { glassPanel, initials } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 interface GameLite {
   id: string;
@@ -18,7 +19,7 @@ interface GameLite {
   tournamentName: string | null;
 }
 
-/** Dashboard-only "Next Game" hero card — real schedule data in, with the user-supplied hockey-arena photo as a full-card background. The opponent side still uses a text-derived monogram: the only verified real team crest in this project is UWS's own (public/uws-logo.png) — there's no confirmed-authentic opponent trademark file to use, so nothing is guessed. */
+/** Dashboard-only "Next Game" hero card — real schedule data in, with the user-supplied hockey-arena photo as a full-card background. The opponent side shows that team's real logo when one has been supplied (see lib/opponent-logos.ts via OpponentLogo), falling back to a text monogram otherwise — never a guessed or generic logo. */
 export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }) {
   return (
     <div className={`${glassPanel} p-5 sm:p-6 lg:col-span-2 min-h-[250px] flex flex-col`}>
@@ -57,9 +58,7 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
             </span>
 
             <div className="flex flex-col items-center gap-1.5 min-w-0">
-              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0 text-base font-bold text-muted">
-                {initials(game.opponent)}
-              </div>
+              <OpponentLogo opponent={game.opponent} className="h-14 w-14 sm:h-16 sm:w-16" />
               <span className="text-xs font-semibold text-foreground truncate max-w-[7rem] text-center">
                 {game.opponent}
               </span>

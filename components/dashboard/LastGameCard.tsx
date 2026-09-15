@@ -1,7 +1,8 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { gameMatchupLabel } from "@/lib/game-display";
-import { glassPanel, initials } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 interface GameLite {
   opponent: string;
@@ -22,9 +23,9 @@ const RESULT_STYLE = {
 } as const;
 
 /** Dashboard-only "Last Game" card — real result only; never invents a score.
- * The opponent side is a text-derived monogram for now (same pattern as
- * NextGameCard) — real per-opponent logo files are coming in a follow-up
- * and will slot in here without changing this card's structure. */
+ * The opponent side shows that team's real logo when one has been supplied
+ * (see lib/opponent-logos.ts via OpponentLogo), falling back to a text
+ * monogram otherwise. */
 export function LastGameCard({ game, result }: { game: GameLite | null; result: "W" | "L" | "T" | null }) {
   const resultStyle = result === "W" || result === "L" ? RESULT_STYLE[result] : null;
 
@@ -62,9 +63,7 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
       {game ? (
         <div className="mt-3 flex-1 flex flex-col justify-between">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-12 w-12 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0 text-sm font-bold text-muted">
-              {initials(game.opponent)}
-            </div>
+            <OpponentLogo opponent={game.opponent} className="h-12 w-12" />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-foreground truncate">{gameMatchupLabel(game)}</p>
               <p className="text-xs text-muted">{format(game.date, "EEE, MMM d")} · Final</p>

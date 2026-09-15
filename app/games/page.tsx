@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { format } from "date-fns";
 import { gameMatchupLabel, gameArenaLabel, gameCityStateLabel, gameTimeLabel } from "@/lib/game-display";
+import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 const GAME_TYPE_LABEL = { PRESEASON: "Preseason", REGULAR_SEASON: "Regular Season", PLAYOFFS: "Playoffs" } as const;
 const GAME_TYPE_ORDER = ["PRESEASON", "REGULAR_SEASON", "PLAYOFFS"] as const;
@@ -65,7 +66,10 @@ export default async function GamesPage() {
                     <Link key={g.id} href={`/games/${g.id}`}>
                       <Card className="hover:border-accent/50 transition-colors h-full">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium text-foreground">{gameMatchupLabel(g)}</p>
+                          <div className="flex items-center gap-2 min-w-0">
+                            <OpponentLogo opponent={g.opponent} className="h-8 w-8" />
+                            <p className="font-medium text-foreground truncate">{gameMatchupLabel(g)}</p>
+                          </div>
                           {result && (
                             <Badge tone={result === "W" ? "positive" : result === "L" ? "negative" : "neutral"}>
                               {result} {g.ourScore}-{g.opponentScore}
