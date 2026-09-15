@@ -2,6 +2,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { PlayerPhotoUpload } from "@/components/players/PlayerPhotoUpload";
 import { PlayerBioForm, type PlayerBio } from "@/components/players/PlayerBioForm";
+import { lightCardStyle } from "@/components/players/lightCardStyle";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
 
@@ -41,21 +42,7 @@ export function PlayerProfileHero({ player }: { player: HeroPlayer }) {
   };
 
   return (
-    <div
-      className="rounded-xl border border-border bg-surface p-5 sm:p-6"
-      style={{
-        // Local override: every themed utility (bg-surface, text-foreground,
-        // text-muted, border-border, plus Button/Badge/form-field colors)
-        // resolves through these custom properties, so redefining them here
-        // turns this one card light gray without forking any component.
-        ["--surface" as string]: "var(--profile-card-bg)",
-        ["--surface-raised" as string]: "var(--profile-card-raised)",
-        ["--border" as string]: "var(--profile-card-border)",
-        ["--foreground" as string]: "var(--profile-card-fg)",
-        ["--muted" as string]: "var(--profile-card-muted)",
-        ["--muted-2" as string]: "var(--profile-card-muted-2)",
-      }}
-    >
+    <div className="rounded-xl border border-border bg-surface p-5 sm:p-6" style={lightCardStyle}>
       <div className="flex flex-col sm:flex-row gap-5 sm:gap-6">
         <PlayerPhotoUpload playerId={player.id} photoUrl={player.photoUrl} />
 
