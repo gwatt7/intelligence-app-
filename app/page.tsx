@@ -68,6 +68,13 @@ export default async function DashboardPage() {
     })
     .filter((v): v is number => v !== null);
 
+  // Team Trend's card color follows the sign of the same teamTrend value
+  // above — positive (or flat) reads as the team's brand teal, a genuine
+  // decline reads red. Purely a display choice; the number itself is
+  // unchanged.
+  const teamTrendGlow = teamTrend === null ? null : teamTrend < 0 ? "negative" : "teal";
+  const teamTrendColor = teamTrendGlow ? `var(--${teamTrendGlow === "teal" ? "data-teal" : "negative"})` : undefined;
+
   const rankings = await buildRankings(season.id);
   const weeklyRankings = await getCurrentWeekRankings(season.id);
   const topPerformer = rankings.topPerformanceIndex[0];
@@ -100,11 +107,14 @@ export default async function DashboardPage() {
             <SnapshotCard
               icon="📊"
               label="Team Trend"
-              tone="teal"
-              topRight={teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} /> : undefined}
+              tone="accent"
+              glow={teamTrendGlow ?? undefined}
+              topRight={
+                teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
+              }
             >
               {teamTrend !== null ? (
-                <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
+                <p className="text-2xl font-bold" style={{ color: teamTrendColor }}>
                   {formatChange(teamTrend)}
                 </p>
               ) : (
@@ -118,7 +128,10 @@ export default async function DashboardPage() {
                 shape, matching the reference. Still the real ranked player
                 and their real photo (or the same blank silhouette used
                 everywhere else when none is set). */}
-            <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`}>
+            <div
+              className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`}
+              style={{ borderColor: "var(--accent-border)", boxShadow: "0 0 26px -6px var(--accent-glow)" }}
+            >
               {topPerformer && (
                 <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-24">
                   <div className="absolute inset-0 z-10 bg-gradient-to-r from-surface via-surface/70 to-transparent" />
@@ -131,7 +144,7 @@ export default async function DashboardPage() {
                 </div>
               )}
               <div className="relative flex items-center gap-2 mb-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-[color:var(--data-teal-bg)] text-[color:var(--data-teal)]">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-accent/15 text-accent-strong">
                   👥
                 </span>
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted-2 truncate">Top Performer</p>
@@ -147,10 +160,12 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            <SnapshotCard icon="⭐" label="Most Improved" tone="positive" backgroundGlyph="↑" glyphTone="positive">
+            <SnapshotCard icon="⭐" label="Most Improved" tone="accent" glow="teal" trendArrow>
               {mostImproved ? (
                 <>
-                  <p className="text-2xl font-bold text-positive">{formatChange(mostImproved.value)}</p>
+                  <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
+                    {formatChange(mostImproved.value)}
+                  </p>
                   <p className="text-sm text-foreground mt-1 truncate">
                     #{mostImproved.jerseyNumber} {mostImproved.name}
                   </p>

@@ -41,11 +41,18 @@
   --profile-card-muted-2: #78786e;
 
   /* Dashboard "Performance Snapshot" data accent — a secondary teal used
-     only for Team Trend / Top Performer, alongside the existing
-     positive/negative tones (Most Improved / Needs Attention keep using
-     the universal green/red). Dashboard-only, see SnapshotCard. */
+     for Team Trend / Most Improved, alongside the existing gold/negative
+     tones. Dashboard-only, see SnapshotCard. The *-border/-glow pairs are
+     for the cards' dynamic colored border + ambient glow (positive/negative
+     for Team Trend, gold for Top Performer). */
   --data-teal: #2dd4bf;
   --data-teal-bg: rgba(45, 212, 191, 0.12);
+  --data-teal-border: rgba(45, 212, 191, 0.4);
+  --data-teal-glow: rgba(45, 212, 191, 0.35);
+  --negative-border: rgba(240, 85, 74, 0.4);
+  --negative-glow: rgba(240, 85, 74, 0.35);
+  --accent-border: rgba(252, 211, 6, 0.35);
+  --accent-glow: rgba(252, 211, 6, 0.3);
 }
 
 @theme inline {

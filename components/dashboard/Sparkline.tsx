@@ -2,8 +2,19 @@
  * draws is a real value passed in by the caller (see app/page.tsx, derived
  * from the same per-game team stat entries the rest of the app uses) —
  * this never invents data, and renders nothing when there are fewer than
- * two real points to connect. */
-export function Sparkline({ points, width = 64, height = 28 }: { points: number[]; width?: number; height?: number }) {
+ * two real points to connect. `color` follows the card's positive/negative
+ * styling (teal vs. red) — it's a display color, not a data value. */
+export function Sparkline({
+  points,
+  width = 64,
+  height = 28,
+  color = "var(--data-teal)",
+}: {
+  points: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) {
   if (points.length < 2) return null;
 
   const min = Math.min(...points);
@@ -22,8 +33,8 @@ export function Sparkline({ points, width = 64, height = 28 }: { points: number[
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible" aria-hidden>
-      <path d={path} fill="none" stroke="var(--data-teal)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lastX} cy={lastY} r="2.25" fill="var(--data-teal)" />
+      <path d={path} fill="none" stroke={color} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lastX} cy={lastY} r="2.25" fill={color} />
     </svg>
   );
 }
