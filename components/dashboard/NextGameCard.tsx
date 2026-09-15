@@ -18,7 +18,7 @@ interface GameLite {
   tournamentName: string | null;
 }
 
-/** Dashboard-only "Next Game" hero card — real schedule data in, styled per the reference design, including the supplied ice/puck decorative photo. The opponent side still uses a text-derived monogram: the only verified real team crest in this project is UWS's own (public/uws-logo.png) — there's no confirmed-authentic opponent trademark file to use, so nothing is guessed. */
+/** Dashboard-only "Next Game" hero card — real schedule data in, with the user-supplied hockey-arena photo as a full-card background. The opponent side still uses a text-derived monogram: the only verified real team crest in this project is UWS's own (public/uws-logo.png) — there's no confirmed-authentic opponent trademark file to use, so nothing is guessed. */
 export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }) {
   return (
     <div className={`${glassPanel} p-5 sm:p-6 lg:col-span-2 min-h-[250px] flex flex-col`}>
@@ -27,18 +27,18 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
         className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
         style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
       />
-      {/* Ice/puck photo, right side — same decorative crop used in the
-          reference, faded into the card via a gradient mask so it reads as
-          atmosphere behind the real matchup content rather than a hard-edged image. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-1/2 opacity-40"
-        style={{
-          maskImage: "linear-gradient(to left, black 40%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to left, black 40%, transparent 100%)",
-        }}
-      >
-        <Image src="/dashboard/next-game-photo.png" alt="" fill className="object-cover" />
+      {/* Full-card hockey-arena photo background (user-supplied), with a
+          left-to-right dark gradient so the real matchup content stays
+          readable while the image remains the dominant visual. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Image src="/dashboard/games-card-bg.png" alt="" fill className="object-cover" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 45%, rgba(10,10,10,0.22) 75%, rgba(10,10,10,0.1) 100%)",
+          }}
+        />
       </div>
       <p className="relative text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">Next Game</p>
 
