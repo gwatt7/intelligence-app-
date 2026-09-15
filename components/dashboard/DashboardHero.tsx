@@ -20,7 +20,20 @@ export function DashboardHero({
   seasonName: string;
 }) {
   return (
-    <div className="space-y-6">
+    // Bleeds out to the edges of <main>'s own padding (mx-4/6, my-6 in
+    // app/layout.tsx) and re-applies the same padding inside, so the
+    // arena background fills the whole main content area edge-to-edge
+    // without shifting any of the existing content. This wrapper only
+    // exists inside the Dashboard page — the sidebar (a separate <aside>
+    // in the layout) and every other page are untouched.
+    <div className="relative -mx-4 sm:-mx-6 -my-6 px-4 sm:px-6 py-6 space-y-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/dashboard/dashboard-bg-arena.jpg)", backgroundAttachment: "fixed" }}
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-background/55" />
+
       <div>
         <h1 className="sr-only">NORTHSTAR Dashboard</h1>
         <p
