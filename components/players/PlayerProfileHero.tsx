@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { PlayerPhotoUpload } from "@/components/players/PlayerPhotoUpload";
@@ -15,6 +16,7 @@ interface HeroPlayer {
   shoots: "LEFT" | "RIGHT" | null;
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
   photoUrl: string | null;
+  heroImageUrl: string | null;
   hometown: string | null;
   height: string | null;
   weight: number | null;
@@ -42,8 +44,29 @@ export function PlayerProfileHero({ player }: { player: HeroPlayer }) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5 sm:p-6" style={lightCardStyle}>
-      <div className="flex flex-col sm:flex-row gap-5 sm:gap-6">
+    <div
+      className={`relative overflow-hidden rounded-xl border border-border bg-surface p-5 sm:p-6 ${
+        player.heroImageUrl ? "min-h-[260px] sm:min-h-[280px]" : ""
+      }`}
+      style={lightCardStyle}
+    >
+      {player.heroImageUrl && (
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <Image src={player.heroImageUrl} alt="" fill className="object-cover" style={{ objectPosition: "70% 30%" }} />
+          {/* Light-toned scrim, matching this card's own light palette, so
+              the name/badges/buttons on the left stay readable while the
+              photo remains clearly visible on the right. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(90deg, var(--profile-card-bg) 0%, rgba(233,233,228,0.92) 30%, rgba(233,233,228,0.55) 55%, rgba(233,233,228,0.15) 80%)",
+            }}
+          />
+        </div>
+      )}
+
+      <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-6">
         <PlayerPhotoUpload playerId={player.id} photoUrl={player.photoUrl} />
 
         <div className="flex-1 min-w-0">

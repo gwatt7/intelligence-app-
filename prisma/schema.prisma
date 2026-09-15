@@ -85,6 +85,13 @@ model Player {
   weight    Int? // lbs
   classYear String? // free text, e.g. "Freshman" or "2027"
 
+  // Optional full-bleed action photo shown behind the light-gray Player
+  // Profile hero card (see PlayerProfileHero) — same data: URI storage
+  // approach as photoUrl, for the same reason. Blank for every player
+  // until a coach sets one; the hero card renders exactly as before when
+  // this is null.
+  heroImageUrl String?
+
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 

@@ -5,14 +5,15 @@
   "scripts": {
     "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "prisma migrate deploy && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && next build",
+    "build": "prisma migrate deploy && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "import:uws-2025-2026": "tsx scripts/import-historical-season.ts",
     "create:2026-2027": "tsx scripts/create-2026-2027-season.ts",
     "archive:weekly-rankings": "tsx scripts/archive-weekly-rankings.ts",
     "cleanup:scheduled-games": "tsx scripts/cleanup-scheduled-games.ts",
-    "import:2026-2027-schedule": "tsx scripts/import-2026-2027-schedule.ts"
+    "import:2026-2027-schedule": "tsx scripts/import-2026-2027-schedule.ts",
+    "set:player-hero-images": "tsx scripts/set-player-hero-images.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
