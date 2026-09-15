@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import Image from "next/image";
 import { updatePlayerPhoto } from "@/lib/actions/players";
 import { Button } from "@/components/ui/Button";
+import { PlayerPhoto } from "@/components/players/PlayerPhoto";
 
 /** Resizes/compresses an image client-side before it's ever sent to the server — keeps the stored data: URI small (typically well under 200KB) regardless of the original file size. */
 function resizeImageFile(file: File, maxDim = 480, quality = 0.85): Promise<string> {
@@ -37,14 +37,6 @@ function resizeImageFile(file: File, maxDim = 480, quality = 0.85): Promise<stri
     };
     reader.readAsDataURL(file);
   });
-}
-
-function PersonSilhouette() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="h-16 w-16 text-muted-2" aria-hidden>
-      <path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.2c-3.3 0-9.8 1.6-9.8 4.9v2.7h19.6v-2.7c0-3.3-6.5-4.9-9.8-4.9z" />
-    </svg>
-  );
 }
 
 export function PlayerPhotoUpload({ playerId, photoUrl }: { playerId: string; photoUrl: string | null }) {
@@ -99,20 +91,7 @@ export function PlayerPhotoUpload({ playerId, photoUrl }: { playerId: string; ph
 
   return (
     <div className="flex flex-col items-center gap-2 shrink-0">
-      <div className="relative h-36 w-36 sm:h-44 sm:w-44 rounded-xl border border-border bg-surface-raised overflow-hidden flex items-center justify-center">
-        {/* Real UWS logo watermark behind the headshot — never a fabricated or stock image. */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.14] pointer-events-none">
-          <Image src="/uws-logo.png" alt="" width={110} height={110} className="object-contain" />
-        </div>
-        {displayed ? (
-          // eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote/local asset
-          <img src={displayed} alt="" className="relative h-full w-full object-cover" />
-        ) : (
-          <div className="relative">
-            <PersonSilhouette />
-          </div>
-        )}
-      </div>
+      <PlayerPhoto photoUrl={displayed} size="lg" variant="flat" />
 
       <input ref={inputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
