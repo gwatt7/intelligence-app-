@@ -4,7 +4,7 @@ import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
 import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
-import { formatChange } from "@/lib/stats";
+import { formatChange, zoneEntryPct, zoneExitPct } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TrendBadge } from "@/components/ui/Badge";
@@ -15,6 +15,8 @@ import { NextGameCard } from "@/components/dashboard/NextGameCard";
 import { LastGameCard } from "@/components/dashboard/LastGameCard";
 import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
 import { SnapshotCard } from "@/components/dashboard/SnapshotCard";
+import { Sparkline } from "@/components/dashboard/Sparkline";
+import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
 import { PlayerPhoto } from "@/components/players/PlayerPhoto";
 
 export default async function DashboardPage() {
@@ -52,6 +54,20 @@ export default async function DashboardPage() {
   const teamTrend =
     entryTrend !== null && exitTrend !== null ? (entryTrend + exitTrend) / 2 : entryTrend ?? exitTrend;
 
+  // Real per-game series (zone entry/exit % averaged per game) for the Team
+  // Trend sparkline — the same last-5-games window as teamTrend above, just
+  // plotted point-by-point instead of collapsed to one delta.
+  const teamTrendSeries = last5
+    .map((e) => {
+      const entryPct = zoneEntryPct(e.stat);
+      const exitPct = zoneExitPct(e.stat);
+      if (entryPct === null && exitPct === null) return null;
+      if (entryPct === null) return exitPct;
+      if (exitPct === null) return entryPct;
+      return (entryPct + exitPct) / 2;
+    })
+    .filter((v): v is number => v !== null);
+
   const rankings = await buildRankings(season.id);
   const weeklyRankings = await getCurrentWeekRankings(season.id);
   const topPerformer = rankings.topPerformanceIndex[0];
@@ -81,28 +97,57 @@ export default async function DashboardPage() {
         <div>
           <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <SnapshotCard icon="📊" label="Team Trend" tone="accent">
-              <TrendBadge value={teamTrend} />
+            <SnapshotCard
+              icon="📊"
+              label="Team Trend"
+              tone="teal"
+              topRight={teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} /> : undefined}
+            >
+              {teamTrend !== null ? (
+                <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
+                  {formatChange(teamTrend)}
+                </p>
+              ) : (
+                <TrendBadge value={teamTrend} />
+              )}
               <p className="text-xs text-muted mt-2">Zone entry/exit, last 5 vs. season</p>
             </SnapshotCard>
 
-            <SnapshotCard icon="⭐" label="Top Performer" tone="accent">
+            {/* Top Performer — its own bespoke layout (photo bleeding to the
+                card edge) rather than the shared icon+value SnapshotCard
+                shape, matching the reference. Still the real ranked player
+                and their real photo (or the same blank silhouette used
+                everywhere else when none is set). */}
+            <div className={`${glassPanel} p-4 sm:p-5 min-h-[128px]`}>
+              {topPerformer && (
+                <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-24">
+                  <div className="absolute inset-0 z-10 bg-gradient-to-r from-surface via-surface/70 to-transparent" />
+                  <PlayerPhoto
+                    photoUrl={topPerformer.photoUrl}
+                    size="md"
+                    variant="boxed"
+                    className="!h-full !w-full !rounded-none"
+                  />
+                </div>
+              )}
+              <div className="relative flex items-center gap-2 mb-3">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-[color:var(--data-teal-bg)] text-[color:var(--data-teal)]">
+                  👥
+                </span>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-2 truncate">Top Performer</p>
+              </div>
               {topPerformer ? (
-                <div className="flex items-center gap-3">
-                  <PlayerPhoto photoUrl={topPerformer.photoUrl} size="sm" variant="boxed" className="!h-12 !w-12 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-foreground text-sm truncate">
-                      #{topPerformer.jerseyNumber} {topPerformer.name}
-                    </p>
-                    <p className="text-xs text-muted mt-0.5">Index {topPerformer.value.toFixed(1)}</p>
-                  </div>
+                <div className="relative pr-14 sm:pr-16">
+                  <p className="text-2xl font-bold text-foreground">#{topPerformer.jerseyNumber}</p>
+                  <p className="text-sm text-foreground truncate">{topPerformer.name}</p>
+                  <p className="text-xs text-muted mt-0.5">Index {topPerformer.value.toFixed(1)}</p>
                 </div>
               ) : (
-                <p className="text-sm text-muted">No data yet.</p>
+                <p className="relative text-sm text-muted">No data yet.</p>
               )}
-            </SnapshotCard>
+            </div>
 
-            <SnapshotCard icon="↑" label="Most Improved" tone="positive">
+            <SnapshotCard icon="⭐" label="Most Improved" tone="positive" backgroundGlyph="↑" glyphTone="positive">
               {mostImproved ? (
                 <>
                   <p className="text-2xl font-bold text-positive">{formatChange(mostImproved.value)}</p>
@@ -115,7 +160,7 @@ export default async function DashboardPage() {
               )}
             </SnapshotCard>
 
-            <SnapshotCard icon="◎" label="Needs Attention" tone="negative">
+            <SnapshotCard icon="🎯" label="Needs Attention" tone="negative" backgroundGlyph="↓" glyphTone="negative">
               {needsAttention ? (
                 <>
                   <p className="text-sm font-semibold text-foreground truncate">

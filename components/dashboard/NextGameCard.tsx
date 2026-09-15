@@ -21,16 +21,22 @@ interface GameLite {
 /** Dashboard-only "Next Game" hero card — real schedule data in, styled per the premium reference design. No opponent logos are fabricated: the opponent side uses a text-derived monogram since only the real UWS crest asset exists in this project. */
 export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }) {
   return (
-    <div className={`${glassPanel} p-5 sm:p-6 lg:col-span-2`}>
+    <div className={`${glassPanel} p-5 sm:p-6 lg:col-span-2 min-h-[210px] flex flex-col`}>
       <div
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
         style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.06]"
+      >
+        <div className="h-32 w-32 rounded-full border-4 border-accent" />
+      </div>
       <p className="relative text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">Next Game</p>
 
       {game ? (
-        <div className="relative mt-3">
+        <div className="relative mt-3 flex-1 flex flex-col justify-between">
           <div className="flex items-center justify-center gap-4 sm:gap-6">
             <div className="flex flex-col items-center gap-1.5 min-w-0">
               <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0">
@@ -55,7 +61,8 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
 
           <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm text-foreground font-medium">
+              <p className="text-sm text-foreground font-medium flex items-center gap-1.5">
+                <span aria-hidden>📅</span>
                 {format(game.date, "EEE, MMM d")} · {gameTimeLabel(game)}
               </p>
               {gameArenaLabel(game) && <p className="text-xs text-muted mt-0.5 truncate">{gameArenaLabel(game)}</p>}

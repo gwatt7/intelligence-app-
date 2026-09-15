@@ -14,7 +14,7 @@ interface GameLite {
 /** Dashboard-only "Last Game" card — real result only; never invents a score. */
 export function LastGameCard({ game, result }: { game: GameLite | null; result: "W" | "L" | "T" | null }) {
   return (
-    <div className={`${glassPanel} p-5`}>
+    <div className={`${glassPanel} p-5 min-h-[210px] flex flex-col`}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-2">Last Game</p>
         {result && (

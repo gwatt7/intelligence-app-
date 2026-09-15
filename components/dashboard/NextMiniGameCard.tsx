@@ -10,23 +10,21 @@ interface MiniGameLite {
 /** Dashboard-only "Next Mini Game" card — reads the same Mini Game schedule data as the Mini Games tab; shows the existing empty state when none is scheduled. */
 export function NextMiniGameCard({ miniGame }: { miniGame: MiniGameLite | null }) {
   return (
-    <div className={`${glassPanel} p-5 flex flex-col`}>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-2">Next Mini Game</p>
-        <span className="text-lg shrink-0" aria-hidden>
-          🎮
-        </span>
-      </div>
+    <div className={`${glassPanel} p-5 flex flex-col min-h-[210px]`}>
+      <span aria-hidden className="pointer-events-none absolute -right-3 -bottom-3 text-8xl opacity-[0.07] select-none">
+        🎮
+      </span>
+      <p className="relative text-xs font-semibold uppercase tracking-[0.2em] text-muted-2">Next Mini Game</p>
 
       {miniGame ? (
         <Link
           href={`/mini-games/${miniGame.id}`}
-          className="mt-3 text-sm font-semibold text-foreground hover:text-accent-strong transition-colors"
+          className="relative mt-3 text-sm font-semibold text-foreground hover:text-accent-strong transition-colors"
         >
           {format(miniGame.date, "MMM d, yyyy")}
         </Link>
       ) : (
-        <p className="mt-3 text-sm text-muted">None scheduled</p>
+        <p className="relative mt-3 text-sm text-muted">None scheduled</p>
       )}
     </div>
   );

@@ -86,8 +86,11 @@ export function Sidebar({
         })}
       </nav>
 
-      {/* Bottom-left brand block — same UWS logo as the top, real team/season data */}
-      {(teamName || seasonName) && (
+      {/* Bottom-left brand block — same UWS logo as the top. "UWS Yellow
+          Jackets" is fixed brand copy (same treatment as the "NORTHSTAR"
+          wordmark above, not pulled from an editable field); the season
+          line is real data from the existing season state, per team. */}
+      {seasonName && (
         <div className="relative shrink-0 border-t border-border px-3 md:px-4 py-3 flex items-center md:items-start gap-2.5">
           <Image
             src="/uws-logo.png"
@@ -97,8 +100,10 @@ export function Sidebar({
             className="h-7 w-7 shrink-0 rounded-sm opacity-90"
           />
           <div className="hidden md:block min-w-0">
-            {teamName && <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground truncate">{teamName}</p>}
-            {seasonName && <p className="text-[11px] text-muted-2 truncate">{seasonName}</p>}
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-foreground truncate" title={teamName ?? undefined}>
+              UWS Yellow Jackets
+            </p>
+            <p className="text-[11px] text-muted-2 truncate">{seasonName}</p>
           </div>
         </div>
       )}

@@ -39,6 +39,13 @@
   --profile-card-fg: #16160f;
   --profile-card-muted: #58584f;
   --profile-card-muted-2: #78786e;
+
+  /* Dashboard "Performance Snapshot" data accent — a secondary teal used
+     only for Team Trend / Top Performer, alongside the existing
+     positive/negative tones (Most Improved / Needs Attention keep using
+     the universal green/red). Dashboard-only, see SnapshotCard. */
+  --data-teal: #2dd4bf;
+  --data-teal-bg: rgba(45, 212, 191, 0.12);
 }
 
 @theme inline {

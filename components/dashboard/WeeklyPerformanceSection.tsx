@@ -22,9 +22,21 @@ export function WeeklyPerformanceSection({
         className="pointer-events-none absolute -left-16 -bottom-20 h-64 w-64 rounded-full opacity-[0.12] blur-3xl"
         style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
       />
+      <svg
+        aria-hidden
+        viewBox="0 0 200 160"
+        className="pointer-events-none absolute -right-6 -bottom-8 h-32 w-40 sm:h-40 sm:w-48 opacity-[0.06]"
+      >
+        <g transform="rotate(-14 100 80)">
+          <rect x="60" y="10" width="12" height="120" rx="5" fill="#f3f3ee" />
+          <path d="M60 120 L72 120 L100 150 Q103 156 96 158 L60 158 Z" fill="#f3f3ee" />
+        </g>
+        <circle cx="145" cy="130" r="12" fill="#f3f3ee" />
+      </svg>
       <div className="relative flex items-start justify-between gap-3 mb-4 flex-wrap">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong flex items-center gap-1.5">
+            <span aria-hidden>📅</span>
             {result ? `Week ${result.weekNumber} — Current` : "This Week's Performers"}
           </p>
           <p className="text-xs text-muted-2 mt-1">
@@ -38,7 +50,8 @@ export function WeeklyPerformanceSection({
 
       <div className="relative">
         {!hasRankings ? (
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted flex items-center gap-1.5">
+            <span aria-hidden>📅</span>
             {result && result.insufficientData.length > 0
               ? `Not enough data yet this week — ${result.insufficientData.length} player(s) below the ${result.minEntriesRequired}-entry minimum.`
               : "No official game stats logged yet this week."}
