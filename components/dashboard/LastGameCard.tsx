@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { gameMatchupLabel } from "@/lib/game-display";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, initials } from "@/components/dashboard/dashboardCardStyles";
 
 interface GameLite {
   opponent: string;
@@ -21,7 +21,10 @@ const RESULT_STYLE = {
   L: { border: "var(--result-loss-border)", glow: "var(--result-loss-glow)", bg: "var(--result-loss-bg)", color: "var(--result-loss)" },
 } as const;
 
-/** Dashboard-only "Last Game" card — real result only; never invents a score. */
+/** Dashboard-only "Last Game" card — real result only; never invents a score.
+ * The opponent side is a text-derived monogram for now (same pattern as
+ * NextGameCard) — real per-opponent logo files are coming in a follow-up
+ * and will slot in here without changing this card's structure. */
 export function LastGameCard({ game, result }: { game: GameLite | null; result: "W" | "L" | "T" | null }) {
   const resultStyle = result === "W" || result === "L" ? RESULT_STYLE[result] : null;
 
@@ -33,7 +36,10 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
           ? {
               borderColor: resultStyle.border,
               boxShadow: `0 0 30px -6px ${resultStyle.glow}`,
-              backgroundImage: `linear-gradient(180deg, ${resultStyle.bg}, transparent 60%)`,
+              // Solid surface base UNDER the result tint — never just the
+              // tint on its own, so the card stays fully opaque regardless
+              // of what's behind it on the page.
+              backgroundImage: `linear-gradient(180deg, ${resultStyle.bg}, transparent 60%), linear-gradient(180deg, var(--surface-raised), var(--surface))`,
             }
           : undefined
       }
@@ -54,10 +60,19 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
       </div>
 
       {game ? (
-        <div className="mt-3">
-          <p className="text-sm font-semibold text-foreground truncate">{gameMatchupLabel(game)}</p>
+        <div className="mt-3 flex-1 flex flex-col justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-12 w-12 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0 text-sm font-bold text-muted">
+              {initials(game.opponent)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground truncate">{gameMatchupLabel(game)}</p>
+              <p className="text-xs text-muted">{format(game.date, "EEE, MMM d")} · Final</p>
+            </div>
+          </div>
+
           <p
-            className="mt-2 text-3xl font-bold font-mono"
+            className="mt-3 text-3xl font-bold font-mono"
             style={resultStyle ? { color: resultStyle.color, textShadow: `0 0 18px ${resultStyle.glow}` } : { color: "var(--foreground)" }}
           >
             {game.ourScore}
@@ -66,7 +81,6 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
             </span>
             {game.opponentScore}
           </p>
-          <p className="text-xs text-muted mt-1">{format(game.date, "EEE, MMM d")} · Final</p>
         </div>
       ) : (
         <p className="mt-3 text-sm text-muted">No games completed yet.</p>
