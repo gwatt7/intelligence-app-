@@ -21,6 +21,13 @@ export const playerSchema = z.object({
   status: z.enum(["ACTIVE", "INJURED", "UNAVAILABLE"]).default("ACTIVE"),
 });
 
+export const playerBioSchema = z.object({
+  hometown: z.string().trim().max(100, "Keep it under 100 characters").optional(),
+  height: z.string().trim().max(20, "Keep it under 20 characters").optional(),
+  weight: z.coerce.number().int().min(0, "Must be zero or greater").max(400, "That doesn't look right").optional(),
+  classYear: z.string().trim().max(30, "Keep it under 30 characters").optional(),
+});
+
 const nonNegativeInt = z.coerce.number().int().min(0, "Must be zero or greater");
 
 export const statLineSchema = z
@@ -115,6 +122,7 @@ export const afterActionSchema = z.object({
 });
 
 export type PlayerInput = z.infer<typeof playerSchema>;
+export type PlayerBioInput = z.infer<typeof playerBioSchema>;
 export type StatLineInput = z.infer<typeof statLineSchema>;
 export type MiniGameInput = z.infer<typeof miniGameSchema>;
 export type GameInput = z.infer<typeof gameSchema>;

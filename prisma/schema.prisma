@@ -75,6 +75,16 @@ model Player {
   shoots       Shoots? // nullable: unknown for historically-imported rosters where the source data doesn't record it
   status       PlayerStatus @default(ACTIVE)
 
+  // Profile presentation — all optional, blank until a coach fills them in.
+  // photoUrl holds the uploaded headshot as a data: URI (resized/compressed
+  // client-side before upload), not a file path — this app has no external
+  // object storage configured, and storing it directly avoids adding one.
+  photoUrl  String?
+  hometown  String?
+  height    String? // free text, e.g. 6'1" — avoids unit-conversion complexity
+  weight    Int? // lbs
+  classYear String? // free text, e.g. "Freshman" or "2027"
+
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 

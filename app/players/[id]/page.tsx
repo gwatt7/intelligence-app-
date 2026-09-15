@@ -4,20 +4,17 @@ import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
 import { sumStatLines, zoneEntryPct, zoneExitPct, points } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { StatusBadge, TrendBadge } from "@/components/ui/Badge";
+import { TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
 import { PerformanceIndexCard } from "@/components/stats/PerformanceIndexCard";
 import { MiniGameProgressionCard } from "@/components/mini-games/MiniGameProgressionCard";
 import { PlayerMiniGameStatForm } from "@/components/forms/PlayerMiniGameStatForm";
+import { PlayerProfileHero } from "@/components/players/PlayerProfileHero";
 import { TrendChart, type TrendPoint } from "@/components/charts/TrendChart";
 import { Card, CardTitle } from "@/components/ui/Card";
-import { ButtonLink } from "@/components/ui/Button";
 import { HistoricalSeasonStatsCard } from "@/components/stats/HistoricalSeasonStatsCard";
 import { format } from "date-fns";
 import type { RawStatLine } from "@/lib/stats";
-
-const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
 
 const MINI_GAME_OFFENSE_ITEMS = [
   { key: "goals", label: "Goals" },
@@ -69,16 +66,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`${player.firstName} ${player.lastName}`}
-        subtitle={`#${player.jerseyNumber} · ${POSITION_LABEL[player.position]}${player.shoots ? ` · Shoots ${player.shoots === "LEFT" ? "Left" : "Right"}` : ""}`}
-        actions={
-          <>
-            <StatusBadge status={player.status} />
-            <ButtonLink href="/team" variant="ghost">Edit in Roster</ButtonLink>
-          </>
-        }
-      />
+      <PlayerProfileHero player={player} />
 
       {seasonStat && (
         <HistoricalSeasonStatsCard
