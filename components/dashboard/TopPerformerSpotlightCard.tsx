@@ -44,7 +44,13 @@ export function TopPerformerSpotlightCard({
       )}
 
       <div className="relative flex items-start gap-2 mb-3 pr-24 sm:pr-28">
-        <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-accent/15 text-accent-strong">
+        <span
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-accent/15 text-accent-strong border"
+          style={{
+            borderColor: "var(--accent-border)",
+            boxShadow: "0 0 10px -1px var(--accent-glow), inset 0 0 6px -1px var(--accent-glow)",
+          }}
+        >
           🏆
         </span>
         <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-2 leading-tight">{label}</p>

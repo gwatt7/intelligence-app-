@@ -10,11 +10,6 @@ const ICON_TONES = {
   neutral: "bg-surface-raised text-muted",
 } as const;
 
-const GLYPH_TONES = {
-  positive: "text-positive",
-  negative: "text-negative",
-} as const;
-
 /** Dynamic card border + inward edge-fade — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). */
 const GLOW_STYLE = {
   teal: accentSurface("var(--data-teal-border)", "var(--data-teal-glow)", "var(--data-teal-fade)"),
@@ -26,8 +21,10 @@ const ARROW_COLOR = {
   negative: "var(--negative)",
 } as const;
 
-/** Solid glowing up-trend arrow (Most Improved) — decorative only, no data of its own. */
-function TrendUpArrow({ color }: { color: string }) {
+/** Solid glowing trend arrow (Most Improved = up, Needs Attention = down) — decorative only, no data of its own. */
+function TrendArrowGlow({ color, direction }: { color: string; direction: "up" | "down" }) {
+  const d = direction === "up" ? "M8 40 L40 8" : "M8 8 L40 40";
+  const head = direction === "up" ? "M22 8 H40 V26" : "M22 40 H40 V22";
   return (
     <svg
       aria-hidden
@@ -35,19 +32,17 @@ function TrendUpArrow({ color }: { color: string }) {
       className="pointer-events-none absolute right-3 bottom-3 h-10 w-10 sm:h-12 sm:w-12"
       style={{ filter: `drop-shadow(0 0 10px ${color})`, opacity: 0.85 }}
     >
-      <path d="M8 40 L40 8" stroke={color} strokeWidth="6" strokeLinecap="round" fill="none" />
-      <path d="M22 8 H40 V26" stroke={color} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d={d} stroke={color} strokeWidth="6" strokeLinecap="round" fill="none" />
+      <path d={head} stroke={color} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
 
-/** Dashboard-only premium tile used for the four Performance Snapshot cards. Purely presentational — every value it renders is passed in as children by the caller from the existing ranking/analytics data. `backgroundGlyph` is a large, low-opacity decorative character (e.g. an arrow) in the bottom-right corner; it carries no data of its own. `glow`/`trendArrow` add the colored border+glow and the solid up-arrow shown in the reference design. */
+/** Dashboard-only premium tile used for the four Performance Snapshot cards. Purely presentational — every value it renders is passed in as children by the caller from the existing ranking/analytics data. `glow` adds the bold colored border + inward edge-fade; `trendArrow` adds the matching glowing up/down arrow shown in the reference design (color follows `glow`). */
 export function SnapshotCard({
   icon,
   label,
   tone = "neutral",
-  backgroundGlyph,
-  glyphTone,
   topRight,
   glow,
   trendArrow,
@@ -56,27 +51,14 @@ export function SnapshotCard({
   icon: ReactNode;
   label: string;
   tone?: keyof typeof ICON_TONES;
-  backgroundGlyph?: string;
-  glyphTone?: keyof typeof GLYPH_TONES;
   topRight?: ReactNode;
   glow?: keyof typeof GLOW_STYLE;
-  trendArrow?: boolean;
+  trendArrow?: "up" | "down";
   children: ReactNode;
 }) {
   return (
     <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`} style={glow ? GLOW_STYLE[glow] : undefined}>
-      {backgroundGlyph && (
-        <span
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -right-2 -bottom-4 text-7xl font-black opacity-[0.10] select-none",
-            glyphTone && GLYPH_TONES[glyphTone]
-          )}
-        >
-          {backgroundGlyph}
-        </span>
-      )}
-      {trendArrow && <TrendUpArrow color={ARROW_COLOR[glow ?? "teal"]} />}
+      {trendArrow && <TrendArrowGlow color={ARROW_COLOR[glow ?? "teal"]} direction={trendArrow} />}
       <div className="relative flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0", ICON_TONES[tone])}>

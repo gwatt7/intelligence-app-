@@ -25,9 +25,9 @@
      accentSurface() in components/dashboard/dashboardCardStyles.ts). */
   --positive: #2fbf71;
   --positive-bg: rgba(47, 191, 113, 0.12);
-  --positive-border: rgba(47, 191, 113, 0.65);
-  --positive-glow: rgba(47, 191, 113, 0.55);
-  --positive-fade: rgba(47, 191, 113, 0.22);
+  --positive-border: rgba(47, 191, 113, 0.85);
+  --positive-glow: rgba(47, 191, 113, 0.65);
+  --positive-fade: rgba(47, 191, 113, 0.3);
   --negative: #f0554a;
   --negative-bg: rgba(240, 85, 74, 0.12);
   --warning: #e7b93f;
@@ -54,15 +54,15 @@
      alpha for the soft inward edge-fade (see accentSurface()). */
   --data-teal: #2dd4bf;
   --data-teal-bg: rgba(45, 212, 191, 0.12);
-  --data-teal-border: rgba(45, 212, 191, 0.65);
-  --data-teal-glow: rgba(45, 212, 191, 0.55);
-  --data-teal-fade: rgba(45, 212, 191, 0.22);
-  --negative-border: rgba(240, 85, 74, 0.65);
-  --negative-glow: rgba(240, 85, 74, 0.55);
-  --negative-fade: rgba(240, 85, 74, 0.22);
-  --accent-border: rgba(252, 211, 6, 0.65);
-  --accent-glow: rgba(252, 211, 6, 0.5);
-  --accent-fade: rgba(252, 211, 6, 0.2);
+  --data-teal-border: rgba(45, 212, 191, 0.85);
+  --data-teal-glow: rgba(45, 212, 191, 0.65);
+  --data-teal-fade: rgba(45, 212, 191, 0.3);
+  --negative-border: rgba(240, 85, 74, 0.85);
+  --negative-glow: rgba(240, 85, 74, 0.65);
+  --negative-fade: rgba(240, 85, 74, 0.3);
+  --accent-border: rgba(252, 211, 6, 0.85);
+  --accent-glow: rgba(252, 211, 6, 0.6);
+  --accent-fade: rgba(252, 211, 6, 0.26);
 
   /* Dashboard "Last Game" result accent — deliberately brighter/more
      saturated than the app-wide --positive/--negative tones above (which

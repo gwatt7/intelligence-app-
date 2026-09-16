@@ -158,7 +158,7 @@ export default async function DashboardPage() {
               <p className="text-xs text-muted mt-2">Zone entry/exit, last 5 vs. season</p>
             </SnapshotCard>
 
-            <SnapshotCard icon="⭐" label="Most Improved" tone="accent" glow="teal" trendArrow>
+            <SnapshotCard icon="⭐" label="Most Improved" tone="accent" glow="teal" trendArrow="up">
               {mostImproved ? (
                 <>
                   <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
@@ -173,7 +173,7 @@ export default async function DashboardPage() {
               )}
             </SnapshotCard>
 
-            <SnapshotCard icon="🎯" label="Needs Attention" tone="negative" backgroundGlyph="↓" glyphTone="negative">
+            <SnapshotCard icon="🎯" label="Needs Attention" tone="negative" glow="negative" trendArrow="down">
               {needsAttention ? (
                 <>
                   <p className="text-sm font-semibold text-foreground truncate">
