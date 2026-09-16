@@ -22,6 +22,8 @@
      brand color, per the win/loss and trend-arrow requirements. */
   --positive: #2fbf71;
   --positive-bg: rgba(47, 191, 113, 0.12);
+  --positive-border: rgba(47, 191, 113, 0.4);
+  --positive-glow: rgba(47, 191, 113, 0.35);
   --negative: #f0554a;
   --negative-bg: rgba(240, 85, 74, 0.12);
   --warning: #e7b93f;

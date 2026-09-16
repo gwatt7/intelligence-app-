@@ -67,3 +67,34 @@ export function PlayerPhoto({
     </div>
   );
 }
+
+/**
+ * Real player photo (or the same blank silhouette used everywhere else) as
+ * a portrait cutout — no bounding box or background panel, center-anchored
+ * so the subject stays in frame regardless of the source photo's own
+ * proportions (a tight portrait headshot or a wide action shot alike),
+ * fading to transparent toward the bottom so it blends into the card
+ * rather than ending in a hard rectangular edge. For cards where a single
+ * player is the visual hero (e.g. Mini Games' Top Progressing / Trending
+ * Down spotlight cards).
+ */
+export function PlayerCutout({ photoUrl, className }: { photoUrl: string | null; className?: string }) {
+  return (
+    <div
+      className={cn("relative overflow-hidden", className)}
+      style={{
+        maskImage: "linear-gradient(to bottom, black 62%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 62%, transparent 100%)",
+      }}
+    >
+      {photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote/local asset
+        <img src={photoUrl} alt="" className="h-full w-full object-cover object-center" />
+      ) : (
+        <div className="h-full w-full flex items-start justify-center pt-3">
+          <PersonSilhouette className="h-[60%] w-[60%] text-muted-2/70" />
+        </div>
+      )}
+    </div>
+  );
+}

@@ -171,6 +171,7 @@ export interface MiniGameProgressionSummary {
   playerId: string;
   name: string;
   jerseyNumber: number;
+  photoUrl: string | null;
   currentPoints: number;
   previousPoints: number;
   progression: StatProgression;
@@ -194,6 +195,7 @@ export async function getMiniGameTeamOverview(
       playerId: p.id,
       name: `${p.firstName} ${p.lastName}`,
       jerseyNumber: p.jerseyNumber,
+      photoUrl: p.photoUrl,
       currentPoints,
       previousPoints,
       progression: pctChange(currentPoints, previousPoints),
