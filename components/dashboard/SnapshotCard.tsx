@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 
 const ICON_TONES = {
   accent: "bg-accent/15 text-accent-strong",
@@ -10,15 +10,20 @@ const ICON_TONES = {
   neutral: "bg-surface-raised text-muted",
 } as const;
 
-/** Dynamic card border + inward edge-fade — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). */
+/** Dynamic card border — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). Paired with AccentGlowCorner below for the corner light-source glow. */
 const GLOW_STYLE = {
-  teal: accentSurface("var(--data-teal-border)", "var(--data-teal-glow)", "var(--data-teal-fade)"),
-  negative: accentSurface("var(--negative-border)", "var(--negative-glow)", "var(--negative-fade)"),
+  teal: accentSurface("var(--data-teal-border)", "var(--data-teal-glow)"),
+  negative: accentSurface("var(--negative-border)", "var(--negative-glow)"),
 } as const;
 
 const ARROW_COLOR = {
   teal: "var(--data-teal)",
   negative: "var(--negative)",
+} as const;
+
+const CORNER_GLOW = {
+  teal: { glow: "var(--data-teal-glow)", fade: "var(--data-teal-fade)" },
+  negative: { glow: "var(--negative-glow)", fade: "var(--negative-fade)" },
 } as const;
 
 /** Solid glowing trend arrow (Most Improved = up, Needs Attention = down) — decorative only, no data of its own. */
@@ -58,6 +63,7 @@ export function SnapshotCard({
 }) {
   return (
     <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`} style={glow ? GLOW_STYLE[glow] : undefined}>
+      {glow && <AccentGlowCorner {...CORNER_GLOW[glow]} />}
       {trendArrow && <TrendArrowGlow color={ARROW_COLOR[glow ?? "teal"]} direction={trendArrow} />}
       <div className="relative flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">

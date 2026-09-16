@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { gameMatchupLabel } from "@/lib/game-display";
-import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 interface GameLite {
@@ -47,16 +47,17 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
       style={
         resultStyle
           ? {
-              ...accentSurface(resultStyle.border, resultStyle.glow, resultStyle.fade),
-              // Solid surface base UNDER the result glow/fade — never just
-              // the color on its own, so the card stays fully opaque
-              // regardless of what's behind it on the page.
+              ...accentSurface(resultStyle.border, resultStyle.glow),
+              // Solid surface base UNDER the result glow — never just the
+              // color on its own, so the card stays fully opaque regardless
+              // of what's behind it on the page.
               backgroundImage: `linear-gradient(180deg, var(--surface-raised), var(--surface))`,
             }
           : undefined
       }
     >
-      <div className="flex items-center justify-between gap-2">
+      {resultStyle && <AccentGlowCorner glow={resultStyle.glow} fade={resultStyle.fade} />}
+      <div className="relative flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-2">Last Game</p>
         {result &&
           (resultStyle ? (
@@ -72,7 +73,7 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
       </div>
 
       {game ? (
-        <div className="mt-3 flex-1 flex flex-col justify-between">
+        <div className="relative mt-3 flex-1 flex flex-col justify-between">
           <div className="flex items-center gap-3 min-w-0">
             <OpponentLogo opponent={game.opponent} className="h-12 w-12" />
             <div className="min-w-0">

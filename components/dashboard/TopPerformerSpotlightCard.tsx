@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { PlayerCutout } from "@/components/players/PlayerPhoto";
-import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 import type { StatContribution } from "@/lib/stats";
 
 interface SpotlightPlayer {
@@ -34,8 +34,9 @@ export function TopPerformerSpotlightCard({
   return (
     <div
       className={`${glassPanel} p-4 sm:p-5 min-h-[220px]`}
-      style={accentSurface("var(--accent-border)", "var(--accent-glow)", "var(--accent-fade)")}
+      style={accentSurface("var(--accent-border)", "var(--accent-glow)")}
     >
+      <AccentGlowCorner glow="var(--accent-glow)" fade="var(--accent-fade)" />
       {player && (
         <div className="absolute right-0 top-0 bottom-0 w-28 sm:w-32">
           <PlayerCutout photoUrl={player.photoUrl} className="h-full w-full" />

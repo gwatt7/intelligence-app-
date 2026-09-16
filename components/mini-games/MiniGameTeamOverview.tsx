@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatMiniGameChange, type MiniGameProgressionSummary } from "@/lib/mini-game-analytics";
 import { PlayerCutout } from "@/components/players/PlayerPhoto";
-import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 
 const TONE = {
   positive: {
@@ -43,8 +43,9 @@ function ProgressionSpotlight({
   return (
     <div
       className={`${glassPanel} overflow-hidden`}
-      style={accentSurface(t.border, t.glow, t.fade)}
+      style={accentSurface(t.border, t.glow)}
     >
+      <AccentGlowCorner glow={t.glow} fade={t.fade} />
       <p className="relative px-4 sm:px-5 pt-4 sm:pt-5 text-xs font-semibold uppercase tracking-[0.15em] text-muted-2 flex items-center gap-1.5">
         <span aria-hidden>{icon}</span>
         {label}
@@ -67,7 +68,7 @@ function ProgressionSpotlight({
           </div>
         </Link>
       ) : (
-        <p className="px-4 sm:px-5 pt-2 pb-5 text-sm text-muted">
+        <p className="relative px-4 sm:px-5 pt-2 pb-5 text-sm text-muted">
           No data yet — need at least 2 Mini Games per player to show progression.
         </p>
       )}
