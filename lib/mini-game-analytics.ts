@@ -7,11 +7,28 @@
 // Analytics page. If you're tempted to make this module call into
 // lib/player-analytics.ts or vice versa: don't — that's the one thing this
 // whole feature must never do.
+//
+// pctChange/topStatContributions are pure, data-agnostic math utilities
+// shared with lib/player-analytics.ts (moved to lib/stats.ts for exactly
+// that reason) — sharing the FORMULA is fine; no MiniGamePlayerStat row
+// ever gets summed, averaged, or ranked together with a GamePlayerStat row.
 
 import { prisma } from "@/lib/db";
 import { format } from "date-fns";
-import { EMPTY_STAT_LINE, sumStatLines, points, type RawStatLine } from "@/lib/stats";
+import {
+  EMPTY_STAT_LINE,
+  sumStatLines,
+  points,
+  pctChange,
+  topStatContributions,
+  type RawStatLine,
+  type StatProgression,
+  type StatContribution,
+} from "@/lib/stats";
 import { getWeekBounds, previousWeekStart } from "@/lib/calendar-week";
+
+export type { StatProgression, StatContribution };
+export { pctChange, topStatContributions };
 
 const STAT_KEYS = Object.keys(EMPTY_STAT_LINE) as (keyof RawStatLine)[];
 
@@ -66,28 +83,6 @@ export async function getPlayerMiniGameEntries(playerId: string): Promise<MiniGa
 // ---------------------------------------------------------------------------
 // Progression math
 // ---------------------------------------------------------------------------
-
-export interface StatProgression {
-  type: "new" | "increase" | "decrease" | "none";
-  pct: number | null; // null only when type === "new" (nothing to compute a % from)
-  current: number;
-  previous: number;
-}
-
-/**
- * The zero-value rules, exactly as specified:
- *  - previous = 0, current = 0  -> 0% (no change)
- *  - previous = 0, current > 0  -> "New" (never Infinity/NaN)
- *  - previous > 0, current = 0  -> -100% (the correct decrease)
- *  - otherwise                  -> ((current - previous) / previous) * 100
- */
-export function pctChange(current: number, previous: number): StatProgression {
-  if (previous === 0 && current === 0) return { type: "none", pct: 0, current, previous };
-  if (previous === 0 && current > 0) return { type: "new", pct: null, current, previous };
-  if (previous > 0 && current === 0) return { type: "decrease", pct: -100, current, previous };
-  const pct = ((current - previous) / previous) * 100;
-  return { type: pct > 0 ? "increase" : pct < 0 ? "decrease" : "none", pct, current, previous };
-}
 
 export function formatMiniGameChange(p: StatProgression, digits = 0): string {
   if (p.type === "new") return "New";
@@ -214,4 +209,54 @@ export async function getMiniGameTeamOverview(
     .slice(0, 5);
 
   return { topProgressing, trendingDown };
+}
+
+// ---------------------------------------------------------------------------
+// Mini Games Top Performer — completely independent of the Official Games
+// "Top Performer" in lib/rankings.ts (which is Performance-Index-based).
+// Deliberately does NOT reuse calculatePerformanceIndex, per this module's
+// standing rule of never feeding Mini Game data into "the Performance
+// Index" — instead it ranks by total Mini Game points (goals + assists),
+// the same real, already-displayed stat the Mini Game History table uses.
+// ---------------------------------------------------------------------------
+
+export interface MiniGameTopPerformer {
+  playerId: string;
+  name: string;
+  jerseyNumber: number;
+  photoUrl: string | null;
+  totalPoints: number;
+  miniGamesPlayed: number;
+}
+
+export async function getMiniGameTopPerformer(seasonId: string): Promise<MiniGameTopPerformer | null> {
+  const players = await prisma.player.findMany({ where: { seasonId } });
+  const entriesByPlayer = await getSeasonMiniGameEntriesByPlayer(seasonId);
+
+  let best: MiniGameTopPerformer | null = null;
+  for (const p of players) {
+    const entries = entriesByPlayer.get(p.id) ?? [];
+    if (entries.length === 0) continue;
+    const totalPoints = points(sumStatLines(entries.map((e) => e.stat)));
+    if (!best || totalPoints > best.totalPoints) {
+      best = {
+        playerId: p.id,
+        name: `${p.firstName} ${p.lastName}`,
+        jerseyNumber: p.jerseyNumber,
+        photoUrl: p.photoUrl,
+        totalPoints,
+        miniGamesPlayed: entries.length,
+      };
+    }
+  }
+  return best;
+}
+
+/** A single player's top 3 Mini Game stat contributions (most recent Mini Game vs. the one before it) — the "why" behind the Mini Games Top Performer card. Empty when the player has fewer than 2 Mini Games logged; never a fabricated percentage. */
+export async function getMiniGameStatContributions(playerId: string): Promise<StatContribution[]> {
+  const entries = await getPlayerMiniGameEntries(playerId);
+  if (entries.length < 2) return [];
+  const current = entries[entries.length - 1].stat;
+  const previous = entries[entries.length - 2].stat;
+  return topStatContributions(current, previous);
 }

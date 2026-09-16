@@ -108,6 +108,76 @@ export function formatChange(value: number | null, digits = 1): string {
   return `${sign}${value.toFixed(digits)}%`;
 }
 
+// --- Per-stat progression (shared by Mini Games and official Games) -------
+// One shared implementation of "current vs. previous" for a single stat,
+// with the explicit zero-value rules a plain (current-previous)/previous
+// would get wrong. Originally lived only in lib/mini-game-analytics.ts;
+// moved here so lib/player-analytics.ts can reuse the exact same formula
+// for official Games instead of a second, competing one. Neither side's
+// data ever passes through the other — each module calls this with only
+// its own entries.
+
+export interface StatProgression {
+  type: "new" | "increase" | "decrease" | "none";
+  pct: number | null; // null only when type === "new" (nothing to compute a % from)
+  current: number;
+  previous: number;
+}
+
+/**
+ * The zero-value rules, exactly as specified:
+ *  - previous = 0, current = 0  -> 0% (no change)
+ *  - previous = 0, current > 0  -> "New" (never Infinity/NaN)
+ *  - previous > 0, current = 0  -> -100% (the correct decrease)
+ *  - otherwise                  -> ((current - previous) / previous) * 100
+ */
+export function pctChange(current: number, previous: number): StatProgression {
+  if (previous === 0 && current === 0) return { type: "none", pct: 0, current, previous };
+  if (previous === 0 && current > 0) return { type: "new", pct: null, current, previous };
+  if (previous > 0 && current === 0) return { type: "decrease", pct: -100, current, previous };
+  const pct = ((current - previous) / previous) * 100;
+  return { type: pct > 0 ? "increase" : pct < 0 ? "decrease" : "none", pct, current, previous };
+}
+
+/** Counting stats worth surfacing as a Top Performer's "top contributions" — deliberately excludes already-derived percentages/ratios and stats where a numeric increase isn't a good thing (e.g. giveaways, goals against). */
+const CONTRIBUTION_STAT_KEYS: { key: keyof RawStatLine; label: string }[] = [
+  { key: "goals", label: "Goals" },
+  { key: "assists", label: "Assists" },
+  { key: "shots", label: "Shots" },
+  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "successfulZoneEntries", label: "Successful Zone Entries" },
+  { key: "successfulZoneExits", label: "Successful Zone Exits" },
+  { key: "takeaways", label: "Takeaways" },
+  { key: "disruptions", label: "Disruptions" },
+  { key: "hits", label: "Hits" },
+  { key: "blocks", label: "Blocks" },
+  { key: "saves", label: "Saves" },
+];
+
+export interface StatContribution {
+  key: string;
+  label: string;
+  progression: StatProgression;
+}
+
+/**
+ * A player's top N positive per-stat contributions between two stat lines
+ * (typically their most recent entry vs. the one before it), ranked by %
+ * increase. Only real, computable increases are eligible — a stat with no
+ * previous value ("New") never displays a fabricated percentage, and a
+ * flat/declining stat is never shown as a "contribution."
+ */
+export function topStatContributions(current: RawStatLine, previous: RawStatLine, limit = 3): StatContribution[] {
+  return CONTRIBUTION_STAT_KEYS.map(({ key, label }) => ({
+    key,
+    label,
+    progression: pctChange(current[key], previous[key]),
+  }))
+    .filter((c) => c.progression.type === "increase")
+    .sort((a, b) => (b.progression.pct ?? 0) - (a.progression.pct ?? 0))
+    .slice(0, limit);
+}
+
 export const derivedCategories = {
   transition: [
     { key: "zoneEntries", label: "Zone Entries" },

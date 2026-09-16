@@ -7,7 +7,7 @@
 // query in this file.
 
 import { prisma } from "@/lib/db";
-import { RawStatLine, sumStatLines, change } from "@/lib/stats";
+import { RawStatLine, sumStatLines, change, topStatContributions, type StatContribution } from "@/lib/stats";
 import { calculatePerformanceIndex, PerformanceIndexBreakdown } from "@/lib/performance-index";
 
 export type StatSource = "GAME";
@@ -88,4 +88,13 @@ export function recentTrendForEntries(
   const priorIndex = calculatePerformanceIndex(position, priorTotals, prior.length).score;
 
   return change(latestIndex, priorIndex);
+}
+
+/** A single player's top 3 official-Game stat contributions (most recent game vs. the one before it) — the "why" behind the Games Top Performer card, using the same shared topStatContributions formula the Mini Games side uses (see lib/stats.ts), applied only to this player's own GamePlayerStat entries. Empty when the player has fewer than 2 official games logged; never a fabricated percentage. */
+export async function getGameStatContributions(playerId: string): Promise<StatContribution[]> {
+  const entries = await getPlayerStatEntries(playerId);
+  if (entries.length < 2) return [];
+  const current = entries[entries.length - 1].stat;
+  const previous = entries[entries.length - 2].stat;
+  return topStatContributions(current, previous);
 }

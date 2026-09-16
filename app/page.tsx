@@ -4,6 +4,8 @@ import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
 import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
+import { getGameStatContributions } from "@/lib/player-analytics";
+import { getMiniGameTopPerformer, getMiniGameStatContributions } from "@/lib/mini-game-analytics";
 import { formatChange, zoneEntryPct, zoneExitPct } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -16,8 +18,7 @@ import { LastGameCard } from "@/components/dashboard/LastGameCard";
 import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
 import { SnapshotCard } from "@/components/dashboard/SnapshotCard";
 import { Sparkline } from "@/components/dashboard/Sparkline";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
-import { PlayerPhoto } from "@/components/players/PlayerPhoto";
+import { TopPerformerSpotlightCard } from "@/components/dashboard/TopPerformerSpotlightCard";
 
 export default async function DashboardPage() {
   const season = await getCurrentSeason();
@@ -81,6 +82,19 @@ export default async function DashboardPage() {
   const mostImproved = rankings.mostImproved[0];
   const needsAttention = [...rankings.topPerformanceIndex].sort((a, b) => a.value - b.value)[0];
 
+  // Top Performer — Games and Top Performer — Mini Games are two completely
+  // independent picks with their own independent "why" (top 3 contributing
+  // stats). Games reuses the existing Performance-Index ranking above;
+  // Mini Games has its own ranking in lib/mini-game-analytics.ts. Neither
+  // calculation ever reads the other's data.
+  const [gameContributions, miniGameTopPerformer] = await Promise.all([
+    topPerformer ? getGameStatContributions(topPerformer.playerId) : Promise.resolve([]),
+    getMiniGameTopPerformer(season.id),
+  ]);
+  const miniGameContributions = miniGameTopPerformer
+    ? await getMiniGameStatContributions(miniGameTopPerformer.playerId)
+    : [];
+
   const lastGameResult =
     lastGame && lastGame.ourScore !== null && lastGame.opponentScore !== null
       ? lastGame.ourScore > lastGame.opponentScore
@@ -103,7 +117,28 @@ export default async function DashboardPage() {
         {/* Performance snapshot */}
         <div>
           <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+
+          {/* Top Performer — Games and Top Performer — Mini Games: two
+              completely independent gold-accented cards, each fed by its own
+              data source and calculation (Official Games / Mini Games), never
+              mixed. Green is used only for each card's individual "top
+              contribution" increases, never the card's own identity color. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+            <TopPerformerSpotlightCard
+              label="Top Performer — Games"
+              player={topPerformer ? { ...topPerformer } : null}
+              contributions={gameContributions}
+              emptyMessage="No official game data yet."
+            />
+            <TopPerformerSpotlightCard
+              label="Top Performer — Mini Games"
+              player={miniGameTopPerformer ? { ...miniGameTopPerformer } : null}
+              contributions={miniGameContributions}
+              emptyMessage="No Mini Games logged yet."
+            />
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
             <SnapshotCard
               icon="📊"
               label="Team Trend"
@@ -122,43 +157,6 @@ export default async function DashboardPage() {
               )}
               <p className="text-xs text-muted mt-2">Zone entry/exit, last 5 vs. season</p>
             </SnapshotCard>
-
-            {/* Top Performer — its own bespoke layout (photo bleeding to the
-                card edge) rather than the shared icon+value SnapshotCard
-                shape, matching the reference. Still the real ranked player
-                and their real photo (or the same blank silhouette used
-                everywhere else when none is set). */}
-            <div
-              className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`}
-              style={{ borderColor: "var(--accent-border)", boxShadow: "0 0 26px -6px var(--accent-glow)" }}
-            >
-              {topPerformer && (
-                <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-24">
-                  <div className="absolute inset-0 z-10 bg-gradient-to-r from-surface via-surface/70 to-transparent" />
-                  <PlayerPhoto
-                    photoUrl={topPerformer.photoUrl}
-                    size="md"
-                    variant="boxed"
-                    className="!h-full !w-full !rounded-none"
-                  />
-                </div>
-              )}
-              <div className="relative flex items-center gap-2 mb-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-accent/15 text-accent-strong">
-                  👥
-                </span>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-2 truncate">Top Performer</p>
-              </div>
-              {topPerformer ? (
-                <div className="relative pr-14 sm:pr-16">
-                  <p className="text-2xl font-bold text-foreground">#{topPerformer.jerseyNumber}</p>
-                  <p className="text-sm text-foreground truncate">{topPerformer.name}</p>
-                  <p className="text-xs text-muted mt-0.5">Index {topPerformer.value.toFixed(1)}</p>
-                </div>
-              ) : (
-                <p className="relative text-sm text-muted">No data yet.</p>
-              )}
-            </div>
 
             <SnapshotCard icon="⭐" label="Most Improved" tone="accent" glow="teal" trendArrow>
               {mostImproved ? (
