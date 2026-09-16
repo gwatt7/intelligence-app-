@@ -85,12 +85,19 @@ model Player {
   weight    Int? // lbs
   classYear String? // free text, e.g. "Freshman" or "2027"
 
-  // Optional full-bleed action photo shown behind the light-gray Player
-  // Profile hero card (see PlayerProfileHero) — same data: URI storage
-  // approach as photoUrl, for the same reason. Blank for every player
-  // until a coach sets one; the hero card renders exactly as before when
-  // this is null.
-  heroImageUrl String?
+  // Optional full-bleed action/background photo — shown behind the
+  // light-gray Player Profile hero card (see PlayerProfileHero) AND behind
+  // the headshot on that player's Players-tab roster card (see
+  // PlayerRosterImage in PlayerPhoto.tsx). Same data: URI storage approach
+  // as photoUrl, for the same reason. Blank for every player until a coach
+  // sets one; every consumer renders exactly as before when this is null.
+  // heroImageFocalX/Y are an optional 0-100 "which part of the photo
+  // matters" focal point (CSS object-position), settable via the Edit
+  // Background Photo control without re-cropping the source file — null
+  // means "let each display site use its own default centering."
+  heroImageUrl    String?
+  heroImageFocalX Float?
+  heroImageFocalY Float?
 
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)

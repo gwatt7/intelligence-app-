@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge, TrendBadge } from "@/components/ui/Badge";
-import { PlayerPhoto } from "@/components/players/PlayerPhoto";
+import { PlayerRosterImage } from "@/components/players/PlayerPhoto";
 import { lightCardStyle } from "@/components/players/lightCardStyle";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
@@ -14,6 +14,9 @@ interface CardPlayer {
   position: "FORWARD" | "DEFENSE" | "GOALIE";
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
   photoUrl: string | null;
+  heroImageUrl: string | null;
+  heroImageFocalX: number | null;
+  heroImageFocalY: number | null;
 }
 
 /**
@@ -34,7 +37,13 @@ export function PlayerCard({
     <Link href={`/players/${player.id}`} style={lightCardStyle}>
       <Card className="hover:border-accent/50 transition-colors h-full flex flex-col items-center text-center gap-3">
         <div className="relative">
-          <PlayerPhoto photoUrl={player.photoUrl} size="md" variant="boxed" />
+          <PlayerRosterImage
+            photoUrl={player.photoUrl}
+            heroImageUrl={player.heroImageUrl}
+            heroImageFocalX={player.heroImageFocalX}
+            heroImageFocalY={player.heroImageFocalY}
+            size="md"
+          />
           <span className="absolute top-1.5 left-1.5 rounded-md bg-surface-raised/90 border border-border px-1.5 py-0.5 text-xs font-mono text-muted">
             #{player.jerseyNumber}
           </span>

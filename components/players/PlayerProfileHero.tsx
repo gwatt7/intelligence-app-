@@ -2,6 +2,7 @@ import Image from "next/image";
 import { StatusBadge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { PlayerPhotoUpload } from "@/components/players/PlayerPhotoUpload";
+import { PlayerBackgroundPhotoUpload } from "@/components/players/PlayerBackgroundPhotoUpload";
 import { PlayerBioForm, type PlayerBio } from "@/components/players/PlayerBioForm";
 import { lightCardStyle } from "@/components/players/lightCardStyle";
 
@@ -17,6 +18,8 @@ interface HeroPlayer {
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
   photoUrl: string | null;
   heroImageUrl: string | null;
+  heroImageFocalX: number | null;
+  heroImageFocalY: number | null;
   hometown: string | null;
   height: string | null;
   weight: number | null;
@@ -52,7 +55,18 @@ export function PlayerProfileHero({ player }: { player: HeroPlayer }) {
     >
       {player.heroImageUrl && (
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <Image src={player.heroImageUrl} alt="" fill className="object-cover" style={{ objectPosition: "70% 30%" }} />
+          <Image
+            src={player.heroImageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{
+              objectPosition:
+                player.heroImageFocalX !== null && player.heroImageFocalY !== null
+                  ? `${player.heroImageFocalX}% ${player.heroImageFocalY}%`
+                  : "70% 30%",
+            }}
+          />
           {/* Light-toned scrim, matching this card's own light palette, so
               the name/badges/buttons on the left stay readable while the
               photo remains clearly visible on the right. */}
@@ -67,7 +81,15 @@ export function PlayerProfileHero({ player }: { player: HeroPlayer }) {
       )}
 
       <div className="relative flex flex-col sm:flex-row gap-5 sm:gap-6">
-        <PlayerPhotoUpload playerId={player.id} photoUrl={player.photoUrl} />
+        <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
+          <PlayerPhotoUpload playerId={player.id} photoUrl={player.photoUrl} />
+          <PlayerBackgroundPhotoUpload
+            playerId={player.id}
+            heroImageUrl={player.heroImageUrl}
+            heroImageFocalX={player.heroImageFocalX}
+            heroImageFocalY={player.heroImageFocalY}
+          />
+        </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">

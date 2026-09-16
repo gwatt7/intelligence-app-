@@ -12,6 +12,11 @@ export type { ActionResult };
 // unresized, not a real limit anyone should hit.
 const MAX_PHOTO_DATA_URI_LENGTH = 2_000_000;
 
+// Background/hero photos are resized to a larger max dimension than
+// headshots (see PlayerBackgroundPhotoUpload) since they're displayed
+// larger, so they get a bit more headroom here for the same reason.
+const MAX_HERO_IMAGE_DATA_URI_LENGTH = 4_000_000;
+
 export async function createPlayer(seasonId: string, formData: FormData): Promise<ActionResult> {
   const parsed = playerSchema.safeParse({
     firstName: formData.get("firstName"),
@@ -145,6 +150,55 @@ export async function updatePlayerPhoto(playerId: string, photoDataUri: string |
   if (!player) return { ok: false, error: "Player not found" };
 
   await prisma.player.update({ where: { id: playerId }, data: { photoUrl: photoDataUri } });
+
+  revalidatePath(`/players/${playerId}`);
+  revalidatePath("/players");
+  revalidatePath("/team");
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/**
+ * Sets (or clears, if `heroImageDataUri` is null) one player's background
+ * photo, completely independent of `updatePlayerPhoto` above — this never
+ * touches `photoUrl`, and that function never touches this. Stored directly
+ * as a data: URI on that same player's own row (same reasoning as
+ * updatePlayerPhoto: no shared file store, and per-row storage means
+ * editing one player's background photo can never touch another's).
+ *
+ * `focalX`/`focalY` are an optional 0-100 "which part of the photo
+ * matters" point (applied as CSS object-position wherever the background
+ * photo is displayed — PlayerProfileHero and the Players-tab roster card),
+ * letting a coach fine-tune framing without re-cropping the source photo.
+ * null means "no preference — let each display site use its own default."
+ */
+export async function updatePlayerHeroImage(
+  playerId: string,
+  heroImageDataUri: string | null,
+  focalX: number | null,
+  focalY: number | null
+): Promise<ActionResult> {
+  if (heroImageDataUri !== null) {
+    if (!heroImageDataUri.startsWith("data:image/")) {
+      return { ok: false, error: "Invalid image" };
+    }
+    if (heroImageDataUri.length > MAX_HERO_IMAGE_DATA_URI_LENGTH) {
+      return { ok: false, error: "Image is too large — please use a smaller photo" };
+    }
+  }
+  for (const focal of [focalX, focalY]) {
+    if (focal !== null && (Number.isNaN(focal) || focal < 0 || focal > 100)) {
+      return { ok: false, error: "Invalid image position" };
+    }
+  }
+
+  const player = await prisma.player.findUnique({ where: { id: playerId } });
+  if (!player) return { ok: false, error: "Player not found" };
+
+  await prisma.player.update({
+    where: { id: playerId },
+    data: { heroImageUrl: heroImageDataUri, heroImageFocalX: focalX, heroImageFocalY: focalY },
+  });
 
   revalidatePath(`/players/${playerId}`);
   revalidatePath("/players");

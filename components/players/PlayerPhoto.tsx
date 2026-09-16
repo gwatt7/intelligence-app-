@@ -9,7 +9,7 @@ export function PersonSilhouette({ className }: { className?: string }) {
   );
 }
 
-const SIZE_CLASSES = {
+export const SIZE_CLASSES = {
   sm: "h-20 w-20",
   md: "h-36 w-36 sm:h-44 sm:w-44",
   lg: "h-40 w-40 sm:h-52 sm:w-52",
@@ -64,6 +64,57 @@ export function PlayerPhoto({
           className={cn("relative h-16 w-16", variant === "boxed" ? "text-muted-2" : "text-black/25")}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Roster-grid image composition (Players page): the player's real
+ * background/action photo (`heroImageUrl`) filling the same boxed frame
+ * PlayerPhoto uses, with their headshot (`photoUrl`) as a small circular
+ * badge overlapping its bottom-right corner — background photo behind,
+ * headshot on top, per the requested layering. Falls back to the existing
+ * single-image PlayerPhoto treatment (photo-fill or blank silhouette)
+ * whenever there's no background photo to layer over, so a player with
+ * only a headshot (or neither) renders exactly as it did before this
+ * component existed.
+ */
+export function PlayerRosterImage({
+  photoUrl,
+  heroImageUrl,
+  heroImageFocalX,
+  heroImageFocalY,
+  size = "md",
+}: {
+  photoUrl: string | null;
+  heroImageUrl: string | null;
+  heroImageFocalX?: number | null;
+  heroImageFocalY?: number | null;
+  size?: keyof typeof SIZE_CLASSES;
+}) {
+  if (!heroImageUrl) {
+    return <PlayerPhoto photoUrl={photoUrl} size={size} variant="boxed" />;
+  }
+
+  return (
+    <div className={cn("relative shrink-0", SIZE_CLASSES[size])}>
+      <div className="absolute inset-0 rounded-xl overflow-hidden border border-border">
+        {/* eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote/local asset */}
+        <img
+          src={heroImageUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          style={{ objectPosition: `${heroImageFocalX ?? 50}% ${heroImageFocalY ?? 50}%` }}
+        />
+      </div>
+      <div className="absolute -bottom-1.5 -right-1.5 h-11 w-11 sm:h-12 sm:w-12 rounded-full overflow-hidden border-2 border-surface bg-surface-raised flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+        {photoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote/local asset
+          <img src={photoUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <PersonSilhouette className="h-6 w-6 text-muted-2" />
+        )}
+      </div>
     </div>
   );
 }
