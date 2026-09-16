@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
 
 const ICON_TONES = {
   accent: "bg-accent/15 text-accent-strong",
@@ -15,10 +15,10 @@ const GLYPH_TONES = {
   negative: "text-negative",
 } as const;
 
-/** Dynamic card border + ambient glow — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). */
+/** Dynamic card border + inward edge-fade — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). */
 const GLOW_STYLE = {
-  teal: { borderColor: "var(--data-teal-border)", boxShadow: "0 0 26px -6px var(--data-teal-glow)" },
-  negative: { borderColor: "var(--negative-border)", boxShadow: "0 0 26px -6px var(--negative-glow)" },
+  teal: accentSurface("var(--data-teal-border)", "var(--data-teal-glow)", "var(--data-teal-fade)"),
+  negative: accentSurface("var(--negative-border)", "var(--negative-glow)", "var(--negative-fade)"),
 } as const;
 
 const ARROW_COLOR = {

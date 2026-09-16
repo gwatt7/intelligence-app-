@@ -19,11 +19,15 @@
   --accent-contrast: #0a0a0a;
 
   /* Functional indicators stay universal green/red/amber, independent of
-     brand color, per the win/loss and trend-arrow requirements. */
+     brand color, per the win/loss and trend-arrow requirements.
+     -border/-glow are deliberately bold/saturated, and -fade is the same
+     hue at low alpha for the soft inward edge-fade on card surfaces (see
+     accentSurface() in components/dashboard/dashboardCardStyles.ts). */
   --positive: #2fbf71;
   --positive-bg: rgba(47, 191, 113, 0.12);
-  --positive-border: rgba(47, 191, 113, 0.4);
-  --positive-glow: rgba(47, 191, 113, 0.35);
+  --positive-border: rgba(47, 191, 113, 0.65);
+  --positive-glow: rgba(47, 191, 113, 0.55);
+  --positive-fade: rgba(47, 191, 113, 0.22);
   --negative: #f0554a;
   --negative-bg: rgba(240, 85, 74, 0.12);
   --warning: #e7b93f;
@@ -46,15 +50,19 @@
      for Team Trend / Most Improved, alongside the existing gold/negative
      tones. Dashboard-only, see SnapshotCard. The *-border/-glow pairs are
      for the cards' dynamic colored border + ambient glow (positive/negative
-     for Team Trend, gold for Top Performer). */
+     for Team Trend, gold for Top Performer); *-fade is the same hue at low
+     alpha for the soft inward edge-fade (see accentSurface()). */
   --data-teal: #2dd4bf;
   --data-teal-bg: rgba(45, 212, 191, 0.12);
-  --data-teal-border: rgba(45, 212, 191, 0.4);
-  --data-teal-glow: rgba(45, 212, 191, 0.35);
-  --negative-border: rgba(240, 85, 74, 0.4);
-  --negative-glow: rgba(240, 85, 74, 0.35);
-  --accent-border: rgba(252, 211, 6, 0.35);
-  --accent-glow: rgba(252, 211, 6, 0.3);
+  --data-teal-border: rgba(45, 212, 191, 0.65);
+  --data-teal-glow: rgba(45, 212, 191, 0.55);
+  --data-teal-fade: rgba(45, 212, 191, 0.22);
+  --negative-border: rgba(240, 85, 74, 0.65);
+  --negative-glow: rgba(240, 85, 74, 0.55);
+  --negative-fade: rgba(240, 85, 74, 0.22);
+  --accent-border: rgba(252, 211, 6, 0.65);
+  --accent-glow: rgba(252, 211, 6, 0.5);
+  --accent-fade: rgba(252, 211, 6, 0.2);
 
   /* Dashboard "Last Game" result accent — deliberately brighter/more
      saturated than the app-wide --positive/--negative tones above (which
@@ -63,12 +71,14 @@
      a glance. Used only by LastGameCard. */
   --result-win: #22ff8c;
   --result-win-bg: rgba(34, 255, 140, 0.16);
-  --result-win-border: rgba(34, 255, 140, 0.55);
-  --result-win-glow: rgba(34, 255, 140, 0.4);
+  --result-win-border: rgba(34, 255, 140, 0.8);
+  --result-win-glow: rgba(34, 255, 140, 0.6);
+  --result-win-fade: rgba(34, 255, 140, 0.26);
   --result-loss: #ff4436;
   --result-loss-bg: rgba(255, 68, 54, 0.16);
-  --result-loss-border: rgba(255, 68, 54, 0.55);
-  --result-loss-glow: rgba(255, 68, 54, 0.4);
+  --result-loss-border: rgba(255, 68, 54, 0.8);
+  --result-loss-glow: rgba(255, 68, 54, 0.6);
+  --result-loss-fade: rgba(255, 68, 54, 0.26);
 }
 
 @theme inline {

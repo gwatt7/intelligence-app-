@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { formatMiniGameChange, type MiniGameProgressionSummary } from "@/lib/mini-game-analytics";
 import { PlayerCutout } from "@/components/players/PlayerPhoto";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
 
 const TONE = {
-  positive: { border: "var(--positive-border)", glow: "var(--positive-glow)", color: "var(--positive)" },
-  negative: { border: "var(--negative-border)", glow: "var(--negative-glow)", color: "var(--negative)" },
+  positive: {
+    border: "var(--positive-border)",
+    glow: "var(--positive-glow)",
+    fade: "var(--positive-fade)",
+    color: "var(--positive)",
+  },
+  negative: {
+    border: "var(--negative-border)",
+    glow: "var(--negative-glow)",
+    fade: "var(--negative-fade)",
+    color: "var(--negative)",
+  },
 } as const;
 
 /**
@@ -33,7 +43,7 @@ function ProgressionSpotlight({
   return (
     <div
       className={`${glassPanel} overflow-hidden`}
-      style={{ borderColor: t.border, boxShadow: `0 0 28px -6px ${t.glow}` }}
+      style={accentSurface(t.border, t.glow, t.fade)}
     >
       <p className="relative px-4 sm:px-5 pt-4 sm:pt-5 text-xs font-semibold uppercase tracking-[0.15em] text-muted-2 flex items-center gap-1.5">
         <span aria-hidden>{icon}</span>

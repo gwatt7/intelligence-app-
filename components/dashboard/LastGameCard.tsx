@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { gameMatchupLabel } from "@/lib/game-display";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { glassPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
 import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 interface GameLite {
@@ -18,8 +18,20 @@ interface GameLite {
  * into it). A tie or no completed game keeps the card in its plain neutral
  * state. */
 const RESULT_STYLE = {
-  W: { border: "var(--result-win-border)", glow: "var(--result-win-glow)", bg: "var(--result-win-bg)", color: "var(--result-win)" },
-  L: { border: "var(--result-loss-border)", glow: "var(--result-loss-glow)", bg: "var(--result-loss-bg)", color: "var(--result-loss)" },
+  W: {
+    border: "var(--result-win-border)",
+    glow: "var(--result-win-glow)",
+    fade: "var(--result-win-fade)",
+    bg: "var(--result-win-bg)",
+    color: "var(--result-win)",
+  },
+  L: {
+    border: "var(--result-loss-border)",
+    glow: "var(--result-loss-glow)",
+    fade: "var(--result-loss-fade)",
+    bg: "var(--result-loss-bg)",
+    color: "var(--result-loss)",
+  },
 } as const;
 
 /** Dashboard-only "Last Game" card — real result only; never invents a score.
@@ -35,12 +47,11 @@ export function LastGameCard({ game, result }: { game: GameLite | null; result: 
       style={
         resultStyle
           ? {
-              borderColor: resultStyle.border,
-              boxShadow: `0 0 30px -6px ${resultStyle.glow}`,
-              // Solid surface base UNDER the result tint — never just the
-              // tint on its own, so the card stays fully opaque regardless
-              // of what's behind it on the page.
-              backgroundImage: `linear-gradient(180deg, ${resultStyle.bg}, transparent 60%), linear-gradient(180deg, var(--surface-raised), var(--surface))`,
+              ...accentSurface(resultStyle.border, resultStyle.glow, resultStyle.fade),
+              // Solid surface base UNDER the result glow/fade — never just
+              // the color on its own, so the card stays fully opaque
+              // regardless of what's behind it on the page.
+              backgroundImage: `linear-gradient(180deg, var(--surface-raised), var(--surface))`,
             }
           : undefined
       }
