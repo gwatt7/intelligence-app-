@@ -1,10 +1,24 @@
 import Link from "next/link";
+import Image from "next/image";
+import type { CSSProperties } from "react";
 import { Card } from "@/components/ui/Card";
 import { StatusBadge, TrendBadge } from "@/components/ui/Badge";
 import { PlayerRosterImage } from "@/components/players/PlayerPhoto";
 import { lightCardStyle } from "@/components/players/lightCardStyle";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
+
+// UWS/Northstar gold accent for the Players-tab roster card — a subtle warm
+// wash that creeps down from the top of the card (behind the photo/name
+// area) plus a gold-tinted border, rather than a thin outline or a solid
+// yellow fill. Deliberately low-alpha/no glow-on-dark-card neon: this card
+// sits on the light grey profile-card palette (see lightCardStyle) and is
+// meant to read as "grey card, gold accent," not a colored card.
+const ACCENT_CARD_STYLE: CSSProperties = {
+  borderColor: "rgba(252, 211, 6, 0.4)",
+  backgroundImage: "linear-gradient(180deg, rgba(252, 211, 6, 0.16) 0%, rgba(252, 211, 6, 0.04) 35%, transparent 60%)",
+  boxShadow: "0 0 22px -14px rgba(252, 211, 6, 0.55)",
+};
 
 interface CardPlayer {
   id: string;
@@ -35,7 +49,10 @@ export function PlayerCard({
 }) {
   return (
     <Link href={`/players/${player.id}`} style={lightCardStyle}>
-      <Card className="hover:border-accent/50 transition-colors h-full flex flex-col items-center text-center gap-3">
+      <Card
+        className="hover:border-accent transition-colors h-full flex flex-col items-center text-center gap-3"
+        style={ACCENT_CARD_STYLE}
+      >
         <div className="relative">
           <PlayerRosterImage
             photoUrl={player.photoUrl}
@@ -50,9 +67,12 @@ export function PlayerCard({
         </div>
 
         <div className="min-w-0 w-full">
-          <p className="font-semibold text-foreground truncate">
-            {player.firstName} {player.lastName}
-          </p>
+          <div className="flex items-center justify-center gap-1.5 min-w-0">
+            <Image src="/uws-logo.png" alt="" width={18} height={18} className="object-contain shrink-0" />
+            <p className="font-semibold text-foreground truncate min-w-0">
+              {player.firstName} {player.lastName}
+            </p>
+          </div>
           <p className="text-xs text-muted mt-0.5">{POSITION_LABEL[player.position]}</p>
         </div>
 

@@ -1,14 +1,16 @@
 import { cn } from "@/lib/cn";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export function Card({
   children,
   className,
   padded = true,
+  style,
 }: {
   children: ReactNode;
   className?: string;
   padded?: boolean;
+  style?: CSSProperties;
 }) {
   return (
     <div
@@ -17,6 +19,7 @@ export function Card({
         padded && "p-4 sm:p-5",
         className
       )}
+      style={style}
     >
       {children}
     </div>
