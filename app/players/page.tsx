@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
 import { PlayerCard } from "@/components/players/PlayerCard";
+import { AddPlayerButton } from "@/components/players/AddPlayerButton";
 
 export default async function PlayersPage() {
   const season = await getCurrentSeason();
@@ -34,6 +35,8 @@ export default async function PlayersPage() {
         subtitle={`Season ${season.name}`}
         actions={<ButtonLink href="/players/compare" variant="secondary">Compare Players</ButtonLink>}
       />
+
+      <AddPlayerButton seasonId={season.id} />
 
       {players.length === 0 ? (
         <EmptyState
