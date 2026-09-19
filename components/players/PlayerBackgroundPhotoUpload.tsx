@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition, type PointerEvent as ReactPointerEvent } from "react";
 import { updatePlayerHeroImage } from "@/lib/actions/players";
-import { resizeImageFile } from "@/lib/client-image-resize";
+import { resizeImageFile, computeImageBrightness } from "@/lib/client-image-resize";
 import { Button } from "@/components/ui/Button";
 import { SIZE_CLASSES } from "@/components/players/PlayerPhoto";
 
@@ -79,7 +79,18 @@ export function PlayerBackgroundPhotoUpload({
   function handleSave() {
     if (!displayed) return;
     startTransition(async () => {
-      const result = await updatePlayerHeroImage(playerId, displayed, focalX, focalY);
+      // Recomputed on every save (not just when a new file is picked), so a
+      // pre-existing photo saved before this feature existed — or one only
+      // being repositioned, not replaced — still ends up with a real
+      // brightness reading instead of staying null forever.
+      let brightness: number | null = null;
+      try {
+        brightness = await computeImageBrightness(displayed);
+      } catch {
+        // Fall back to the original light-scrim/dark-text look rather than
+        // blocking the save over a brightness read failing.
+      }
+      const result = await updatePlayerHeroImage(playerId, displayed, focalX, focalY, brightness);
       if (result.ok) {
         setPreview(null);
       } else {
@@ -98,7 +109,7 @@ export function PlayerBackgroundPhotoUpload({
   function handleRemove() {
     if (!confirm("Remove this player's background photo?")) return;
     startTransition(async () => {
-      const result = await updatePlayerHeroImage(playerId, null, null, null);
+      const result = await updatePlayerHeroImage(playerId, null, null, null, null);
       if (!result.ok) {
         setError(result.error);
         return;

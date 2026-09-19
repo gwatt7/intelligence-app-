@@ -95,9 +95,19 @@ model Player {
   // matters" focal point (CSS object-position), settable via the Edit
   // Background Photo control without re-cropping the source file — null
   // means "let each display site use its own default centering."
-  heroImageUrl    String?
-  heroImageFocalX Float?
-  heroImageFocalY Float?
+  //
+  // heroImageBrightness is a 0 (darkest) - 1 (lightest) average-luminance
+  // reading of that same photo, computed client-side (canvas pixel sample)
+  // whenever it's saved via the Edit Background Photo control — never
+  // hand-set. PlayerProfileHero uses it to automatically pick dark-on-light
+  // vs light-on-dark text/scrim so the name/hometown/position/etc. stay
+  // readable regardless of the photo. null (a photo set before this field
+  // existed, or no photo at all) falls back to the original light-scrim/
+  // dark-text look.
+  heroImageUrl        String?
+  heroImageFocalX     Float?
+  heroImageFocalY     Float?
+  heroImageBrightness Float?
 
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)

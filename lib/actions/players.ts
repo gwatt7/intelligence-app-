@@ -171,12 +171,18 @@ export async function updatePlayerPhoto(playerId: string, photoDataUri: string |
  * photo is displayed — PlayerProfileHero and the Players-tab roster card),
  * letting a coach fine-tune framing without re-cropping the source photo.
  * null means "no preference — let each display site use its own default."
+ *
+ * `brightness` is a 0-1 average-luminance reading of the same photo
+ * (computed client-side, see lib/client-image-resize.ts), used to pick
+ * readable text/scrim colors over it. null means "unknown — fall back to
+ * the original light-scrim/dark-text look."
  */
 export async function updatePlayerHeroImage(
   playerId: string,
   heroImageDataUri: string | null,
   focalX: number | null,
-  focalY: number | null
+  focalY: number | null,
+  brightness: number | null
 ): Promise<ActionResult> {
   if (heroImageDataUri !== null) {
     if (!heroImageDataUri.startsWith("data:image/")) {
@@ -191,13 +197,21 @@ export async function updatePlayerHeroImage(
       return { ok: false, error: "Invalid image position" };
     }
   }
+  if (brightness !== null && (Number.isNaN(brightness) || brightness < 0 || brightness > 1)) {
+    return { ok: false, error: "Invalid image brightness" };
+  }
 
   const player = await prisma.player.findUnique({ where: { id: playerId } });
   if (!player) return { ok: false, error: "Player not found" };
 
   await prisma.player.update({
     where: { id: playerId },
-    data: { heroImageUrl: heroImageDataUri, heroImageFocalX: focalX, heroImageFocalY: focalY },
+    data: {
+      heroImageUrl: heroImageDataUri,
+      heroImageFocalX: focalX,
+      heroImageFocalY: focalY,
+      heroImageBrightness: brightness,
+    },
   });
 
   revalidatePath(`/players/${playerId}`);
