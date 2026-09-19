@@ -33,6 +33,13 @@ const MINI_GAME_DEFENSE_ITEMS = [
 // Forwards only.
 const MINI_GAME_FACEOFF_ITEMS = [{ key: "faceoffsWon", label: "Faceoffs Won" }] as const;
 
+// Goalies only.
+const MINI_GAME_GOALTENDING_ITEMS = [
+  { key: "saves", label: "Saves" },
+  { key: "goalsAgainst", label: "Goals Against" },
+  { key: "shotsAgainst", label: "Shots Against" },
+] as const;
+
 export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const player = await prisma.player.findUnique({ where: { id } });
@@ -104,26 +111,29 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
 
           {entries.length > 0 ? (
             <>
-              <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
-              <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
-              <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
-              {player.position === "FORWARD" && (
-                <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
-              )}
-              {player.position === "GOALIE" && (
+              {player.position === "GOALIE" ? (
                 <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
-              )}
+              ) : (
+                <>
+                  <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
+                  <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
+                  <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
+                  {player.position === "FORWARD" && (
+                    <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
+                  )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card>
-                  <CardTitle>Zone Entry % Over Time</CardTitle>
-                  <TrendChart data={entryPctSeries} unit="%" />
-                </Card>
-                <Card>
-                  <CardTitle>Zone Exit % Over Time</CardTitle>
-                  <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
-                </Card>
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Card>
+                      <CardTitle>Zone Entry % Over Time</CardTitle>
+                      <TrendChart data={entryPctSeries} unit="%" />
+                    </Card>
+                    <Card>
+                      <CardTitle>Zone Exit % Over Time</CardTitle>
+                      <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
+                    </Card>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <Card>
@@ -169,34 +179,54 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
               <p className="text-xs text-muted mt-1">Mini Games logged this season</p>
             </Card>
 
-            <StatCategoryCard title="Mini Game Totals — Offense" items={derivedCategories.offense} stat={miniGameTotals} />
-            <StatCategoryCard title="Mini Game Totals — Defense" items={derivedCategories.defense} stat={miniGameTotals} />
-            {player.position === "FORWARD" && (
-              <StatCategoryCard title="Mini Game Totals — Faceoffs" items={derivedCategories.faceoffs} stat={miniGameTotals} />
+            {player.position === "GOALIE" ? (
+              <StatCategoryCard
+                title="Mini Game Totals — Goaltending"
+                items={derivedCategories.goaltending}
+                stat={miniGameTotals}
+              />
+            ) : (
+              <>
+                <StatCategoryCard title="Mini Game Totals — Offense" items={derivedCategories.offense} stat={miniGameTotals} />
+                <StatCategoryCard title="Mini Game Totals — Defense" items={derivedCategories.defense} stat={miniGameTotals} />
+                {player.position === "FORWARD" && (
+                  <StatCategoryCard title="Mini Game Totals — Faceoffs" items={derivedCategories.faceoffs} stat={miniGameTotals} />
+                )}
+              </>
             )}
 
-            <MiniGameProgressionCard
-              title="Mini Game Progression (vs. previous Mini Game)"
-              items={MINI_GAME_OFFENSE_ITEMS}
-              progression={miniGameProgression}
-            />
-            <MiniGameProgressionCard
-              title="Mini Game Progression — Defense (vs. previous Mini Game)"
-              items={MINI_GAME_DEFENSE_ITEMS}
-              progression={miniGameProgression}
-            />
-            {player.position === "FORWARD" && (
+            {player.position === "GOALIE" ? (
               <MiniGameProgressionCard
-                title="Mini Game Progression — Faceoffs (vs. previous Mini Game)"
-                items={MINI_GAME_FACEOFF_ITEMS}
+                title="Mini Game Progression — Goaltending (vs. previous Mini Game)"
+                items={MINI_GAME_GOALTENDING_ITEMS}
                 progression={miniGameProgression}
               />
+            ) : (
+              <>
+                <MiniGameProgressionCard
+                  title="Mini Game Progression (vs. previous Mini Game)"
+                  items={MINI_GAME_OFFENSE_ITEMS}
+                  progression={miniGameProgression}
+                />
+                <MiniGameProgressionCard
+                  title="Mini Game Progression — Defense (vs. previous Mini Game)"
+                  items={MINI_GAME_DEFENSE_ITEMS}
+                  progression={miniGameProgression}
+                />
+                {player.position === "FORWARD" && (
+                  <MiniGameProgressionCard
+                    title="Mini Game Progression — Faceoffs (vs. previous Mini Game)"
+                    items={MINI_GAME_FACEOFF_ITEMS}
+                    progression={miniGameProgression}
+                  />
+                )}
+              </>
             )}
 
             <div>
               <MiniGameProgressionCard
                 title="Mini Game Weekly Trend"
-                items={MINI_GAME_OFFENSE_ITEMS}
+                items={player.position === "GOALIE" ? MINI_GAME_GOALTENDING_ITEMS : MINI_GAME_OFFENSE_ITEMS}
                 progression={miniGameWeekly?.progression ?? null}
               />
               {miniGameWeekly && (
@@ -215,20 +245,40 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                   <thead>
                     <tr className="text-xs text-muted uppercase tracking-wide text-left">
                       <th className="py-2 pr-4">Date</th>
-                      <th className="py-2 pr-4">Goals</th>
-                      <th className="py-2 pr-4">Assists</th>
-                      <th className="py-2 pr-4">Points</th>
-                      <th className="py-2 pr-4">Shots</th>
+                      {player.position === "GOALIE" ? (
+                        <>
+                          <th className="py-2 pr-4">Saves</th>
+                          <th className="py-2 pr-4">Goals Against</th>
+                          <th className="py-2 pr-4">Shots Against</th>
+                        </>
+                      ) : (
+                        <>
+                          <th className="py-2 pr-4">Goals</th>
+                          <th className="py-2 pr-4">Assists</th>
+                          <th className="py-2 pr-4">Points</th>
+                          <th className="py-2 pr-4">Shots</th>
+                        </>
+                      )}
                     </tr>
                   </thead>
                   <tbody>
                     {[...miniGameEntries].reverse().map((e) => (
                       <tr key={e.id} className="border-t border-border">
                         <td className="py-2 pr-4 text-muted">{e.label}</td>
-                        <td className="py-2 pr-4">{e.stat.goals}</td>
-                        <td className="py-2 pr-4">{e.stat.assists}</td>
-                        <td className="py-2 pr-4">{points(e.stat)}</td>
-                        <td className="py-2 pr-4">{e.stat.shots}</td>
+                        {player.position === "GOALIE" ? (
+                          <>
+                            <td className="py-2 pr-4">{e.stat.saves}</td>
+                            <td className="py-2 pr-4">{e.stat.goalsAgainst}</td>
+                            <td className="py-2 pr-4">{e.stat.shotsAgainst}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td className="py-2 pr-4">{e.stat.goals}</td>
+                            <td className="py-2 pr-4">{e.stat.assists}</td>
+                            <td className="py-2 pr-4">{points(e.stat)}</td>
+                            <td className="py-2 pr-4">{e.stat.shots}</td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>

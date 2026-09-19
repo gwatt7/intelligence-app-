@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { StatLineFields } from "@/components/forms/StatLineFields";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { zoneEntryPct, zoneExitPct, formatPct, type RawStatLine } from "@/lib/stats";
+import { zoneEntryPct, zoneExitPct, savePct, formatPct, type RawStatLine } from "@/lib/stats";
 import type { ActionResult } from "@/lib/actions/team";
 
 type Player = {
@@ -77,8 +77,17 @@ function PlayerRow({
         <span className="flex items-center gap-3 text-xs text-muted">
           {hasStats ? (
             <>
-              <span>Entry {formatPct(zoneEntryPct(stat!))}</span>
-              <span>Exit {formatPct(zoneExitPct(stat!))}</span>
+              {player.position === "GOALIE" ? (
+                <>
+                  <span>Saves {stat!.saves}</span>
+                  <span>Save% {formatPct(savePct(stat!))}</span>
+                </>
+              ) : (
+                <>
+                  <span>Entry {formatPct(zoneEntryPct(stat!))}</span>
+                  <span>Exit {formatPct(zoneExitPct(stat!))}</span>
+                </>
+              )}
               <Badge tone="positive">Logged</Badge>
             </>
           ) : (
