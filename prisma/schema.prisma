@@ -257,6 +257,12 @@ model MiniGamePlayerStat {
   takeaways   Int @default(0)
   giveaways   Int @default(0)
 
+  // Faceoffs (only meaningful when player.position === FORWARD) — Total
+  // Faceoffs and Faceoff % are always derived from these two raw counts
+  // (see lib/stats.ts), never stored, so they can never drift out of sync.
+  faceoffsWon  Int @default(0)
+  faceoffsLost Int @default(0)
+
   // Goaltending (only meaningful when player.position === GOALIE)
   shotsAgainst Int @default(0)
   goalsAgainst Int @default(0)
@@ -352,6 +358,12 @@ model GamePlayerStat {
   blocks      Int @default(0)
   takeaways   Int @default(0)
   giveaways   Int @default(0)
+
+  // Faceoffs (only meaningful when player.position === FORWARD) — Total
+  // Faceoffs and Faceoff % are always derived from these two raw counts
+  // (see lib/stats.ts), never stored, so they can never drift out of sync.
+  faceoffsWon  Int @default(0)
+  faceoffsLost Int @default(0)
 
   // Goaltending
   shotsAgainst Int @default(0)

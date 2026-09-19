@@ -23,6 +23,11 @@ export interface RawStatLine {
   takeaways: number;
   giveaways: number;
 
+  // Forwards only — see faceoffPct()/totalFaceoffs() below. Left at 0 for
+  // non-forwards, same as every other stat a position doesn't use.
+  faceoffsWon: number;
+  faceoffsLost: number;
+
   shotsAgainst: number;
   goalsAgainst: number;
   saves: number;
@@ -44,6 +49,8 @@ export const EMPTY_STAT_LINE: RawStatLine = {
   blocks: 0,
   takeaways: 0,
   giveaways: 0,
+  faceoffsWon: 0,
+  faceoffsLost: 0,
   shotsAgainst: 0,
   goalsAgainst: 0,
   saves: 0,
@@ -82,6 +89,15 @@ export function points(s: RawStatLine): number {
 
 export function savePct(s: RawStatLine): number | null {
   return pct(s.saves, s.shotsAgainst);
+}
+
+export function totalFaceoffs(s: RawStatLine): number {
+  return s.faceoffsWon + s.faceoffsLost;
+}
+
+/** Faceoffs Won ÷ Total Faceoffs × 100. Forwards only in practice (see StatLineFields), but the formula itself doesn't need to know that — a player with 0 faceoffs taken just has nothing to divide by, same as any other 0-denominator stat, and renders "—" via formatPct rather than NaN/Infinity. */
+export function faceoffPct(s: RawStatLine): number | null {
+  return pct(s.faceoffsWon, totalFaceoffs(s));
 }
 
 /** Sum any number of raw stat lines into one totals line. Percentages must be derived from the sum, never averaged. */
@@ -152,6 +168,7 @@ const CONTRIBUTION_STAT_KEYS: { key: keyof RawStatLine; label: string }[] = [
   { key: "hits", label: "Hits" },
   { key: "blocks", label: "Blocks" },
   { key: "saves", label: "Saves" },
+  { key: "faceoffsWon", label: "Faceoffs Won" },
 ];
 
 export interface StatContribution {
@@ -205,6 +222,15 @@ export const derivedCategories = {
     { key: "takeaways", label: "Takeaways" },
     { key: "giveaways", label: "Giveaways" },
   ],
+  // Forwards only — callers gate rendering on player.position === "FORWARD"
+  // (see app/players/[id]/page.tsx); the category itself has no position
+  // logic, same as goaltending below being gated by the caller.
+  faceoffs: [
+    { key: "faceoffsWon", label: "Faceoffs Won" },
+    { key: "faceoffsLost", label: "Faceoffs Lost" },
+    { key: "totalFaceoffs", label: "Total Faceoffs", derived: true },
+    { key: "faceoffPct", label: "Faceoff %", derived: true, isPct: true },
+  ],
   goaltending: [
     { key: "shotsAgainst", label: "Shots Against" },
     { key: "goalsAgainst", label: "Goals Against" },
@@ -228,6 +254,10 @@ export function getStatValue(s: RawStatLine, key: string): number | null {
       return points(s);
     case "savePct":
       return savePct(s);
+    case "totalFaceoffs":
+      return totalFaceoffs(s);
+    case "faceoffPct":
+      return faceoffPct(s);
     default:
       return (s as unknown as Record<string, number>)[key] ?? null;
   }

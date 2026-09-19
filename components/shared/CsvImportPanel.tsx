@@ -22,6 +22,8 @@ const EXPECTED_COLUMNS = [
   "blocks",
   "takeaways",
   "giveaways",
+  "faceoffsWon",
+  "faceoffsLost",
   "shotsAgainst",
   "goalsAgainst",
   "saves",

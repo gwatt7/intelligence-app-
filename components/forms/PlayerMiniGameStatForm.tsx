@@ -19,11 +19,13 @@ export interface MiniGameOption {
 export function PlayerMiniGameStatForm({
   playerId,
   isGoalie,
+  isForward,
   miniGames,
   statsByMiniGame,
 }: {
   playerId: string;
   isGoalie: boolean;
+  isForward?: boolean;
   miniGames: MiniGameOption[];
   statsByMiniGame: Record<string, RawStatLine>;
 }) {
@@ -56,7 +58,7 @@ export function PlayerMiniGameStatForm({
           ))}
         </Select>
       </Field>
-      <StatLineFields key={selectedId} defaults={statsByMiniGame[selectedId]} isGoalie={isGoalie} />
+      <StatLineFields key={selectedId} defaults={statsByMiniGame[selectedId]} isGoalie={isGoalie} isForward={isForward} />
       <div className="flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save Mini Game Stats"}

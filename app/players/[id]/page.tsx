@@ -30,6 +30,9 @@ const MINI_GAME_DEFENSE_ITEMS = [
   { key: "blocks", label: "Blocks" },
 ] as const;
 
+// Forwards only.
+const MINI_GAME_FACEOFF_ITEMS = [{ key: "faceoffsWon", label: "Faceoffs Won" }] as const;
+
 export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const player = await prisma.player.findUnique({ where: { id } });
@@ -104,6 +107,9 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
               <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
               <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
               <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
+              {player.position === "FORWARD" && (
+                <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
+              )}
               {player.position === "GOALIE" && (
                 <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
               )}
@@ -142,6 +148,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
             <PlayerMiniGameStatForm
               playerId={player.id}
               isGoalie={player.position === "GOALIE"}
+              isForward={player.position === "FORWARD"}
               miniGames={miniGameOptions}
               statsByMiniGame={statsByMiniGame}
             />
@@ -164,6 +171,9 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
 
             <StatCategoryCard title="Mini Game Totals — Offense" items={derivedCategories.offense} stat={miniGameTotals} />
             <StatCategoryCard title="Mini Game Totals — Defense" items={derivedCategories.defense} stat={miniGameTotals} />
+            {player.position === "FORWARD" && (
+              <StatCategoryCard title="Mini Game Totals — Faceoffs" items={derivedCategories.faceoffs} stat={miniGameTotals} />
+            )}
 
             <MiniGameProgressionCard
               title="Mini Game Progression (vs. previous Mini Game)"
@@ -175,6 +185,13 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
               items={MINI_GAME_DEFENSE_ITEMS}
               progression={miniGameProgression}
             />
+            {player.position === "FORWARD" && (
+              <MiniGameProgressionCard
+                title="Mini Game Progression — Faceoffs (vs. previous Mini Game)"
+                items={MINI_GAME_FACEOFF_ITEMS}
+                progression={miniGameProgression}
+              />
+            )}
 
             <div>
               <MiniGameProgressionCard

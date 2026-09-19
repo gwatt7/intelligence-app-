@@ -47,6 +47,8 @@ export const statLineSchema = z
     blocks: nonNegativeInt.default(0),
     takeaways: nonNegativeInt.default(0),
     giveaways: nonNegativeInt.default(0),
+    faceoffsWon: nonNegativeInt.default(0),
+    faceoffsLost: nonNegativeInt.default(0),
     shotsAgainst: nonNegativeInt.default(0),
     goalsAgainst: nonNegativeInt.default(0),
     saves: nonNegativeInt.default(0),

@@ -89,7 +89,7 @@ function PlayerRow({
       </button>
       {open && (
         <form action={formAction} className="px-4 pb-4">
-          <StatLineFields defaults={stat} isGoalie={player.position === "GOALIE"} />
+          <StatLineFields defaults={stat} isGoalie={player.position === "GOALIE"} isForward={player.position === "FORWARD"} />
           <div className="flex items-center gap-3 mt-4">
             <Button type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save Stats"}
