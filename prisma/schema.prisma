@@ -115,10 +115,10 @@ model Player {
   // Simple, configurable Performance Index weights (see lib/performance-index.ts).
   // Stored per-player so future versions can tune weighting per role without a migration.
 
-  miniGameStats MiniGamePlayerStat[]
-  gameStats     GamePlayerStat[]
-  highlights    PlayerHighlight[]
-  seasonStats   PlayerSeasonStat[]
+  miniGameStats        MiniGamePlayerStat[]
+  gameStats            GamePlayerStat[]
+  highlights           PlayerHighlight[]
+  seasonStats          PlayerSeasonStat[]
   weeklyRankingEntries WeeklyRankingEntry[]
 
   createdAt DateTime @default(now())
@@ -267,6 +267,12 @@ model MiniGamePlayerStat {
   shotsAgainst Int @default(0)
   goalsAgainst Int @default(0)
   saves        Int @default(0)
+  kills        Int @default(0)
+
+  // Freeze % is always derived from these two raw counts (see
+  // lib/stats.ts), never stored, same reasoning as Faceoff % above.
+  freezes             Int @default(0)
+  freezeOpportunities Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -369,6 +375,12 @@ model GamePlayerStat {
   shotsAgainst Int @default(0)
   goalsAgainst Int @default(0)
   saves        Int @default(0)
+  kills        Int @default(0)
+
+  // Freeze % is always derived from these two raw counts (see
+  // lib/stats.ts), never stored, same reasoning as Faceoff % above.
+  freezes             Int @default(0)
+  freezeOpportunities Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -516,12 +528,12 @@ model WeeklyRanking {
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
-  weekStart DateTime // Monday 00:00:00 of the ranking week (see WEEKLY_RANKING_TIMEZONE)
-  weekEnd   DateTime // Sunday 23:59:59.999 of the ranking week
+  weekStart  DateTime // Monday 00:00:00 of the ranking week (see WEEKLY_RANKING_TIMEZONE)
+  weekEnd    DateTime // Sunday 23:59:59.999 of the ranking week
   weekNumber Int // 1-based week number within the season, for display (e.g. "Week 4")
 
-  scoringVersion      String // which version of the Performance Index produced this — see lib/weekly-rankings-config.ts
-  minEntriesRequired  Int // the minimum-data threshold in effect when this was computed
+  scoringVersion     String // which version of the Performance Index produced this — see lib/weekly-rankings-config.ts
+  minEntriesRequired Int // the minimum-data threshold in effect when this was computed
 
   archivedAt DateTime @default(now()) // when the Sunday-night job (or a manual run) finalized this week
 

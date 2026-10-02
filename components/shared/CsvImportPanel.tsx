@@ -27,6 +27,9 @@ const EXPECTED_COLUMNS = [
   "shotsAgainst",
   "goalsAgainst",
   "saves",
+  "kills",
+  "freezes",
+  "freezeOpportunities",
 ];
 
 type ImportResult = { ok: true; imported: number; skipped: number[] } | { ok: false; error: string };

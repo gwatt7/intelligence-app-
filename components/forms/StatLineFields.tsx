@@ -21,6 +21,9 @@ type RawStatLine = {
   shotsAgainst: number;
   goalsAgainst: number;
   saves: number;
+  kills: number;
+  freezes: number;
+  freezeOpportunities: number;
 };
 
 type FieldDef = { key: keyof RawStatLine; label: string };
@@ -56,10 +59,16 @@ const FACEOFF_FIELDS: FieldDef[] = [
   { key: "faceoffsLost", label: "Faceoffs Lost" },
 ];
 
+// Freeze % (Freezes ÷ Freeze Opportunities × 100) is always computed from
+// these two counts, never entered directly (see lib/stats.ts) — same
+// pattern as Faceoff % above.
 const GOALIE_FIELDS: FieldDef[] = [
   { key: "shotsAgainst", label: "Shots Against" },
   { key: "goalsAgainst", label: "Goals Against" },
   { key: "saves", label: "Saves" },
+  { key: "kills", label: "Kills" },
+  { key: "freezes", label: "Freezes" },
+  { key: "freezeOpportunities", label: "Freeze Opportunities" },
 ];
 
 /**

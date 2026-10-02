@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries } from "@/lib/player-analytics";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points } from "@/lib/stats";
+import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
 import { TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
@@ -38,6 +38,8 @@ const MINI_GAME_GOALTENDING_ITEMS = [
   { key: "saves", label: "Saves" },
   { key: "goalsAgainst", label: "Goals Against" },
   { key: "shotsAgainst", label: "Shots Against" },
+  { key: "kills", label: "Kills" },
+  { key: "freezes", label: "Freezes" },
 ] as const;
 
 export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -250,6 +252,8 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                           <th className="py-2 pr-4">Saves</th>
                           <th className="py-2 pr-4">Goals Against</th>
                           <th className="py-2 pr-4">Shots Against</th>
+                          <th className="py-2 pr-4">Kills</th>
+                          <th className="py-2 pr-4">Freeze %</th>
                         </>
                       ) : (
                         <>
@@ -270,6 +274,14 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                             <td className="py-2 pr-4">{e.stat.saves}</td>
                             <td className="py-2 pr-4">{e.stat.goalsAgainst}</td>
                             <td className="py-2 pr-4">{e.stat.shotsAgainst}</td>
+                            <td className="py-2 pr-4">{e.stat.kills}</td>
+                            <td className="py-2 pr-4">
+                              {formatPct(freezePct(e.stat))}
+                              <span className="text-muted-2">
+                                {" "}
+                                ({e.stat.freezes}/{e.stat.freezeOpportunities})
+                              </span>
+                            </td>
                           </>
                         ) : (
                           <>

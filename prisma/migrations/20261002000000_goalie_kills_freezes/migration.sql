@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "GamePlayerStat" ADD COLUMN     "freezeOpportunities" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "freezes" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "kills" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "MiniGamePlayerStat" ADD COLUMN     "freezeOpportunities" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "freezes" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "kills" INTEGER NOT NULL DEFAULT 0;

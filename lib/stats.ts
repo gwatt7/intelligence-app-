@@ -31,6 +31,12 @@ export interface RawStatLine {
   shotsAgainst: number;
   goalsAgainst: number;
   saves: number;
+  kills: number;
+
+  // Goalies only — see freezePct() below. Freeze % is always derived from
+  // these two, never stored.
+  freezes: number;
+  freezeOpportunities: number;
 }
 
 export const EMPTY_STAT_LINE: RawStatLine = {
@@ -54,6 +60,9 @@ export const EMPTY_STAT_LINE: RawStatLine = {
   shotsAgainst: 0,
   goalsAgainst: 0,
   saves: 0,
+  kills: 0,
+  freezes: 0,
+  freezeOpportunities: 0,
 };
 
 /** Percentage helper. Returns null (not 0) when there's no attempt to divide by, so callers can render "—" instead of a misleading 0%. */
@@ -89,6 +98,11 @@ export function points(s: RawStatLine): number {
 
 export function savePct(s: RawStatLine): number | null {
   return pct(s.saves, s.shotsAgainst);
+}
+
+/** Freezes ÷ Freeze Opportunities × 100. Goalies only in practice (see StatLineFields), same 0-denominator handling as every other derived percentage — renders "—" via formatPct rather than NaN/Infinity when there are no freeze opportunities logged. */
+export function freezePct(s: RawStatLine): number | null {
+  return pct(s.freezes, s.freezeOpportunities);
 }
 
 export function totalFaceoffs(s: RawStatLine): number {
@@ -236,6 +250,10 @@ export const derivedCategories = {
     { key: "goalsAgainst", label: "Goals Against" },
     { key: "saves", label: "Saves" },
     { key: "savePct", label: "Save %", derived: true, isPct: true },
+    { key: "kills", label: "Kills" },
+    { key: "freezes", label: "Freezes" },
+    { key: "freezeOpportunities", label: "Freeze Opportunities" },
+    { key: "freezePct", label: "Freeze %", derived: true, isPct: true },
   ],
 } as const;
 
@@ -258,6 +276,8 @@ export function getStatValue(s: RawStatLine, key: string): number | null {
       return totalFaceoffs(s);
     case "faceoffPct":
       return faceoffPct(s);
+    case "freezePct":
+      return freezePct(s);
     default:
       return (s as unknown as Record<string, number>)[key] ?? null;
   }
