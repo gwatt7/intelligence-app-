@@ -55,6 +55,8 @@ export const statLineSchema = z
     kills: nonNegativeInt.default(0),
     freezes: nonNegativeInt.default(0),
     freezeOpportunities: nonNegativeInt.default(0),
+    wins: nonNegativeInt.default(0),
+    losses: nonNegativeInt.default(0),
   })
   .refine((s) => s.successfulZoneEntries <= s.zoneEntries, {
     message: "Successful zone entries can't exceed total zone entries",

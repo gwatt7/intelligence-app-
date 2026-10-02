@@ -30,6 +30,8 @@ const EXPECTED_COLUMNS = [
   "kills",
   "freezes",
   "freezeOpportunities",
+  "wins",
+  "losses",
 ];
 
 type ImportResult = { ok: true; imported: number; skipped: number[] } | { ok: false; error: string };

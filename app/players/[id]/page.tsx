@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries } from "@/lib/player-analytics";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, formatPct } from "@/lib/stats";
+import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
 import { TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
@@ -40,6 +40,8 @@ const MINI_GAME_GOALTENDING_ITEMS = [
   { key: "shotsAgainst", label: "Shots Against" },
   { key: "kills", label: "Kills" },
   { key: "freezes", label: "Freezes" },
+  { key: "wins", label: "Wins" },
+  { key: "losses", label: "Losses" },
 ] as const;
 
 export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -254,6 +256,7 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                           <th className="py-2 pr-4">Shots Against</th>
                           <th className="py-2 pr-4">Kills</th>
                           <th className="py-2 pr-4">Freeze %</th>
+                          <th className="py-2 pr-4">Win %</th>
                         </>
                       ) : (
                         <>
@@ -280,6 +283,13 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
                               <span className="text-muted-2">
                                 {" "}
                                 ({e.stat.freezes}/{e.stat.freezeOpportunities})
+                              </span>
+                            </td>
+                            <td className="py-2 pr-4">
+                              {formatPct(winPct(e.stat))}
+                              <span className="text-muted-2">
+                                {" "}
+                                ({e.stat.wins}/{e.stat.wins + e.stat.losses})
                               </span>
                             </td>
                           </>

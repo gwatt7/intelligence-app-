@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "GamePlayerStat" ADD COLUMN     "losses" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "wins" INTEGER NOT NULL DEFAULT 0;
+
+-- AlterTable
+ALTER TABLE "MiniGamePlayerStat" ADD COLUMN     "losses" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "wins" INTEGER NOT NULL DEFAULT 0;

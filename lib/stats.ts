@@ -37,6 +37,11 @@ export interface RawStatLine {
   // these two, never stored.
   freezes: number;
   freezeOpportunities: number;
+
+  // Goalies only — see winPct() below. Win % is always derived from these
+  // two, never stored.
+  wins: number;
+  losses: number;
 }
 
 export const EMPTY_STAT_LINE: RawStatLine = {
@@ -63,6 +68,8 @@ export const EMPTY_STAT_LINE: RawStatLine = {
   kills: 0,
   freezes: 0,
   freezeOpportunities: 0,
+  wins: 0,
+  losses: 0,
 };
 
 /** Percentage helper. Returns null (not 0) when there's no attempt to divide by, so callers can render "—" instead of a misleading 0%. */
@@ -103,6 +110,11 @@ export function savePct(s: RawStatLine): number | null {
 /** Freezes ÷ Freeze Opportunities × 100. Goalies only in practice (see StatLineFields), same 0-denominator handling as every other derived percentage — renders "—" via formatPct rather than NaN/Infinity when there are no freeze opportunities logged. */
 export function freezePct(s: RawStatLine): number | null {
   return pct(s.freezes, s.freezeOpportunities);
+}
+
+/** Wins ÷ (Wins + Losses) × 100. Goalies only in practice (see StatLineFields), same 0-denominator handling as every other derived percentage — renders "—" via formatPct rather than NaN/Infinity when no decisions are logged. */
+export function winPct(s: RawStatLine): number | null {
+  return pct(s.wins, s.wins + s.losses);
 }
 
 export function totalFaceoffs(s: RawStatLine): number {
@@ -254,6 +266,9 @@ export const derivedCategories = {
     { key: "freezes", label: "Freezes" },
     { key: "freezeOpportunities", label: "Freeze Opportunities" },
     { key: "freezePct", label: "Freeze %", derived: true, isPct: true },
+    { key: "wins", label: "Wins" },
+    { key: "losses", label: "Losses" },
+    { key: "winPct", label: "Win %", derived: true, isPct: true },
   ],
 } as const;
 
@@ -278,6 +293,8 @@ export function getStatValue(s: RawStatLine, key: string): number | null {
       return faceoffPct(s);
     case "freezePct":
       return freezePct(s);
+    case "winPct":
+      return winPct(s);
     default:
       return (s as unknown as Record<string, number>)[key] ?? null;
   }

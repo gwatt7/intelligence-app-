@@ -274,6 +274,11 @@ model MiniGamePlayerStat {
   freezes             Int @default(0)
   freezeOpportunities Int @default(0)
 
+  // Win % is always derived from these two raw counts (see lib/stats.ts),
+  // never stored, same reasoning as Faceoff %/Freeze % above.
+  wins   Int @default(0)
+  losses Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -381,6 +386,11 @@ model GamePlayerStat {
   // lib/stats.ts), never stored, same reasoning as Faceoff % above.
   freezes             Int @default(0)
   freezeOpportunities Int @default(0)
+
+  // Win % is always derived from these two raw counts (see lib/stats.ts),
+  // never stored, same reasoning as Faceoff %/Freeze % above.
+  wins   Int @default(0)
+  losses Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
