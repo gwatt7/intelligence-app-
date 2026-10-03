@@ -4,8 +4,8 @@ import { format, differenceInCalendarDays } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { gameMatchupLabel, gameArenaLabel, gameCityStateLabel, gameTimeLabel } from "@/lib/game-display";
-import { flatPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
-import { OpponentLogo } from "@/components/games/OpponentLogo";
+import { flatPanel, accentSurface, AccentGlowCorner, initials } from "@/components/dashboard/dashboardCardStyles";
+import { getOpponentLogo } from "@/lib/opponent-logos";
 
 interface GameLite {
   id: string;
@@ -22,9 +22,14 @@ interface GameLite {
 
 /** Dashboard-only "Next Game" hero card — real schedule data in, the gold
  * accent border marking it as the featured card of the row, per the
- * reference. The opponent side shows that team's real logo when one has
- * been supplied (see lib/opponent-logos.ts via OpponentLogo), falling back
- * to a text monogram otherwise — never a guessed or generic logo. */
+ * reference. Both team marks render free-floating directly over the
+ * background photo (no circle/box container) — the opponent side shows
+ * that team's real logo when one has been supplied (see
+ * lib/opponent-logos.ts), falling back to a text monogram otherwise, never
+ * a guessed or generic logo. UWS uses a one-off transparent-background cut
+ * of public/uws-logo.png (that file's own canvas is opaque black, which is
+ * fine for the circular badge used everywhere else but would show as a
+ * visible square here); see dashboard/uws-logo-cutout.png. */
 export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }) {
   return (
     <div
@@ -32,29 +37,34 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
       style={accentSurface("var(--accent-border)", "var(--accent-glow)")}
     >
       <AccentGlowCorner glow="var(--accent-glow)" fade="var(--accent-fade)" />
-      {/* Decorative puck photo (user-supplied) filling the card's right side,
-          fading into the card on the left rather than ending in a hard
-          edge, per the reference. */}
+      {/* Decorative puck photo (user-supplied) filling the card's right side
+          top-to-bottom, fading into the card on the left rather than
+          ending in a hard-edged box, per the reference. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute right-0 bottom-0 top-[42%] w-[52%] opacity-90"
+        className="pointer-events-none absolute inset-y-0 right-0 w-[58%] opacity-90"
         style={{
-          maskImage: "linear-gradient(to left, black 50%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to left, black 50%, transparent 100%)",
+          maskImage: "linear-gradient(to left, black 45%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to left, black 45%, transparent 100%)",
         }}
       >
-        <Image src="/dashboard/next-game-photo.png" alt="" fill className="object-cover object-bottom" />
+        <Image src="/dashboard/next-game-photo.png" alt="" fill className="object-cover" />
       </div>
 
       <h3 className="relative text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">Next Game</h3>
 
       {game ? (
         <div className="relative mt-3 flex-1 flex flex-col justify-between">
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            <div className="flex flex-col items-center gap-1.5 min-w-0">
-              <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-surface-raised border border-border flex items-center justify-center shrink-0">
-                <Image src="/uws-logo.png" alt="" width={36} height={36} className="object-contain" />
-              </div>
+          <div className="flex items-center justify-center gap-6 sm:gap-8">
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              <Image
+                src="/dashboard/uws-logo-cutout.png"
+                alt=""
+                width={80}
+                height={80}
+                className="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0"
+                style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
+              />
               <span className="text-xs font-semibold text-foreground">UWS</span>
             </div>
 
@@ -62,8 +72,27 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
               {game.homeAway === "AWAY" ? "@" : "vs"}
             </span>
 
-            <div className="flex flex-col items-center gap-1.5 min-w-0">
-              <OpponentLogo opponent={game.opponent} className="h-14 w-14 sm:h-16 sm:w-16" />
+            <div className="flex flex-col items-center gap-2 min-w-0">
+              {(() => {
+                const logo = getOpponentLogo(game.opponent);
+                return logo ? (
+                  <Image
+                    src={logo}
+                    alt=""
+                    width={80}
+                    height={80}
+                    className="h-16 w-16 sm:h-20 sm:w-20 object-contain shrink-0"
+                    style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
+                  />
+                ) : (
+                  <span
+                    className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center shrink-0 text-xl font-bold text-foreground"
+                    style={{ filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
+                  >
+                    {initials(game.opponent)}
+                  </span>
+                );
+              })()}
               <span className="text-xs font-semibold text-foreground truncate max-w-[7rem] text-center">
                 {game.opponent}
               </span>
