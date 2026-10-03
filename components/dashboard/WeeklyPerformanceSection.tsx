@@ -1,7 +1,8 @@
 import Image from "next/image";
+import { Calendar } from "lucide-react";
 import { ButtonLink } from "@/components/ui/Button";
 import { WeeklyPerformerRow, MEDALS } from "@/components/dashboard/WeeklyPerformerRow";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { flatPanel, accentSurface } from "@/components/dashboard/dashboardCardStyles";
 import type { WeeklyRankingResult } from "@/lib/weekly-rankings";
 
 /** Dashboard-only cinematic banner around the weekly rankings, using the
@@ -18,12 +19,7 @@ export function WeeklyPerformanceSection({
   const hasRankings = !!result && (result.top.length > 0 || result.bottom.length > 0);
 
   return (
-    <div className={`${glassPanel} p-5 sm:p-6`}>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-16 -bottom-20 h-64 w-64 rounded-full opacity-[0.12] blur-3xl"
-        style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
-      />
+    <div className={`${flatPanel} p-5 sm:p-6`} style={accentSurface("var(--accent-border)", "var(--accent-glow)")}>
       <div
         aria-hidden
         className="pointer-events-none absolute inset-y-0 right-0 w-2/3 sm:w-1/2 opacity-30"
@@ -35,24 +31,28 @@ export function WeeklyPerformanceSection({
         <Image src="/dashboard/weekly-banner-photo.png" alt="" fill className="object-cover" />
       </div>
       <div className="relative flex items-start justify-between gap-3 mb-4 flex-wrap">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong flex items-center gap-1.5">
-            <span aria-hidden>📅</span>
-            {result ? `Week ${result.weekNumber} — Current` : "This Week's Performers"}
-          </p>
-          <p className="text-xs text-muted-2 mt-1">
-            Official games only · auto-updates as stats are logged · archives every Sunday night
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/15 text-accent-strong shrink-0">
+            <Calendar className="h-[18px] w-[18px]" strokeWidth={2} />
+          </span>
+          <div>
+            <p className="text-lg font-bold text-foreground leading-tight">
+              {result ? `Week ${result.weekNumber} — Current` : "This Week's Performers"}
+            </p>
+            <p className="text-xs text-muted-2 mt-1">
+              Official games only · auto-updates as stats are logged · archives every Sunday night
+            </p>
+          </div>
         </div>
-        <ButtonLink href={historyHref} variant="secondary" className="!px-3 !py-1.5 text-xs shrink-0">
+        <ButtonLink href={historyHref} variant="secondary" className="!rounded-full !px-4 !py-1.5 text-xs shrink-0">
           View Full Rankings
         </ButtonLink>
       </div>
 
-      <div className="relative">
+      <div className="relative border-t border-border pt-4">
         {!hasRankings ? (
           <p className="text-sm text-muted flex items-center gap-1.5">
-            <span aria-hidden>📅</span>
+            <Calendar className="h-4 w-4 shrink-0 text-muted-2" strokeWidth={2} aria-hidden />
             {result && result.insufficientData.length > 0
               ? `Not enough data yet this week — ${result.insufficientData.length} player(s) below the ${result.minEntriesRequired}-entry minimum.`
               : "No official game stats logged yet this week."}

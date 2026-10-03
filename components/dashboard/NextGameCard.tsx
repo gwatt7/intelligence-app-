@@ -1,9 +1,10 @@
 import Image from "next/image";
+import { Calendar } from "lucide-react";
 import { format, differenceInCalendarDays } from "date-fns";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { gameMatchupLabel, gameArenaLabel, gameCityStateLabel, gameTimeLabel } from "@/lib/game-display";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { flatPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 import { OpponentLogo } from "@/components/games/OpponentLogo";
 
 interface GameLite {
@@ -19,29 +20,33 @@ interface GameLite {
   tournamentName: string | null;
 }
 
-/** Dashboard-only "Next Game" hero card — real schedule data in, with the user-supplied hockey-arena photo as a full-card background. The opponent side shows that team's real logo when one has been supplied (see lib/opponent-logos.ts via OpponentLogo), falling back to a text monogram otherwise — never a guessed or generic logo. */
+/** Dashboard-only "Next Game" hero card — real schedule data in, the gold
+ * accent border marking it as the featured card of the row, per the
+ * reference. The opponent side shows that team's real logo when one has
+ * been supplied (see lib/opponent-logos.ts via OpponentLogo), falling back
+ * to a text monogram otherwise — never a guessed or generic logo. */
 export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }) {
   return (
-    <div className={`${glassPanel} p-5 sm:p-6 lg:col-span-2 min-h-[250px] flex flex-col`}>
+    <div
+      className={`${flatPanel} p-5 sm:p-6 lg:col-span-2 min-h-[250px] flex flex-col`}
+      style={accentSurface("var(--accent-border)", "var(--accent-glow)")}
+    >
+      <AccentGlowCorner glow="var(--accent-glow)" fade="var(--accent-fade)" />
+      {/* Decorative puck photo (user-supplied) filling the card's right side,
+          fading into the card on the left rather than ending in a hard
+          edge, per the reference. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full opacity-20 blur-3xl"
-        style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
-      />
-      {/* Full-card hockey-arena photo background (user-supplied), with a
-          left-to-right dark gradient so the real matchup content stays
-          readable while the image remains the dominant visual. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <Image src="/dashboard/games-card-bg.png" alt="" fill className="object-cover" />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(10,10,10,0.82) 0%, rgba(10,10,10,0.55) 45%, rgba(10,10,10,0.22) 75%, rgba(10,10,10,0.1) 100%)",
-          }}
-        />
+        className="pointer-events-none absolute right-0 bottom-0 top-[42%] w-[52%] opacity-90"
+        style={{
+          maskImage: "linear-gradient(to left, black 50%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to left, black 50%, transparent 100%)",
+        }}
+      >
+        <Image src="/dashboard/next-game-photo.png" alt="" fill className="object-cover object-bottom" />
       </div>
-      <p className="relative text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">Next Game</p>
+
+      <h3 className="relative text-xs font-semibold uppercase tracking-[0.2em] text-accent-strong">Next Game</h3>
 
       {game ? (
         <div className="relative mt-3 flex-1 flex flex-col justify-between">
@@ -53,7 +58,7 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
               <span className="text-xs font-semibold text-foreground">UWS</span>
             </div>
 
-            <span className="text-sm font-medium text-muted-2 shrink-0">
+            <span className="text-sm font-medium text-muted-2 shrink-0 uppercase">
               {game.homeAway === "AWAY" ? "@" : "vs"}
             </span>
 
@@ -67,9 +72,12 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
 
           <div className="mt-4 flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-sm text-foreground font-medium flex items-center gap-1.5">
-                <span aria-hidden>📅</span>
+              <p className="text-sm text-foreground font-medium flex items-center gap-1.5 flex-wrap">
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-muted" strokeWidth={2} aria-hidden />
                 {format(game.date, "EEE, MMM d")} · {gameTimeLabel(game)}
+                <Badge tone="accent" className="ml-1">
+                  In {Math.max(differenceInCalendarDays(game.date, now), 0)}d
+                </Badge>
               </p>
               {gameArenaLabel(game) && <p className="text-xs text-muted mt-0.5 truncate">{gameArenaLabel(game)}</p>}
               {gameCityStateLabel(game) && <p className="text-xs text-muted-2 truncate">{gameCityStateLabel(game)}</p>}
@@ -79,12 +87,13 @@ export function NextGameCard({ game, now }: { game: GameLite | null; now: Date }
                 </Badge>
               )}
             </div>
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              <Badge tone="accent">In {Math.max(differenceInCalendarDays(game.date, now), 0)}d</Badge>
-              <ButtonLink href={`/games/${game.id}`} variant="primary" className="!px-3 !py-1.5 text-xs">
-                View →
-              </ButtonLink>
-            </div>
+            <ButtonLink
+              href={`/games/${game.id}`}
+              variant="primary"
+              className="!rounded-full !px-4 !py-1.5 text-xs shrink-0"
+            >
+              View →
+            </ButtonLink>
           </div>
         </div>
       ) : (

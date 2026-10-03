@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { PlayerCutout } from "@/components/players/PlayerPhoto";
-import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
+import { flatPanel } from "@/components/dashboard/dashboardCardStyles";
 import type { StatContribution } from "@/lib/stats";
 
 interface SpotlightPlayer {
@@ -11,14 +12,15 @@ interface SpotlightPlayer {
 }
 
 /**
- * Dashboard "Top Performer" card — GOLD is this card's fixed identity
- * accent (never swapped for green/red); green is used only for each
- * individual contribution's ↑ indicator. Two instances of this same
- * component are used on the Dashboard — one fed Official-Game data, one
- * fed Mini-Game data — each with its own completely independent player
- * selection and contributions, computed by lib/player-analytics.ts and
- * lib/mini-game-analytics.ts respectively. This component itself has no
- * calculation logic of its own; it only renders what it's given.
+ * Dashboard "Top Performer" tile — sized and styled to sit in the same
+ * Performance Snapshot row as Team Trend / Most Improved / Needs Attention,
+ * per the reference. Two instances are used on the Dashboard — one fed
+ * Official-Game data, one fed Mini-Game data — each with its own
+ * independent player selection and contributions, computed by
+ * lib/player-analytics.ts and lib/mini-game-analytics.ts respectively, and
+ * each still shown (distinguished by `label`) so neither ranking is lost.
+ * This component has no calculation logic of its own; it only renders the
+ * single top contribution it's given.
  */
 export function TopPerformerSpotlightCard({
   label,
@@ -31,55 +33,39 @@ export function TopPerformerSpotlightCard({
   contributions: StatContribution[];
   emptyMessage: string;
 }) {
+  const topContribution = contributions[0];
+
   return (
-    <div
-      className={`${glassPanel} p-4 sm:p-5 min-h-[220px]`}
-      style={accentSurface("var(--accent-border)", "var(--accent-glow)")}
-    >
-      <AccentGlowCorner glow="var(--accent-glow)" fade="var(--accent-fade)" />
+    <div className={`${flatPanel} p-4 sm:p-5 min-h-[150px] flex flex-col`}>
       {player && (
-        <div className="absolute right-0 top-0 bottom-0 w-28 sm:w-32">
+        <div className="absolute right-0 top-0 bottom-0 w-14 sm:w-16">
           <PlayerCutout photoUrl={player.photoUrl} className="h-full w-full" />
-          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/55 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-surface via-surface/50 to-transparent" />
         </div>
       )}
 
-      <div className="relative flex items-start gap-2 mb-3 pr-24 sm:pr-28">
-        <span
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0 bg-accent/15 text-accent-strong border"
-          style={{
-            borderColor: "var(--accent-border)",
-            boxShadow: "0 0 10px -1px var(--accent-glow), inset 0 0 6px -1px var(--accent-glow)",
-          }}
-        >
-          🏆
+      <div className="relative flex items-start gap-2 mb-3 pr-12 sm:pr-14">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg shrink-0 bg-[color:var(--data-teal-bg)] text-[color:var(--data-teal)]">
+          <Users className="h-4 w-4" strokeWidth={2} />
         </span>
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-2 leading-tight">{label}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-2 leading-tight pt-1">{label}</p>
       </div>
 
       {player ? (
-        <Link href={`/players/${player.playerId}`} className="relative block pr-24 sm:pr-28 hover:opacity-90 transition-opacity">
+        <Link
+          href={`/players/${player.playerId}`}
+          className="relative block pr-12 sm:pr-14 hover:opacity-90 transition-opacity"
+        >
           <p className="text-base font-bold text-foreground truncate">
             #{player.jerseyNumber} {player.name}
           </p>
-
-          <div className="mt-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-2 mb-1.5">Top Contributions</p>
-            {contributions.length > 0 ? (
-              <ul className="space-y-1">
-                {contributions.map((c) => (
-                  <li key={c.key} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-muted truncate">{c.label}</span>
-                    <span className="font-mono font-semibold text-positive shrink-0">
-                      ↑ {(c.progression.pct ?? 0).toFixed(1)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-xs text-muted">Not enough data yet to show top contributions.</p>
-            )}
-          </div>
+          {topContribution ? (
+            <p className="text-xs text-positive font-mono mt-1">
+              ↑ {topContribution.label} {(topContribution.progression.pct ?? 0).toFixed(1)}%
+            </p>
+          ) : (
+            <p className="text-xs text-muted mt-1">Not enough data yet.</p>
+          )}
         </Link>
       ) : (
         <p className="relative text-sm text-muted">{emptyMessage}</p>

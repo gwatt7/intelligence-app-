@@ -3,17 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { href: "/", label: "Dashboard", icon: "🏠" },
-  { href: "/team", label: "Team", icon: "👥" },
-  { href: "/players", label: "Players", icon: "👤" },
-  { href: "/mini-games", label: "Mini Games", icon: "🎮" },
-  { href: "/games", label: "Games", icon: "🥅" },
-  { href: "/analytics", label: "Analytics", icon: "📈" },
-  { href: "/weekly-rankings", label: "Weekly Rankings", icon: "🏆" },
-  { href: "/war-room", label: "War Room", icon: "⚔️" },
+  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/team", label: "Team", icon: Users },
+  { href: "/players", label: "Players", icon: User },
+  { href: "/mini-games", label: "Mini Games", icon: Gamepad2 },
+  { href: "/games", label: "Games", icon: BookOpen },
+  { href: "/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/weekly-rankings", label: "Weekly Rankings", icon: Trophy },
+  { href: "/war-room", label: "War Room", icon: Swords },
 ] as const;
 
 export function Sidebar({
@@ -65,22 +66,23 @@ export function Sidebar({
         </span>
       </Link>
 
-      <nav className="relative flex flex-1 flex-col gap-1 overflow-y-auto p-2">
+      <nav className="relative flex flex-1 flex-col gap-1.5 overflow-y-auto p-3">
         {TABS.map((tab) => {
           const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const Icon = tab.icon;
           return (
             <Link
               key={tab.href}
               href={tab.href}
               title={tab.label}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                 active
-                  ? "bg-gradient-to-r from-accent to-accent/50 text-accent-contrast shadow-[0_0_16px_rgba(252,211,6,0.25)]"
+                  ? "bg-accent text-accent-contrast shadow-[0_0_18px_rgba(252,211,6,0.3)]"
                   : "text-muted hover:text-foreground hover:bg-surface-raised"
               )}
             >
-              <span className="text-base shrink-0">{tab.icon}</span>
+              <Icon className="h-5 w-5 shrink-0" strokeWidth={2} />
               <span className="hidden md:inline truncate">{tab.label}</span>
             </Link>
           );

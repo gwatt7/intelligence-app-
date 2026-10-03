@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { glassPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
+import { flatPanel, accentSurface, AccentGlowCorner } from "@/components/dashboard/dashboardCardStyles";
 
 const ICON_TONES = {
   accent: "bg-accent/15 text-accent-strong",
@@ -10,7 +11,10 @@ const ICON_TONES = {
   neutral: "bg-surface-raised text-muted",
 } as const;
 
-/** Dynamic card border — "teal" for a positive trend, "negative" for a declining one. Colors are display-only, driven by the caller's real calculated value (see app/page.tsx). Paired with AccentGlowCorner below for the corner light-source glow. */
+/** Dynamic card border — "teal" for a positive trend, "negative" for a
+ * declining one. Colors are display-only, driven by the caller's real
+ * calculated value (see app/page.tsx). Paired with AccentGlowCorner below
+ * for the corner light-source glow. */
 const GLOW_STYLE = {
   teal: accentSurface("var(--data-teal-border)", "var(--data-teal-glow)"),
   negative: accentSurface("var(--negative-border)", "var(--negative-glow)"),
@@ -26,24 +30,14 @@ const CORNER_GLOW = {
   negative: { glow: "var(--negative-glow)", fade: "var(--negative-fade)" },
 } as const;
 
-/** Solid glowing trend arrow (Most Improved = up, Needs Attention = down) — decorative only, no data of its own. */
-function TrendArrowGlow({ color, direction }: { color: string; direction: "up" | "down" }) {
-  const d = direction === "up" ? "M8 40 L40 8" : "M8 8 L40 40";
-  const head = direction === "up" ? "M22 8 H40 V26" : "M22 40 H40 V22";
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 48 48"
-      className="pointer-events-none absolute right-3 bottom-3 h-10 w-10 sm:h-12 sm:w-12"
-      style={{ filter: `drop-shadow(0 0 10px ${color})`, opacity: 0.85 }}
-    >
-      <path d={d} stroke={color} strokeWidth="6" strokeLinecap="round" fill="none" />
-      <path d={head} stroke={color} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    </svg>
-  );
-}
-
-/** Dashboard-only premium tile used for the four Performance Snapshot cards. Purely presentational — every value it renders is passed in as children by the caller from the existing ranking/analytics data. `glow` adds the bold colored border + inward edge-fade; `trendArrow` adds the matching glowing up/down arrow shown in the reference design (color follows `glow`). */
+/** Dashboard-only tile used for the Performance Snapshot row. Purely
+ * presentational — every value it renders is passed in as children by the
+ * caller from the existing ranking/analytics data. `glow` adds the colored
+ * border + inward corner glow; `trendArrow` adds the matching up/down
+ * indicator shown in the reference (color follows `glow`); `tealTint`
+ * washes the whole card in a translucent teal fill, matching the
+ * reference's Team Trend card specifically (the other tiles stay flat even
+ * when their own value/arrow is teal-colored). */
 export function SnapshotCard({
   icon,
   label,
@@ -51,6 +45,7 @@ export function SnapshotCard({
   topRight,
   glow,
   trendArrow,
+  tint,
   children,
 }: {
   icon: ReactNode;
@@ -59,15 +54,34 @@ export function SnapshotCard({
   topRight?: ReactNode;
   glow?: keyof typeof GLOW_STYLE;
   trendArrow?: "up" | "down";
+  /** Full translucent background wash in this color, matching the
+   * reference's Team Trend card specifically — the other tiles stay flat
+   * even when their own value/arrow is colored. */
+  tint?: keyof typeof GLOW_STYLE;
   children: ReactNode;
 }) {
+  const ArrowIcon = trendArrow === "up" ? TrendingUp : TrendingDown;
+  const tintBg = { teal: "var(--data-teal-bg)", negative: "var(--negative-bg)" } as const;
   return (
-    <div className={`${glassPanel} p-4 sm:p-5 min-h-[150px]`} style={glow ? GLOW_STYLE[glow] : undefined}>
+    <div
+      className={cn(flatPanel, "p-4 sm:p-5 min-h-[150px]")}
+      style={{
+        ...(glow ? GLOW_STYLE[glow] : undefined),
+        ...(tint ? { backgroundImage: `linear-gradient(160deg, ${tintBg[tint]}, var(--surface) 70%)` } : undefined),
+      }}
+    >
       {glow && <AccentGlowCorner {...CORNER_GLOW[glow]} />}
-      {trendArrow && <TrendArrowGlow color={ARROW_COLOR[glow ?? "teal"]} direction={trendArrow} />}
+      {trendArrow && (
+        <ArrowIcon
+          aria-hidden
+          strokeWidth={1.75}
+          className="pointer-events-none absolute right-3 bottom-3 h-9 w-9 sm:h-10 sm:w-10 opacity-70"
+          style={{ color: ARROW_COLOR[glow ?? "teal"], filter: `drop-shadow(0 0 8px ${ARROW_COLOR[glow ?? "teal"]})` }}
+        />
+      )}
       <div className="relative flex items-start justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg text-sm shrink-0", ICON_TONES[tone])}>
+          <span className={cn("flex h-7 w-7 items-center justify-center rounded-lg shrink-0", ICON_TONES[tone])}>
             {icon}
           </span>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-2 truncate">{label}</p>

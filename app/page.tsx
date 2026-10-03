@@ -1,3 +1,4 @@
+import { BarChart3, Star, Target } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { metricValue, change } from "@/lib/team-analytics";
@@ -114,16 +115,38 @@ export default async function DashboardPage() {
           <NextMiniGameCard miniGame={nextMiniGame} />
         </div>
 
-        {/* Performance snapshot */}
+        {/* Performance snapshot — one row, per the reference. Top Performer —
+            Games and Top Performer — Mini Games are two completely
+            independent tiles, each fed by its own data source and
+            calculation (Official Games / Mini Games), never mixed; both
+            stay visible alongside Team Trend / Most Improved / Needs
+            Attention so neither ranking is lost. */}
         <div>
-          <h2 className="text-sm font-medium text-muted mb-2.5">Performance Snapshot</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-foreground mb-3">
+            Performance Snapshot
+          </h2>
 
-          {/* Top Performer — Games and Top Performer — Mini Games: two
-              completely independent gold-accented cards, each fed by its own
-              data source and calculation (Official Games / Mini Games), never
-              mixed. Green is used only for each card's individual "top
-              contribution" increases, never the card's own identity color. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+            <SnapshotCard
+              icon={<BarChart3 className="h-4 w-4" strokeWidth={2} />}
+              label="Team Trend"
+              tone="teal"
+              glow={teamTrendGlow ?? undefined}
+              tint={teamTrendGlow ?? "teal"}
+              topRight={
+                teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
+              }
+            >
+              {teamTrend !== null ? (
+                <p className="text-2xl font-bold" style={{ color: teamTrendColor }}>
+                  {formatChange(teamTrend)}
+                </p>
+              ) : (
+                <TrendBadge value={teamTrend} />
+              )}
+              <p className="text-xs text-muted mt-2">vs. last 5 games</p>
+            </SnapshotCard>
+
             <TopPerformerSpotlightCard
               label="Top Performer — Games"
               player={topPerformer ? { ...topPerformer } : null}
@@ -136,29 +159,8 @@ export default async function DashboardPage() {
               contributions={miniGameContributions}
               emptyMessage="No Mini Games logged yet."
             />
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
-            <SnapshotCard
-              icon="📊"
-              label="Team Trend"
-              tone="accent"
-              glow={teamTrendGlow ?? undefined}
-              topRight={
-                teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
-              }
-            >
-              {teamTrend !== null ? (
-                <p className="text-2xl font-bold" style={{ color: teamTrendColor }}>
-                  {formatChange(teamTrend)}
-                </p>
-              ) : (
-                <TrendBadge value={teamTrend} />
-              )}
-              <p className="text-xs text-muted mt-2">Zone entry/exit, last 5 vs. season</p>
-            </SnapshotCard>
-
-            <SnapshotCard icon="⭐" label="Most Improved" tone="accent" glow="teal" trendArrow="up">
+            <SnapshotCard icon={<Star className="h-4 w-4" strokeWidth={2} />} label="Most Improved" tone="accent" glow="teal" trendArrow="up">
               {mostImproved ? (
                 <>
                   <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
@@ -173,7 +175,7 @@ export default async function DashboardPage() {
               )}
             </SnapshotCard>
 
-            <SnapshotCard icon="🎯" label="Needs Attention" tone="negative" glow="negative" trendArrow="down">
+            <SnapshotCard icon={<Target className="h-4 w-4" strokeWidth={2} />} label="Needs Attention" tone="negative" glow="negative" trendArrow="down">
               {needsAttention ? (
                 <>
                   <p className="text-sm font-semibold text-foreground truncate">

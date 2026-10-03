@@ -1,20 +1,26 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { glassPanel } from "@/components/dashboard/dashboardCardStyles";
+import { Gamepad2 } from "lucide-react";
+import { flatPanel } from "@/components/dashboard/dashboardCardStyles";
 
 interface MiniGameLite {
   id: string;
   date: Date;
 }
 
-/** Dashboard-only "Next Mini Game" card — reads the same Mini Game schedule data as the Mini Games tab; shows the existing empty state when none is scheduled. */
+/** Dashboard-only "Next Mini Game" card — reads the same Mini Game schedule
+ * data as the Mini Games tab; shows the existing empty state when none is
+ * scheduled. */
 export function NextMiniGameCard({ miniGame }: { miniGame: MiniGameLite | null }) {
   return (
-    <div className={`${glassPanel} p-5 flex flex-col min-h-[250px]`}>
-      <span aria-hidden className="pointer-events-none absolute -right-3 -bottom-3 text-8xl opacity-[0.07] select-none">
-        🎮
-      </span>
-      <p className="relative text-xs font-semibold uppercase tracking-[0.2em] text-muted-2">Next Mini Game</p>
+    <div className={`${flatPanel} p-5 flex flex-col min-h-[250px]`}>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute right-5 bottom-5 h-24 w-24 rounded-2xl border border-border flex items-center justify-center"
+      >
+        <Gamepad2 strokeWidth={1.5} className="h-11 w-11 text-muted-2 opacity-60 select-none" />
+      </div>
+      <h3 className="relative text-xs font-semibold tracking-wide text-foreground">Next Mini Game</h3>
 
       {miniGame ? (
         <Link
