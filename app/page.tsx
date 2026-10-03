@@ -6,7 +6,6 @@ import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
 import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
 import { getGameStatContributions } from "@/lib/player-analytics";
-import { getMiniGameTopPerformer, getMiniGameStatContributions } from "@/lib/mini-game-analytics";
 import { formatChange, zoneEntryPct, zoneExitPct } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -82,18 +81,11 @@ export default async function DashboardPage() {
   const topPerformer = rankings.topPerformanceIndex[0];
   const mostImproved = rankings.mostImproved[0];
 
-  // Top Performer — Games and Top Performer — Mini Games are two completely
-  // independent picks with their own independent "why" (top 3 contributing
-  // stats). Games reuses the existing Performance-Index ranking above;
-  // Mini Games has its own ranking in lib/mini-game-analytics.ts. Neither
-  // calculation ever reads the other's data.
-  const [gameContributions, miniGameTopPerformer] = await Promise.all([
-    topPerformer ? getGameStatContributions(topPerformer.playerId) : Promise.resolve([]),
-    getMiniGameTopPerformer(season.id),
-  ]);
-  const miniGameContributions = miniGameTopPerformer
-    ? await getMiniGameStatContributions(miniGameTopPerformer.playerId)
-    : [];
+  // Top Performer reuses the existing Performance-Index ranking above (the
+  // Dashboard's Top Performer card shows Official-Game data only; the
+  // separate Mini-Game top-performer ranking in lib/mini-game-analytics.ts
+  // is untouched and still computed/used elsewhere, just not surfaced here).
+  const gameContributions = topPerformer ? await getGameStatContributions(topPerformer.playerId) : [];
 
   const lastGameResult =
     lastGame && lastGame.ourScore !== null && lastGame.opponentScore !== null
@@ -114,25 +106,22 @@ export default async function DashboardPage() {
           <NextMiniGameCard miniGame={nextMiniGame} />
         </div>
 
-        {/* Performance snapshot — one row. Top Performer — Games and Top
-            Performer — Mini Games are two completely independent tiles,
-            each fed by its own data source and calculation (Official Games
-            / Mini Games), never mixed; both stay visible so neither
-            ranking is lost, each given extra width (lg:col-span-2 of 6) so
-            the player graphic has real room. */}
+        {/* Performance snapshot — one row of three equal cards, matching the
+            reference. Top Performer shows Official-Game data; the separate
+            Mini-Game top-performer ranking is untouched in
+            lib/mini-game-analytics.ts but isn't surfaced on the Dashboard. */}
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-foreground mb-3">
             Performance Snapshot
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             <SnapshotCard
               icon={<BarChart3 className="h-4 w-4" strokeWidth={2} />}
               label="Team Trend"
               tone="teal"
               glow={teamTrendGlow ?? undefined}
               tint={teamTrendGlow ?? "teal"}
-              className="lg:col-span-1"
               topRight={
                 teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
               }
@@ -148,18 +137,10 @@ export default async function DashboardPage() {
             </SnapshotCard>
 
             <TopPerformerSpotlightCard
-              label="Top Performer — Games"
+              label="Top Performer"
               player={topPerformer ? { ...topPerformer } : null}
               contributions={gameContributions}
               emptyMessage="No official game data yet."
-              className="lg:col-span-2"
-            />
-            <TopPerformerSpotlightCard
-              label="Top Performer — Mini Games"
-              player={miniGameTopPerformer ? { ...miniGameTopPerformer } : null}
-              contributions={miniGameContributions}
-              emptyMessage="No Mini Games logged yet."
-              className="lg:col-span-2"
             />
 
             <SnapshotCard
@@ -168,7 +149,6 @@ export default async function DashboardPage() {
               tone="accent"
               glow="teal"
               trendArrow="up"
-              className="lg:col-span-1"
             >
               {mostImproved ? (
                 <>

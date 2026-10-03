@@ -1,11 +1,14 @@
-// Shared visual tokens for the Dashboard-only card look — a flat, near-black
-// panel with a thin border and a small, contained corner glow, matching the
-// reference design (no large blurred "neon" blobs spilling outside the
-// card). Kept local to components/dashboard so this styling never touches
-// the shared components/ui/Card used everywhere else in the app — the
-// redesign is scoped to the Dashboard page only.
+// Shared visual tokens for the Dashboard-only card look — a near-black
+// panel with a thin border, a soft top-to-bottom surface gradient, and a
+// small, contained corner glow, matching the reference design's layered,
+// not-flat depth (without the large blurred "neon" blobs spilling outside
+// the card from the pre-redesign look). Kept local to components/dashboard
+// so this styling never touches the shared components/ui/Card used
+// everywhere else in the app — the redesign is scoped to the Dashboard
+// page only.
 
-export const flatPanel = "relative overflow-hidden rounded-2xl border border-border bg-surface";
+export const flatPanel =
+  "relative overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-surface-raised/55 to-surface shadow-[0_6px_22px_rgba(0,0,0,0.3)]";
 
 /** Pre-redesign "glass" panel (gradient surface + deeper shadow) — kept
  * for components/mini-games/MiniGameTeamOverview.tsx, which is outside the
@@ -26,7 +29,7 @@ export const glassPanel =
 export function accentSurface(border: string, glow: string): { borderColor: string; boxShadow: string } {
   return {
     borderColor: border,
-    boxShadow: `0 0 0 1px ${border}, 0 8px 24px -8px ${glow}`,
+    boxShadow: `0 0 0 1px ${border}, 0 10px 34px -8px ${glow}`,
   };
 }
 
@@ -43,7 +46,7 @@ export function AccentGlowCorner({ glow, fade }: { glow: string; fade: string })
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full blur-2xl opacity-80"
+      className="pointer-events-none absolute -right-12 -bottom-12 h-48 w-48 rounded-full blur-2xl opacity-90"
       style={{ background: `radial-gradient(circle, ${glow}, ${fade} 60%, transparent 80%)` }}
     />
   );

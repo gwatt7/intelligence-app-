@@ -6,14 +6,17 @@ import { ButtonLink } from "@/components/ui/Button";
 const anton = Anton({ weight: "400", subsets: ["latin"] });
 
 /**
- * Dashboard-only NORTHSTAR header. A fixed-height image band (the supplied
- * helmet/arena photo, right-aligned, dark-gradient into the wordmark) sits
- * above the rest of the dashboard content, which returns to the page's
- * normal dark background — matching the reference, where only this band
- * carries imagery and everything below it is flat. "NORTH" is solid white,
- * "STAR" is a gold gradient, both in Anton (the closest available
- * athletic/collegiate display font to the reference), with a slight skew
- * for the athletic wordmark look.
+ * Dashboard-only NORTHSTAR header. The hockey-rink photo (dashboard-bg-
+ * arena.jpg) is the Dashboard's background — deliberately separate from
+ * whatever reference mockup informs the UI layout above it — fixed-
+ * attachment so it reads as one continuous photo behind the hero band AND
+ * the cards below, not an image confined to the hero. The hero band itself
+ * keeps the reference's proportions (fixed height, wordmark + subtitle +
+ * season line lower-left, Compare Players pill top-right) with its own
+ * left-to-right gradient over the shared background so the wordmark stays
+ * legible. "NORTH" is solid white, "STAR" is a gold gradient, both in
+ * Anton (the closest available athletic/collegiate display font to the
+ * reference), with a slight skew for the athletic wordmark look.
  */
 export function DashboardHero({
   children,
@@ -25,29 +28,25 @@ export function DashboardHero({
   seasonName: string;
 }) {
   return (
-    <div className="space-y-6">
-      {/* Bleeds out to the edges of <main>'s own padding (mx-4/6, my-6 in
-          app/layout.tsx) and re-applies the same padding inside, so the
-          hero photo fills the content area edge-to-edge at the top without
-          shifting anything below it — only this band, not the whole page. */}
-      <div className="relative -mx-4 sm:-mx-6 -mt-6 px-4 sm:px-6 pt-8 pb-6 sm:pb-8 h-[280px] sm:h-[320px] md:h-[360px] flex flex-col justify-between overflow-hidden">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-cover"
-          style={{ backgroundImage: "url(/dashboard/hero-photo.png)", backgroundPosition: "85% center" }}
-        />
+    // Bleeds out to the edges of <main>'s own padding (mx-4/6, my-6 in
+    // app/layout.tsx) and re-applies the same padding inside, so the rink
+    // photo fills the whole content area edge-to-edge behind everything.
+    <div className="relative -mx-4 sm:-mx-6 -my-6 px-4 sm:px-6 py-6 space-y-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
+        style={{ backgroundImage: "url(/dashboard/dashboard-bg-arena.jpg)", backgroundAttachment: "fixed" }}
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-20 bg-background/55" />
+
+      <div className="relative h-[260px] sm:h-[300px] md:h-[340px] flex flex-col justify-between">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 -z-10"
           style={{
             background:
-              "linear-gradient(90deg, var(--background) 0%, var(--background) 18%, rgba(10,10,10,0.5) 36%, rgba(10,10,10,0.15) 58%, transparent 80%)",
+              "linear-gradient(90deg, var(--background) 0%, var(--background) 15%, rgba(10,10,10,0.55) 40%, rgba(10,10,10,0.2) 65%, transparent 90%)",
           }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10"
-          style={{ background: "linear-gradient(0deg, rgba(10,10,10,0.25) 0%, transparent 15%, transparent 85%, rgba(10,10,10,0.15) 100%)" }}
         />
 
         <div className="relative flex items-start justify-between gap-4">
