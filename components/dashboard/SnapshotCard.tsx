@@ -46,6 +46,7 @@ export function SnapshotCard({
   glow,
   trendArrow,
   tint,
+  className,
   children,
 }: {
   icon: ReactNode;
@@ -58,13 +59,14 @@ export function SnapshotCard({
    * reference's Team Trend card specifically — the other tiles stay flat
    * even when their own value/arrow is colored. */
   tint?: keyof typeof GLOW_STYLE;
+  className?: string;
   children: ReactNode;
 }) {
   const ArrowIcon = trendArrow === "up" ? TrendingUp : TrendingDown;
   const tintBg = { teal: "var(--data-teal-bg)", negative: "var(--negative-bg)" } as const;
   return (
     <div
-      className={cn(flatPanel, "p-4 sm:p-5 min-h-[150px]")}
+      className={cn(flatPanel, "p-4 sm:p-5 min-h-[150px]", className)}
       style={{
         ...(glow ? GLOW_STYLE[glow] : undefined),
         ...(tint ? { backgroundImage: `linear-gradient(160deg, ${tintBg[tint]}, var(--surface) 70%)` } : undefined),

@@ -1,4 +1,4 @@
-import { BarChart3, Star, Target } from "lucide-react";
+import { BarChart3, Star } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { metricValue, change } from "@/lib/team-analytics";
@@ -81,7 +81,6 @@ export default async function DashboardPage() {
   const weeklyRankings = await getCurrentWeekRankings(season.id);
   const topPerformer = rankings.topPerformanceIndex[0];
   const mostImproved = rankings.mostImproved[0];
-  const needsAttention = [...rankings.topPerformanceIndex].sort((a, b) => a.value - b.value)[0];
 
   // Top Performer — Games and Top Performer — Mini Games are two completely
   // independent picks with their own independent "why" (top 3 contributing
@@ -115,24 +114,25 @@ export default async function DashboardPage() {
           <NextMiniGameCard miniGame={nextMiniGame} />
         </div>
 
-        {/* Performance snapshot — one row, per the reference. Top Performer —
-            Games and Top Performer — Mini Games are two completely
-            independent tiles, each fed by its own data source and
-            calculation (Official Games / Mini Games), never mixed; both
-            stay visible alongside Team Trend / Most Improved / Needs
-            Attention so neither ranking is lost. */}
+        {/* Performance snapshot — one row. Top Performer — Games and Top
+            Performer — Mini Games are two completely independent tiles,
+            each fed by its own data source and calculation (Official Games
+            / Mini Games), never mixed; both stay visible so neither
+            ranking is lost, each given extra width (lg:col-span-2 of 6) so
+            the player graphic has real room. */}
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-foreground mb-3">
             Performance Snapshot
           </h2>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5">
             <SnapshotCard
               icon={<BarChart3 className="h-4 w-4" strokeWidth={2} />}
               label="Team Trend"
               tone="teal"
               glow={teamTrendGlow ?? undefined}
               tint={teamTrendGlow ?? "teal"}
+              className="lg:col-span-1"
               topRight={
                 teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
               }
@@ -152,15 +152,24 @@ export default async function DashboardPage() {
               player={topPerformer ? { ...topPerformer } : null}
               contributions={gameContributions}
               emptyMessage="No official game data yet."
+              className="lg:col-span-2"
             />
             <TopPerformerSpotlightCard
               label="Top Performer — Mini Games"
               player={miniGameTopPerformer ? { ...miniGameTopPerformer } : null}
               contributions={miniGameContributions}
               emptyMessage="No Mini Games logged yet."
+              className="lg:col-span-2"
             />
 
-            <SnapshotCard icon={<Star className="h-4 w-4" strokeWidth={2} />} label="Most Improved" tone="accent" glow="teal" trendArrow="up">
+            <SnapshotCard
+              icon={<Star className="h-4 w-4" strokeWidth={2} />}
+              label="Most Improved"
+              tone="accent"
+              glow="teal"
+              trendArrow="up"
+              className="lg:col-span-1"
+            >
               {mostImproved ? (
                 <>
                   <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
@@ -169,19 +178,6 @@ export default async function DashboardPage() {
                   <p className="text-sm text-foreground mt-1 truncate">
                     #{mostImproved.jerseyNumber} {mostImproved.name}
                   </p>
-                </>
-              ) : (
-                <p className="text-sm text-muted">No data yet.</p>
-              )}
-            </SnapshotCard>
-
-            <SnapshotCard icon={<Target className="h-4 w-4" strokeWidth={2} />} label="Needs Attention" tone="negative" glow="negative" trendArrow="down">
-              {needsAttention ? (
-                <>
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    #{needsAttention.jerseyNumber} {needsAttention.name}
-                  </p>
-                  <p className="text-xs text-muted mt-1">Index {needsAttention.value.toFixed(1)}</p>
                 </>
               ) : (
                 <p className="text-sm text-muted">No data yet.</p>
