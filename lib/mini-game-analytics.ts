@@ -155,21 +155,127 @@ export function miniGameWeeklyTrend(entries: MiniGameStatEntry[], now = new Date
 // ---------------------------------------------------------------------------
 // Team overview — Top Progressing / Trending Down
 // ---------------------------------------------------------------------------
-// Ranked by % change in points (goals + assists) between a player's most
-// recent Mini Game and the one before it — the same "current vs. previous"
-// comparison as the per-stat progression above, just applied to the single
-// most recognizable scoring stat so players can be ranked against each
-// other. Purely Mini Game data; players with fewer than 2 Mini Games logged
-// aren't ranked (nothing to compare yet).
+// Ranked by a transparent COUNT of real per-stat improvements vs. declines
+// between a player's most recent Mini Game and the one before it (tie-
+// broken by capped magnitude, so one extreme percentage can't dominate the
+// ranking) — not by points % alone. Points-only ranking structurally can
+// never surface a defenseman's or goalie's real improvement, since they
+// often have 0 points most games; counting every tracked stat's direction
+// of change lets a goalie's save/goals-against swing, or a defenseman's
+// hits/takeaways swing, count the same as a forward's scoring swing.
+// Purely Mini Game data; players with fewer than 2 Mini Games logged aren't
+// ranked (nothing to compare yet) — never a fabricated progression.
+
+/** Stats where a numeric INCREASE is the real improvement. */
+const POSITIVE_WHEN_UP: { key: keyof RawStatLine; label: string }[] = [
+  { key: "goals", label: "Goals" },
+  { key: "assists", label: "Assists" },
+  { key: "shots", label: "Shots" },
+  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "successfulZoneEntries", label: "Successful Zone Entries" },
+  { key: "successfulZoneExits", label: "Successful Zone Exits" },
+  { key: "takeaways", label: "Takeaways" },
+  { key: "disruptions", label: "Disruptions" },
+  { key: "hits", label: "Hits" },
+  { key: "blocks", label: "Blocks" },
+  { key: "faceoffsWon", label: "Faceoffs Won" },
+  { key: "saves", label: "Saves" },
+  { key: "kills", label: "Kills" },
+  { key: "freezes", label: "Freezes" },
+  { key: "wins", label: "Wins" },
+];
+
+/** Stats where a numeric DECREASE is the real improvement (fewer is
+ * better) — this is what lets goaltending be interpreted correctly: fewer
+ * goals against is a goaltending improvement, not a decline. */
+const POSITIVE_WHEN_DOWN: { key: keyof RawStatLine; label: string }[] = [
+  { key: "giveaways", label: "Giveaways" },
+  { key: "goalsAgainst", label: "Goals Against" },
+  { key: "losses", label: "Losses" },
+];
+
+export interface MiniGameStatChange {
+  key: string;
+  label: string;
+  current: number;
+  previous: number;
+  progression: StatProgression;
+}
+
+/** Splits every stat whose value actually changed between two Mini Game
+ * lines into "favorable" (a real improvement, direction-aware) and
+ * "unfavorable" (a real decline) — flat/no-change stats appear in neither,
+ * and a stat with no previous value is "new" (favorable for a
+ * positive-when-up stat, unfavorable for a positive-when-down one) rather
+ * than a fabricated percentage. Sorted by magnitude (capped at 200% so one
+ * extreme swing can't bury every other real change) for display/tie-break
+ * purposes only — never the primary ranking signal by itself. */
+function classifyMiniGameChanges(
+  current: RawStatLine,
+  previous: RawStatLine
+): { favorable: MiniGameStatChange[]; unfavorable: MiniGameStatChange[] } {
+  const favorable: MiniGameStatChange[] = [];
+  const unfavorable: MiniGameStatChange[] = [];
+
+  for (const { key, label } of POSITIVE_WHEN_UP) {
+    const progression = pctChange(current[key], previous[key]);
+    const change: MiniGameStatChange = { key, label, current: current[key], previous: previous[key], progression };
+    if (progression.type === "increase" || progression.type === "new") favorable.push(change);
+    else if (progression.type === "decrease") unfavorable.push(change);
+  }
+  for (const { key, label } of POSITIVE_WHEN_DOWN) {
+    const progression = pctChange(current[key], previous[key]);
+    const change: MiniGameStatChange = { key, label, current: current[key], previous: previous[key], progression };
+    if (progression.type === "decrease") favorable.push(change);
+    else if (progression.type === "increase" || progression.type === "new") unfavorable.push(change);
+  }
+
+  const magnitude = (c: MiniGameStatChange) => (c.progression.pct !== null ? Math.min(Math.abs(c.progression.pct), 200) : 60);
+  favorable.sort((a, b) => magnitude(b) - magnitude(a));
+  unfavorable.sort((a, b) => magnitude(b) - magnitude(a));
+
+  return { favorable, unfavorable };
+}
+
+const sumMagnitude = (changes: MiniGameStatChange[]) =>
+  changes.reduce((total, c) => total + (c.progression.pct !== null ? Math.min(Math.abs(c.progression.pct), 200) : 60), 0);
+
+/** Turns the top 1-3 real stat changes (already direction-classified by
+ * classifyMiniGameChanges) into one concise, data-driven sentence — never a
+ * generic or invented explanation. Returns "" when there's nothing to
+ * describe (e.g. a player with no favorable changes shown on the Trending
+ * Down card). */
+export function describeMiniGameChanges(changes: MiniGameStatChange[], direction: "improved" | "declined"): string {
+  if (changes.length === 0) return "";
+  const labels = changes.slice(0, 3).map((c) => c.label);
+  const joined =
+    labels.length === 1
+      ? labels[0]
+      : labels.length === 2
+      ? `${labels[0]} and ${labels[1]}`
+      : `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`;
+  const verb = labels.length === 1 ? "has" : "have";
+  return `${joined} ${verb} ${direction} compared with the previous Mini Game.`;
+}
 
 export interface MiniGameProgressionSummary {
   playerId: string;
   name: string;
   jerseyNumber: number;
   photoUrl: string | null;
+  position: "FORWARD" | "DEFENSE" | "GOALIE";
   currentPoints: number;
   previousPoints: number;
+  /** Points (goals + assists) progression — shown as the small headline
+   * badge only when it's a real, computable change (pctChange already
+   * returns "none"/"new" correctly for zero-baseline cases); the detailed
+   * favorable/unfavorable breakdown below is what actually explains the
+   * ranking, and works regardless of position. */
   progression: StatProgression;
+  favorableChanges: MiniGameStatChange[];
+  unfavorableChanges: MiniGameStatChange[];
+  /** e.g. "Oct 1, 2026 → Oct 8, 2026" — the two Mini Games being compared. */
+  comparisonLabel: string;
 }
 
 export async function getMiniGameTeamOverview(
@@ -182,30 +288,43 @@ export async function getMiniGameTeamOverview(
   for (const p of players) {
     const entries = entriesByPlayer.get(p.id) ?? [];
     if (entries.length < 2) continue;
-    const current = entries[entries.length - 1].stat;
-    const previous = entries[entries.length - 2].stat;
+    const currentEntry = entries[entries.length - 1];
+    const previousEntry = entries[entries.length - 2];
+    const current = currentEntry.stat;
+    const previous = previousEntry.stat;
     const currentPoints = points(current);
     const previousPoints = points(previous);
+    const { favorable, unfavorable } = classifyMiniGameChanges(current, previous);
     summaries.push({
       playerId: p.id,
       name: `${p.firstName} ${p.lastName}`,
       jerseyNumber: p.jerseyNumber,
       photoUrl: p.photoUrl,
+      position: p.position,
       currentPoints,
       previousPoints,
       progression: pctChange(currentPoints, previousPoints),
+      favorableChanges: favorable,
+      unfavorableChanges: unfavorable,
+      comparisonLabel: `${previousEntry.label} → ${currentEntry.label}`,
     });
   }
 
-  const sortValue = (s: MiniGameProgressionSummary) =>
-    s.progression.type === "new" ? Number.POSITIVE_INFINITY : s.progression.pct ?? 0;
+  // Primary sort: net count of real favorable vs. unfavorable stat changes
+  // (simple, explainable, immune to any single stat's percentage). Tie-
+  // break: total capped magnitude in the relevant direction — a secondary
+  // influence only, so an extreme swing can break a tie but can never
+  // outrank a player with more genuine all-around improvement.
+  const netScore = (s: MiniGameProgressionSummary) => s.favorableChanges.length - s.unfavorableChanges.length;
 
-  const sorted = summaries.slice().sort((a, b) => sortValue(b) - sortValue(a));
+  const topProgressing = summaries
+    .filter((s) => netScore(s) > 0)
+    .sort((a, b) => netScore(b) - netScore(a) || sumMagnitude(b.favorableChanges) - sumMagnitude(a.favorableChanges))
+    .slice(0, 5);
 
-  const topProgressing = sorted.filter((s) => sortValue(s) > 0).slice(0, 5);
-  const trendingDown = sorted
-    .filter((s) => sortValue(s) < 0)
-    .sort((a, b) => sortValue(a) - sortValue(b))
+  const trendingDown = summaries
+    .filter((s) => netScore(s) < 0)
+    .sort((a, b) => netScore(a) - netScore(b) || sumMagnitude(b.unfavorableChanges) - sumMagnitude(a.unfavorableChanges))
     .slice(0, 5);
 
   return { topProgressing, trendingDown };

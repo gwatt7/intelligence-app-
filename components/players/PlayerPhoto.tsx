@@ -10,6 +10,7 @@ export function PersonSilhouette({ className }: { className?: string }) {
 }
 
 export const SIZE_CLASSES = {
+  xs: "h-14 w-14 sm:h-16 sm:w-16",
   sm: "h-20 w-20",
   md: "h-36 w-36 sm:h-44 sm:w-44",
   lg: "h-40 w-40 sm:h-52 sm:w-52",
@@ -61,7 +62,11 @@ export function PlayerPhoto({
         <img src={photoUrl} alt="" className="relative h-full w-full object-cover" />
       ) : (
         <PersonSilhouette
-          className={cn("relative h-16 w-16", variant === "boxed" ? "text-muted-2" : "text-black/25")}
+          className={cn(
+            "relative",
+            size === "xs" ? "h-9 w-9" : "h-16 w-16",
+            variant === "boxed" ? "text-muted-2" : "text-black/25"
+          )}
         />
       )}
     </div>
