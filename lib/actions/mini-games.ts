@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -10,7 +9,6 @@ import type { ActionResult } from "./team";
 export type { ActionResult };
 
 export async function createMiniGame(seasonId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = miniGameSchema.safeParse({
     date: formData.get("date"),
     notes: formData.get("notes") || undefined,
@@ -31,7 +29,6 @@ export async function createMiniGame(seasonId: string, formData: FormData): Prom
 }
 
 export async function updateMiniGameNotes(miniGameId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const miniGame = await prisma.miniGame.findUnique({ where: { id: miniGameId } });
   if (!miniGame) return { ok: false, error: "Mini Game not found" };
 
@@ -50,7 +47,6 @@ export async function saveMiniGamePlayerStat(
   playerId: string,
   formData: FormData
 ): Promise<ActionResult> {
-  await requireSession();
   const raw = Object.fromEntries(formData.entries());
   const parsed = statLineSchema.safeParse(raw);
   if (!parsed.success) {
@@ -80,7 +76,6 @@ export async function importMiniGameStatsFromCsv(
   seasonId: string,
   rows: Record<string, number>[]
 ): Promise<{ ok: true; imported: number; skipped: number[] } | { ok: false; error: string }> {
-  await requireSession();
   const players = await prisma.player.findMany({ where: { seasonId } });
   const byJersey = new Map(players.map((p) => [p.jerseyNumber, p]));
 
@@ -121,7 +116,6 @@ export async function importMiniGameStatsFromCsv(
 
 /** Deletes a Mini Game and, via onDelete: Cascade, its MiniGamePlayerStat rows. Never touches Game/GamePlayerStat. */
 export async function deleteMiniGame(miniGameId: string): Promise<ActionResult> {
-  await requireSession();
   const miniGame = await prisma.miniGame.findUnique({ where: { id: miniGameId } });
   if (!miniGame) return { ok: false, error: "Mini Game not found" };
 

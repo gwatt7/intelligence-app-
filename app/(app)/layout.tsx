@@ -1,13 +1,9 @@
 import { Sidebar } from "@/components/nav/Sidebar";
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
-import { requireSession } from "@/lib/auth/require";
 
-// Layout for the existing analytics dashboard and all its tabs. Every page in
-// this folder requires a signed-in session (proxy.ts also enforces this).
+// Layout for the existing analytics dashboard and all its tabs (sidebar + page).
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const session = await requireSession();
-
   // Vercel sets these automatically at build time — surfacing them in the
   // sidebar makes it possible to tell, just by looking at the live site,
   // whether a given push actually made it into the deployment being served
@@ -27,7 +23,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         buildEnv={buildEnv}
         teamName={team?.name}
         seasonName={season?.name}
-        signedInAs={session.sub}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 sm:px-6 py-6">{children}</main>
     </div>

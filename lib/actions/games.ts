@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -10,7 +9,6 @@ import type { ActionResult } from "./team";
 export type { ActionResult };
 
 export async function createGame(seasonId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const timeTBA = formData.get("timeTBA") === "on";
   const timeValue = (formData.get("time") as string) || "19:00"; // default 7:00 PM, ignored entirely when timeTBA
 
@@ -56,7 +54,6 @@ export async function createGame(seasonId: string, formData: FormData): Promise<
 }
 
 export async function updateGameResultAndNotes(gameId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return { ok: false, error: "Game not found" };
 
@@ -91,7 +88,6 @@ export async function updateGameResultAndNotes(gameId: string, formData: FormDat
 }
 
 export async function saveGamePlayerStat(gameId: string, playerId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const raw = Object.fromEntries(formData.entries());
   const parsed = statLineSchema.safeParse(raw);
   if (!parsed.success) {
@@ -122,7 +118,6 @@ export async function importGameStatsFromCsv(
   seasonId: string,
   rows: Record<string, number>[]
 ): Promise<{ ok: true; imported: number; skipped: number[] } | { ok: false; error: string }> {
-  await requireSession();
   const players = await prisma.player.findMany({ where: { seasonId } });
   const byJersey = new Map(players.map((p) => [p.jerseyNumber, p]));
 

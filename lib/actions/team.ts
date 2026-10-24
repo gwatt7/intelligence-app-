@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { seasonSchema, teamInfoSchema } from "@/lib/validation";
@@ -10,7 +9,6 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 
 /** Creates a brand-new season and its Team record together — the Version 1 onboarding step. */
 export async function createSeasonWithTeam(formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const seasonParsed = seasonSchema.safeParse({ name: formData.get("seasonName") });
   if (!seasonParsed.success) {
     return { ok: false, error: seasonParsed.error.issues[0]?.message ?? "Invalid season" };
@@ -42,7 +40,6 @@ export async function createSeasonWithTeam(formData: FormData): Promise<ActionRe
 }
 
 export async function updateTeamInfo(seasonId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = teamInfoSchema.safeParse({
     name: formData.get("name"),
     league: formData.get("league") || undefined,
@@ -69,7 +66,6 @@ export async function updateTeamInfo(seasonId: string, formData: FormData): Prom
  * treat "no logged rows" as the zero/empty state everywhere else in the app.
  */
 export async function createNewSeason(formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = seasonSchema.safeParse({ name: formData.get("seasonName") });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid season" };
@@ -119,7 +115,6 @@ export async function createNewSeason(formData: FormData): Promise<ActionResult>
 }
 
 export async function switchSeason(seasonId: string): Promise<ActionResult> {
-  await requireSession();
   await setCurrentSeason(seasonId);
   revalidatePath("/", "layout");
   return { ok: true };

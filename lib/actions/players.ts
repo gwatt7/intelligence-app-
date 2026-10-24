@@ -1,6 +1,5 @@
 "use server";
 
-import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { playerSchema, playerBioSchema } from "@/lib/validation";
@@ -19,7 +18,6 @@ const MAX_PHOTO_DATA_URI_LENGTH = 2_000_000;
 const MAX_HERO_IMAGE_DATA_URI_LENGTH = 4_000_000;
 
 export async function createPlayer(seasonId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = playerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
@@ -53,7 +51,6 @@ export async function createPlayer(seasonId: string, formData: FormData): Promis
 }
 
 export async function updatePlayer(playerId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = playerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
@@ -91,7 +88,6 @@ export async function updatePlayer(playerId: string, formData: FormData): Promis
 }
 
 export async function deletePlayer(playerId: string): Promise<ActionResult> {
-  await requireSession();
   const player = await prisma.player.findUnique({ where: { id: playerId } });
   if (!player) return { ok: false, error: "Player not found" };
 
@@ -106,7 +102,6 @@ export async function deletePlayer(playerId: string): Promise<ActionResult> {
 
 /** Profile presentation fields — separate from the roster identity fields (playerSchema) above, since they're edited from the Player Profile page rather than the Roster table. */
 export async function updatePlayerBio(playerId: string, formData: FormData): Promise<ActionResult> {
-  await requireSession();
   const parsed = playerBioSchema.safeParse({
     hometown: formData.get("hometown") || undefined,
     height: formData.get("height") || undefined,
@@ -142,7 +137,6 @@ export async function updatePlayerBio(playerId: string, formData: FormData): Pro
  * update targets exactly one Player row by id.
  */
 export async function updatePlayerPhoto(playerId: string, photoDataUri: string | null): Promise<ActionResult> {
-  await requireSession();
   if (photoDataUri !== null) {
     if (!photoDataUri.startsWith("data:image/")) {
       return { ok: false, error: "Invalid image" };
@@ -190,7 +184,6 @@ export async function updatePlayerHeroImage(
   focalY: number | null,
   brightness: number | null
 ): Promise<ActionResult> {
-  await requireSession();
   if (heroImageDataUri !== null) {
     if (!heroImageDataUri.startsWith("data:image/")) {
       return { ok: false, error: "Invalid image" };

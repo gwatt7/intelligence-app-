@@ -1,11 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Check, LogIn } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { HurtsToWin } from "@/components/landing/HurtsToWin";
 
 // Public Northstar landing page — the first screen of the app.
-// It is fully separate from the analytics dashboard (app/(app)/dashboard),
-// which is only reachable after signing in.
+// It is separate from the analytics dashboard (app/(app)/dashboard); the
+// ENTER button takes you there.
 export default function LandingPage() {
   return (
     // The app's global CSS (globals.css) styles the dark dashboard: it sets a
@@ -64,11 +64,11 @@ export default function LandingPage() {
           </div>
 
           <Link
-            href="/login"
+            href="/dashboard"
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 text-lg font-black uppercase tracking-[0.2em] text-[#fcd306] shadow-[0_6px_0_#fcd306] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fcd306]"
           >
-            <LogIn className="h-5 w-5" strokeWidth={2.5} />
-            Login
+            Enter
+            <ArrowRight className="h-5 w-5" strokeWidth={2.5} />
           </Link>
         </section>
       </div>

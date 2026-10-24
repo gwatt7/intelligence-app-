@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Bare shell shared by every page. The public pages (landing, login) render
+// Bare shell shared by every page. The homepage renders
 // straight into it; the dashboard's sidebar layout lives in app/(app)/layout.tsx.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

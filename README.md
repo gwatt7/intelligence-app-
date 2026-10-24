@@ -20,20 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## App structure and sign-in
+## App structure
 
-| Route | What it is | Access |
-| --- | --- | --- |
-| `/` | Northstar landing page (logo, slogan, team selection, LOGIN) | Public |
-| `/login` | UWS Men's Hockey sign-in | Public |
-| `/dashboard` | Existing analytics dashboard | Signed in |
-| `/team`, `/players`, `/games`, `/mini-games`, `/analytics`, `/weekly-rankings`, `/war-room` | Existing dashboard tabs | Signed in |
+| Route | What it is |
+| --- | --- |
+| `/` | Northstar homepage (logo, slogan, team selection, ENTER button) |
+| `/dashboard` | Analytics dashboard |
+| `/team`, `/players`, `/games`, `/mini-games`, `/analytics`, `/weekly-rankings`, `/war-room` | Dashboard tabs |
 
-- The landing logo is `public/northstar.png`.
-- Dashboard pages live in `app/(app)/`. Their layout (`app/(app)/layout.tsx`) requires a session.
-- `proxy.ts` redirects signed-out visitors to `/login`. Every server action in `lib/actions/` also calls `requireSession()`.
-- Sign-in uses one shared team account set with environment variables: `NORTHSTAR_LOGIN_USERNAME`, `NORTHSTAR_LOGIN_PASSWORD` and `NORTHSTAR_SESSION_SECRET`. See `.env.example`. If any are missing, sign-in is disabled. There is no default password.
-- Sessions last 12 hours and are stored in a signed, HTTP-only cookie. "Sign out" in the sidebar clears it.
+- The homepage logo is `public/northstar.png`.
+- Dashboard pages live in `app/(app)/`, which holds the sidebar layout. The homepage (`app/page.tsx`) has no sidebar.
+- There is no login. Anyone with the link can open the dashboard, same as before the homepage was added.
 
 ## Learn More
 
