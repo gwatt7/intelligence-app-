@@ -1,5 +1,6 @@
 "use server";
 
+import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { logActivity } from "@/lib/activity";
@@ -24,6 +25,7 @@ export interface MissionBriefPayload {
 
 /** Creates or replaces the Mission Brief for a game. Objectives are fully replaced on each save — simplest correct behavior for a form that edits a whole list at once. */
 export async function saveMissionBrief(gameId: string, payload: MissionBriefPayload): Promise<ActionResult> {
+  await requireSession();
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return { ok: false, error: "Game not found" };
 
@@ -71,7 +73,7 @@ export async function saveMissionBrief(gameId: string, payload: MissionBriefPayl
 
   revalidatePath(`/war-room/${gameId}`);
   revalidatePath("/war-room");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -91,6 +93,7 @@ export interface AfterActionPayload {
 }
 
 export async function saveAfterActionReport(gameId: string, payload: AfterActionPayload): Promise<ActionResult> {
+  await requireSession();
   const game = await prisma.game.findUnique({ where: { id: gameId }, include: { warRoom: true } });
   if (!game) return { ok: false, error: "Game not found" };
 
@@ -126,6 +129,6 @@ export async function saveAfterActionReport(gameId: string, payload: AfterAction
 
   revalidatePath(`/war-room/${gameId}`);
   revalidatePath("/war-room");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

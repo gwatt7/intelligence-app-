@@ -1,174 +1,79 @@
-import { BarChart3, Star } from "lucide-react";
-import { prisma } from "@/lib/db";
-import { getCurrentSeason } from "@/lib/season";
-import { metricValue, change } from "@/lib/team-analytics";
-import { getTeamStatEntries } from "@/lib/team-analytics-server";
-import { buildRankings } from "@/lib/rankings";
-import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
-import { getGameStatContributions } from "@/lib/player-analytics";
-import { formatChange, zoneEntryPct, zoneExitPct } from "@/lib/stats";
-import { PageHeader } from "@/components/ui/PageHeader";
-import { EmptyState } from "@/components/ui/EmptyState";
-import { TrendBadge } from "@/components/ui/Badge";
-import { ButtonLink } from "@/components/ui/Button";
-import { DashboardHero } from "@/components/dashboard/DashboardHero";
-import { WeeklyPerformanceSection } from "@/components/dashboard/WeeklyPerformanceSection";
-import { NextGameCard } from "@/components/dashboard/NextGameCard";
-import { LastGameCard } from "@/components/dashboard/LastGameCard";
-import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
-import { SnapshotCard } from "@/components/dashboard/SnapshotCard";
-import { Sparkline } from "@/components/dashboard/Sparkline";
-import { TopPerformerSpotlightCard } from "@/components/dashboard/TopPerformerSpotlightCard";
+import Image from "next/image";
+import Link from "next/link";
+import { Check, LogIn } from "lucide-react";
+import { HurtsToWin } from "@/components/landing/HurtsToWin";
 
-export default async function DashboardPage() {
-  const season = await getCurrentSeason();
-
-  if (!season) {
-    return (
-      <div>
-        <PageHeader title="Dashboard" />
-        <EmptyState
-          title="Welcome to NORTHSTAR"
-          description="Start by creating your season and team."
-          action={<ButtonLink href="/team">Set Up Season & Team</ButtonLink>}
-        />
-      </div>
-    );
-  }
-
-  const now = new Date();
-
-  const [nextGame, lastGame, nextMiniGame, team] = await Promise.all([
-    prisma.game.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
-    prisma.game.findFirst({
-      where: { seasonId: season.id, isCompleted: true, date: { lte: now } },
-      orderBy: { date: "desc" },
-    }),
-    prisma.miniGame.findFirst({ where: { seasonId: season.id, date: { gte: now } }, orderBy: { date: "asc" } }),
-    prisma.team.findUnique({ where: { seasonId: season.id } }),
-  ]);
-
-  const teamEntries = await getTeamStatEntries(season.id);
-  const last5 = teamEntries.slice(-5);
-  const entryTrend = change(metricValue(last5, "zoneEntryPct", true), metricValue(teamEntries, "zoneEntryPct", true));
-  const exitTrend = change(metricValue(last5, "zoneExitPct", true), metricValue(teamEntries, "zoneExitPct", true));
-  const teamTrend =
-    entryTrend !== null && exitTrend !== null ? (entryTrend + exitTrend) / 2 : entryTrend ?? exitTrend;
-
-  // Real per-game series (zone entry/exit % averaged per game) for the Team
-  // Trend sparkline — the same last-5-games window as teamTrend above, just
-  // plotted point-by-point instead of collapsed to one delta.
-  const teamTrendSeries = last5
-    .map((e) => {
-      const entryPct = zoneEntryPct(e.stat);
-      const exitPct = zoneExitPct(e.stat);
-      if (entryPct === null && exitPct === null) return null;
-      if (entryPct === null) return exitPct;
-      if (exitPct === null) return entryPct;
-      return (entryPct + exitPct) / 2;
-    })
-    .filter((v): v is number => v !== null);
-
-  // Team Trend's card color follows the sign of the same teamTrend value
-  // above — positive (or flat) reads as the team's brand teal, a genuine
-  // decline reads red. Purely a display choice; the number itself is
-  // unchanged.
-  const teamTrendGlow = teamTrend === null ? null : teamTrend < 0 ? "negative" : "teal";
-  const teamTrendColor = teamTrendGlow ? `var(--${teamTrendGlow === "teal" ? "data-teal" : "negative"})` : undefined;
-
-  const rankings = await buildRankings(season.id);
-  const weeklyRankings = await getCurrentWeekRankings(season.id);
-  const topPerformer = rankings.topPerformanceIndex[0];
-  const mostImproved = rankings.mostImproved[0];
-
-  // Top Performer reuses the existing Performance-Index ranking above (the
-  // Dashboard's Top Performer card shows Official-Game data only; the
-  // separate Mini-Game top-performer ranking in lib/mini-game-analytics.ts
-  // is untouched and still computed/used elsewhere, just not surfaced here).
-  const gameContributions = topPerformer ? await getGameStatContributions(topPerformer.playerId) : [];
-
-  const lastGameResult =
-    lastGame && lastGame.ourScore !== null && lastGame.opponentScore !== null
-      ? lastGame.ourScore > lastGame.opponentScore
-        ? "W"
-        : lastGame.ourScore < lastGame.opponentScore
-        ? "L"
-        : "T"
-      : null;
-
+// Public Northstar landing page — the first screen of the app.
+// It is fully separate from the analytics dashboard (app/(app)/dashboard),
+// which is only reachable after signing in.
+export default function LandingPage() {
   return (
-    <DashboardHero teamName={team?.name ?? "Team"} seasonName={season.name}>
-      <div className="space-y-6">
-        {/* Game + Mini Game context — Next Game is the visually dominant card */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-          <NextGameCard game={nextGame} now={now} />
-          <LastGameCard game={lastGame} result={lastGameResult} />
-          <NextMiniGameCard miniGame={nextMiniGame} />
-        </div>
+    // The app's global CSS (globals.css) styles the dark dashboard: it sets a
+    // dark default border color and adds a gold tick to headings inside
+    // <main>. This light page overrides --border locally and uses
+    // role="main" so neither leaks in.
+    <div
+      className="min-h-screen bg-[#bebebe] text-black flex flex-col"
+      style={{ "--border": "#d4d4d4" } as React.CSSProperties}
+    >
+      <div role="main" className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-14">
+        <h1 className="sr-only">Northstar</h1>
 
-        {/* Performance snapshot — one row of three equal cards, matching the
-            reference. Top Performer shows Official-Game data; the separate
-            Mini-Game top-performer ranking is untouched in
-            lib/mini-game-analytics.ts but isn't surfaced on the Dashboard. */}
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-foreground mb-3">
-            Performance Snapshot
+        {/* Exact northstar.png supplied by the team (public/northstar.png). */}
+        <Image
+          src="/northstar.png"
+          alt="Northstar"
+          width={1536}
+          height={1024}
+          priority
+          className="w-full max-w-[560px] h-auto"
+        />
+
+        <HurtsToWin className="-mt-4 sm:-mt-8 w-full max-w-[460px] h-auto" />
+
+        <p className="mt-5 text-lg sm:text-xl font-semibold text-neutral-800 text-center">
+          Your team&apos;s performance starts here.
+        </p>
+
+        {/* Team selection */}
+        <section aria-labelledby="team-heading" className="mt-10 w-full max-w-md">
+          <h2 id="team-heading" className="text-xs font-bold uppercase tracking-[0.2em] text-neutral-700 text-center mb-3">
+            Select your team
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-            <SnapshotCard
-              icon={<BarChart3 className="h-4 w-4" strokeWidth={2} />}
-              label="Team Trend"
-              tone="teal"
-              glow={teamTrendGlow ?? undefined}
-              tint={teamTrendGlow ?? "teal"}
-              topRight={
-                teamTrendSeries.length > 1 ? <Sparkline points={teamTrendSeries} color={teamTrendColor} /> : undefined
-              }
+          <div
+            role="radiogroup"
+            aria-labelledby="team-heading"
+            className="rounded-2xl bg-white/80 p-2 shadow-[0_10px_30px_rgba(0,0,0,0.12)]"
+          >
+            <div
+              role="radio"
+              aria-checked="true"
+              className="flex items-center gap-4 rounded-xl border-2 bg-white px-4 py-4 shadow-[0_0_0_3px_#fcd306]"
+              style={{ borderColor: "#000" }}
             >
-              {teamTrend !== null ? (
-                <p className="text-2xl font-bold" style={{ color: teamTrendColor }}>
-                  {formatChange(teamTrend)}
-                </p>
-              ) : (
-                <TrendBadge value={teamTrend} />
-              )}
-              <p className="text-xs text-muted mt-2">vs. last 5 games</p>
-            </SnapshotCard>
-
-            <TopPerformerSpotlightCard
-              label="Top Performer"
-              player={topPerformer ? { ...topPerformer } : null}
-              contributions={gameContributions}
-              emptyMessage="No official game data yet."
-            />
-
-            <SnapshotCard
-              icon={<Star className="h-4 w-4" strokeWidth={2} />}
-              label="Most Improved"
-              tone="accent"
-              glow="teal"
-              trendArrow="up"
-            >
-              {mostImproved ? (
-                <>
-                  <p className="text-2xl font-bold" style={{ color: "var(--data-teal)" }}>
-                    {formatChange(mostImproved.value)}
-                  </p>
-                  <p className="text-sm text-foreground mt-1 truncate">
-                    #{mostImproved.jerseyNumber} {mostImproved.name}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-muted">No data yet.</p>
-              )}
-            </SnapshotCard>
+              <Image src="/uws-logo.png" alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-md" />
+              <div className="min-w-0 flex-1">
+                <p className="text-xl font-black italic tracking-wide text-black leading-tight">UWS MEN&apos;S HOCKEY</p>
+                <p className="text-sm text-neutral-600">UW–Superior Yellow Jackets</p>
+              </div>
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#fcd306] text-black">
+                <Check className="h-4 w-4" strokeWidth={3} />
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Weekly Performance Rankings — Top 3 / Bottom 3 of the current week */}
-        <WeeklyPerformanceSection result={weeklyRankings} historyHref="/weekly-rankings" />
+          <Link
+            href="/login"
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-6 py-4 text-lg font-black uppercase tracking-[0.2em] text-[#fcd306] shadow-[0_6px_0_#fcd306] transition-transform hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-[#fcd306]"
+          >
+            <LogIn className="h-5 w-5" strokeWidth={2.5} />
+            Login
+          </Link>
+        </section>
       </div>
-    </DashboardHero>
+
+      <footer className="pb-6 text-center text-xs text-neutral-600">© Northstar · UWS Men&apos;s Hockey</footer>
+    </div>
   );
 }

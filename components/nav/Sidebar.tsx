@@ -3,11 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords } from "lucide-react";
+import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords, LogOut } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const TABS = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/team", label: "Team", icon: Users },
   { href: "/players", label: "Players", icon: User },
   { href: "/mini-games", label: "Mini Games", icon: Gamepad2 },
@@ -22,11 +22,13 @@ export function Sidebar({
   buildEnv,
   teamName,
   seasonName,
+  signedInAs,
 }: {
   buildSha?: string;
   buildEnv?: string;
   teamName?: string | null;
   seasonName?: string | null;
+  signedInAs?: string;
 }) {
   const pathname = usePathname();
 
@@ -51,7 +53,7 @@ export function Sidebar({
         style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
       />
 
-      <Link href="/" className="relative flex items-center gap-2 px-3 md:px-4 h-14 shrink-0 border-b border-border">
+      <Link href="/dashboard" className="relative flex items-center gap-2 px-3 md:px-4 h-14 shrink-0 border-b border-border">
         <Image
           src="/uws-logo.png"
           alt="University of Wisconsin–Superior"
@@ -68,7 +70,7 @@ export function Sidebar({
 
       <nav className="relative flex flex-1 flex-col gap-1.5 overflow-y-auto p-3">
         {TABS.map((tab) => {
-          const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const active = pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
             <Link
@@ -110,6 +112,23 @@ export function Sidebar({
           </div>
         </div>
       )}
+
+      {/* Sign out — ends the session and returns to the login screen. */}
+      <form action="/api/auth/logout" method="post" className="relative shrink-0 border-t border-border p-3">
+        {signedInAs && (
+          <p className="hidden md:block px-1 pb-2 text-[11px] text-muted-2 truncate" title={signedInAs}>
+            Signed in as {signedInAs}
+          </p>
+        )}
+        <button
+          type="submit"
+          title="Sign out"
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:text-foreground hover:bg-surface-raised"
+        >
+          <LogOut className="h-5 w-5 shrink-0" strokeWidth={2} />
+          <span className="hidden md:inline">Sign out</span>
+        </button>
+      </form>
 
       {buildSha && (
         <div className="relative hidden md:block shrink-0 border-t border-border px-3 py-2 text-[10px] text-muted-2">

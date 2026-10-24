@@ -1,5 +1,6 @@
 "use server";
 
+import { requireSession } from "@/lib/auth/require";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -9,6 +10,7 @@ import type { ActionResult } from "./team";
 export type { ActionResult };
 
 export async function createMiniGame(seasonId: string, formData: FormData): Promise<ActionResult> {
+  await requireSession();
   const parsed = miniGameSchema.safeParse({
     date: formData.get("date"),
     notes: formData.get("notes") || undefined,
@@ -24,11 +26,12 @@ export async function createMiniGame(seasonId: string, formData: FormData): Prom
   await logActivity(seasonId, "MINI_GAME_LOGGED", `Mini Game (${parsed.data.date}) created`);
 
   revalidatePath("/mini-games");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   redirect(`/mini-games/${miniGame.id}`);
 }
 
 export async function updateMiniGameNotes(miniGameId: string, formData: FormData): Promise<ActionResult> {
+  await requireSession();
   const miniGame = await prisma.miniGame.findUnique({ where: { id: miniGameId } });
   if (!miniGame) return { ok: false, error: "Mini Game not found" };
 
@@ -47,6 +50,7 @@ export async function saveMiniGamePlayerStat(
   playerId: string,
   formData: FormData
 ): Promise<ActionResult> {
+  await requireSession();
   const raw = Object.fromEntries(formData.entries());
   const parsed = statLineSchema.safeParse(raw);
   if (!parsed.success) {
@@ -67,7 +71,7 @@ export async function saveMiniGamePlayerStat(
   revalidatePath(`/mini-games/${miniGameId}`);
   revalidatePath("/mini-games");
   revalidatePath(`/players`);
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -76,6 +80,7 @@ export async function importMiniGameStatsFromCsv(
   seasonId: string,
   rows: Record<string, number>[]
 ): Promise<{ ok: true; imported: number; skipped: number[] } | { ok: false; error: string }> {
+  await requireSession();
   const players = await prisma.player.findMany({ where: { seasonId } });
   const byJersey = new Map(players.map((p) => [p.jerseyNumber, p]));
 
@@ -110,12 +115,13 @@ export async function importMiniGameStatsFromCsv(
   revalidatePath(`/mini-games/${miniGameId}`);
   revalidatePath("/mini-games");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, imported, skipped };
 }
 
 /** Deletes a Mini Game and, via onDelete: Cascade, its MiniGamePlayerStat rows. Never touches Game/GamePlayerStat. */
 export async function deleteMiniGame(miniGameId: string): Promise<ActionResult> {
+  await requireSession();
   const miniGame = await prisma.miniGame.findUnique({ where: { id: miniGameId } });
   if (!miniGame) return { ok: false, error: "Mini Game not found" };
 
@@ -123,6 +129,6 @@ export async function deleteMiniGame(miniGameId: string): Promise<ActionResult> 
 
   revalidatePath("/mini-games");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   redirect("/mini-games");
 }
