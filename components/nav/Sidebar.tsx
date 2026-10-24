@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
 const TABS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -29,6 +30,12 @@ export function Sidebar({
   seasonName?: string | null;
 }) {
   const pathname = usePathname();
+
+  // The dashboard uses its own design (components/dashboard). Every other
+  // page keeps this sidebar unchanged.
+  if (pathname === "/dashboard") {
+    return <DashboardSidebar buildSha={buildSha} buildEnv={buildEnv} seasonName={seasonName} />;
+  }
 
   return (
     <aside className="relative sticky top-0 z-30 flex h-screen w-16 md:w-56 shrink-0 flex-col overflow-hidden border-r border-border bg-background">

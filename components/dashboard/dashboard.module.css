@@ -1,0 +1,59 @@
+/* Dashboard-only styles. Everything here is scoped to the dashboard's root
+   element (.root), so no other page is affected. */
+
+.root {
+  /* Reference-design palette */
+  --dash-gold: #f5b800;
+  --dash-ink: #0d1116;
+  --dash-page: #eceef0;
+  --dash-line: #e5e7eb;
+
+  /* The app's shared theme is dark. Inside the dashboard, re-point the
+     shared tokens to light values so shared components rendered here
+     (buttons, badges, weekly ranking rows) match the light design. */
+  --background: #eceef0;
+  --surface: #ffffff;
+  --surface-raised: #f7f8f9;
+  --border: #e5e7eb;
+  --foreground: #0d1114;
+  --muted: #5b626b;
+  --muted-2: #8a9099;
+  --accent: #f5b800;
+  --accent-strong: #b88a00;
+  --accent-contrast: #0d1116;
+
+  color: var(--foreground);
+  font-family: var(--font-dash-body), ui-sans-serif, system-ui, sans-serif;
+  color-scheme: light;
+}
+
+.root select {
+  color-scheme: light;
+}
+
+/* globals.css adds a gold tick + left padding to every h1/h2/h3 inside
+   <main>. The dashboard draws its own slanted heading bars instead. */
+.root h1,
+.root h2,
+.root h3 {
+  padding-left: 0;
+}
+.root h1::before,
+.root h2::before,
+.root h3::before {
+  content: none;
+}
+
+/* Let the dashboard use the full width next to the sidebar, on a light page
+   background, like the reference. Only applies while the dashboard is shown. */
+:global(body):has(.root) {
+  background: #eceef0;
+}
+:global(main):has(.root) {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  /* allow the content area to shrink beside the sidebar (the schedule
+     strip scrolls sideways on its own instead of widening the page) */
+  min-width: 0;
+}

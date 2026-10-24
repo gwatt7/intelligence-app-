@@ -1,100 +1,102 @@
-import { Anton } from "next/font/google";
-import type { ReactNode } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Users } from "lucide-react";
-import { ButtonLink } from "@/components/ui/Button";
-
-const anton = Anton({ weight: "400", subsets: ["latin"] });
+import { display } from "@/components/dashboard/dashboardUi";
 
 /**
- * Dashboard-only NORTHSTAR header. The hockey-rink photo (dashboard-bg-
- * arena.jpg) is the Dashboard's background — deliberately separate from
- * whatever reference mockup informs the UI layout above it — fixed-
- * attachment so it reads as one continuous photo behind the hero band AND
- * the cards below, not an image confined to the hero. The hero band itself
- * keeps the reference's proportions (fixed height, wordmark + subtitle +
- * season line lower-left, Compare Players pill top-right) with its own
- * left-to-right gradient over the shared background so the wordmark stays
- * legible. "NORTH" is solid white, "STAR" is a gold gradient, both in
- * Anton (the closest available athletic/collegiate display font to the
- * reference), with a slight skew for the athletic wordmark look.
+ * Dashboard header banner: team identity, the two header actions, and the
+ * season summary row (record, games left, roster size, streak). Every value
+ * is passed in from real data by the dashboard page.
  */
 export function DashboardHero({
-  children,
   teamName,
-  seasonName,
+  subtitle,
+  record,
+  gamesLeft,
+  rosterCount,
+  streak,
 }: {
-  children: ReactNode;
   teamName: string;
-  seasonName: string;
+  subtitle: string;
+  record: string;
+  gamesLeft: number;
+  rosterCount: number;
+  streak: string | null;
 }) {
-  return (
-    // Bleeds out to the edges of <main>'s own padding (mx-4/6, my-6 in
-    // app/layout.tsx) and re-applies the same padding inside, so the rink
-    // photo fills the whole content area edge-to-edge behind everything.
-    <div className="relative -mx-4 sm:-mx-6 -my-6 px-4 sm:px-6 py-6 space-y-6">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-20 bg-cover bg-center"
-        style={{ backgroundImage: "url(/dashboard/dashboard-bg-arena.jpg)", backgroundAttachment: "fixed" }}
-      />
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-20 bg-background/55" />
+  const stats = [
+    { label: "Record", value: record, gold: true },
+    { label: "Games Left", value: String(gamesLeft) },
+    { label: "Roster", value: String(rosterCount) },
+    { label: "Streak", value: streak ?? "–" },
+  ];
 
-      <div className="relative h-[260px] sm:h-[300px] md:h-[340px] flex flex-col justify-between">
+  return (
+    <section className="relative overflow-hidden rounded-[4px] bg-[#0d1116] text-white" title={teamName}>
+      {/* Rink photo (existing asset), black & white, darkened toward the left. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <Image
+          src="/dashboard/dashboard-bg-arena.jpg"
+          alt=""
+          fill
+          priority
+          sizes="(min-width: 1024px) 1120px, 100vw"
+          className="object-cover grayscale"
+          style={{ objectPosition: "50% 38%" }}
+        />
         <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10"
+          className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(90deg, var(--background) 0%, var(--background) 15%, rgba(10,10,10,0.55) 40%, rgba(10,10,10,0.2) 65%, transparent 90%)",
+              "linear-gradient(90deg, rgba(13,17,22,0.94) 0%, rgba(13,17,22,0.86) 30%, rgba(13,17,22,0.72) 60%, rgba(13,17,22,0.6) 100%)",
           }}
         />
+      </div>
 
-        <div className="relative flex items-start justify-between gap-4">
-          <h1 className="sr-only">NORTHSTAR Dashboard</h1>
-          <ButtonLink href="/players/compare" variant="secondary" className="!rounded-full !px-4 !py-2 text-xs shrink-0">
-            <Users className="h-4 w-4" strokeWidth={2} />
-            Compare Players
-          </ButtonLink>
+      <div className="relative flex flex-col gap-5 px-[30px] pt-[38px] xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex min-w-0 items-start gap-[20px] pt-[2px]">
+          <span className="flex h-[85px] w-[85px] shrink-0 items-center justify-center rounded-[3px] bg-white">
+            <Image src="/dashboard/uws-logo-cutout.png" alt="UWS Yellow Jackets" width={68} height={68} className="h-[68px] w-[68px]" />
+          </span>
+          <div className="min-w-0">
+            <p className={`${display} text-[13px] font-bold uppercase leading-[13px] tracking-[0.16em] text-[#f5b800]`}>
+              UWS Yellow Jackets · Men&apos;s Hockey
+            </p>
+            <h1 className={`${display} mt-[5px] text-[34px] sm:text-[46px] lg:text-[54px] font-bold uppercase leading-[0.9] tracking-[0.012em]`}>
+              Team Dashboard
+            </h1>
+            <p className="mt-[6px] text-[14px] leading-[17px] text-[#c9ccd1]">{subtitle}</p>
+          </div>
         </div>
 
-        <div className="relative">
-          <p
-            className={`${anton.className} text-6xl sm:text-7xl md:text-8xl uppercase leading-none tracking-tight`}
-            style={{ transform: "skewX(-6deg)", transformOrigin: "left" }}
+        <div className="flex shrink-0 flex-wrap items-center gap-[10px] xl:mt-[22px]">
+          <Link
+            href="/analytics?filter=SEASON"
+            className="flex h-[42px] items-center whitespace-nowrap rounded-[3px] border [--border:#3b3f45] bg-[#0d1116]/80 px-[17px] text-[14px] font-semibold text-white hover:[--border:#6b7078]"
           >
-            <span
-              style={{
-                color: "#f3f3ee",
-                WebkitTextStroke: "1.5px #0a0a0a",
-                textShadow: "0 2px 0 rgba(0,0,0,0.5), 0 0 20px rgba(0,0,0,0.35)",
-              }}
-            >
-              NORTH
-            </span>
-            <span
-              style={{
-                backgroundImage: "linear-gradient(180deg, #ffe14d 0%, #fcd306 55%, #d99a06 100%)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-                WebkitTextStroke: "1.5px #0a0a0a",
-                textShadow: "0 0 28px rgba(252,211,6,0.45)",
-              }}
-            >
-              STAR
-            </span>
-          </p>
-          <p className="mt-2 text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-foreground" title={teamName}>
-            UWS Yellow Jackets
-          </p>
-          <div className="mt-3 flex items-center gap-3">
-            <div className="h-[3px] w-10 rounded-full bg-accent shrink-0" />
-            <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.2em] text-muted">Season {seasonName}</p>
-          </div>
+            Season Report
+          </Link>
+          <Link
+            href="/players/compare"
+            className="flex h-[42px] items-center gap-[9px] whitespace-nowrap rounded-[3px] bg-[#f5b800] px-[17px] text-[14px] font-semibold text-[#0d1116] hover:bg-[#ffc71a]"
+          >
+            <Users className="h-[16px] w-[16px]" strokeWidth={2} />
+            Compare Players
+          </Link>
         </div>
       </div>
 
-      {children}
-    </div>
+      <div className="relative mx-[30px] mt-[30px] grid grid-cols-2 border-t [--border:rgba(255,255,255,0.1)] sm:grid-cols-4">
+        {stats.map((s, i) => (
+          <div key={s.label} className={`pb-[25px] pt-[14px] ${i > 0 ? "sm:border-l sm:[--border:rgba(255,255,255,0.1)] sm:pl-[28px]" : ""} ${i % 2 === 1 ? "border-l [--border:rgba(255,255,255,0.1)] pl-[20px] sm:pl-[28px]" : ""}`}>
+            <p className={`${display} text-[12px] font-semibold uppercase leading-[14px] tracking-[0.14em] text-[#9aa0a6]`}>{s.label}</p>
+            <p className={`${display} mt-[6px] text-[30px] font-bold leading-none ${s.gold ? "text-[#f5b800]" : "text-white"}`}>
+              {s.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div aria-hidden className="relative h-[3px] bg-[#f0b70f]" />
+    </section>
   );
 }
