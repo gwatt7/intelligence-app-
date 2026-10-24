@@ -25,7 +25,7 @@ export default async function LoginPage({
   return (
     // Overrides the dashboard's dark default border color (globals.css) for this light page.
     <div
-      className="min-h-screen bg-[#bebebe] text-black flex flex-col items-center justify-center px-4 py-10"
+      className="min-h-screen bg-[#bfbfbf] text-black flex flex-col items-center justify-center px-4 py-10"
       style={{ "--border": "#d4d4d4" } as React.CSSProperties}
     >
       <Link href="/" aria-label="Northstar home">

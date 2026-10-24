@@ -13,7 +13,7 @@ export default function LandingPage() {
     // <main>. This light page overrides --border locally and uses
     // role="main" so neither leaks in.
     <div
-      className="min-h-screen bg-[#bebebe] text-black flex flex-col"
+      className="min-h-screen bg-[#bfbfbf] text-black flex flex-col"
       style={{ "--border": "#d4d4d4" } as React.CSSProperties}
     >
       <div role="main" className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-14">
