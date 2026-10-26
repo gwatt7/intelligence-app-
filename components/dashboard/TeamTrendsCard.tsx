@@ -23,7 +23,7 @@ const TABS = {
   defense: {
     label: "Defense",
     series: [
-      { key: "takeaways", label: "Takeaways", color: "#0d1116" },
+      { key: "disruptions", label: "Disruptions", color: "#0d1116" },
       { key: "blocks", label: "Blocks", color: "#a3a8b0" },
       { key: "hits", label: "Hits", color: "#e9b000", fill: true },
     ],

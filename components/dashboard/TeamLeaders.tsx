@@ -10,7 +10,6 @@ function Spotlight({ player }: { player: ReportCardRow }) {
     { label: "GP", value: player.gamesPlayed },
     { label: "PTS", value: pts },
     { label: "Shots", value: player.shots },
-    { label: "Takeaways", value: player.takeaways },
   ];
   const position =
     player.heroImageFocalX !== null && player.heroImageFocalY !== null
@@ -38,7 +37,7 @@ function Spotlight({ player }: { player: ReportCardRow }) {
         <p className={`${display} mt-[10px] text-[40px] font-bold uppercase leading-none`}>
           <span className="text-[#f5b800]">#{player.jerseyNumber}</span> {player.firstName} {player.lastName}
         </p>
-        <div className="mt-[14px] grid grid-cols-4 border-t border-white/25 pt-[12px]">
+        <div className="mt-[14px] grid grid-cols-3 border-t border-white/25 pt-[12px]">
           {stats.map((s) => (
             <div key={s.label}>
               <p className={`${display} text-[26px] font-bold leading-none`}>{s.value ?? "–"}</p>
@@ -73,13 +72,13 @@ function LeaderTile({ leader, label }: { leader: Leader | null; label: string })
   );
 }
 
-const LABELS = ["Points", "Goals", "Assists", "Plus / Minus", "Takeaways", "Blocked Shots"];
+const LABELS = ["Points", "Goals", "Assists", "Plus / Minus", "Blocked Shots"];
 
 export function TeamLeaders({ spotlight, leaders }: { spotlight: ReportCardRow | null; leaders: (Leader | null)[] }) {
   return (
     <div className="grid grid-cols-1 gap-[24px] lg:grid-cols-2">
       {spotlight ? <Spotlight player={spotlight} /> : <div className={`${panel} min-h-[346px]`} />}
-      <div className={`${panel} grid grid-cols-2 overflow-hidden [&>*:nth-child(even)]:border-l [&>*:nth-child(n+3)]:border-t [&>*]:[--border:#eef0f2]`}>
+      <div className={`${panel} grid grid-cols-2 overflow-hidden [&>*:nth-child(even)]:border-l [&>*:nth-child(n+3)]:border-t [&>*]:[--border:#eef0f2] [&>*:last-child:nth-child(odd)]:col-span-2`}>
         {LABELS.map((label, i) => (
           <LeaderTile key={label} label={label} leader={leaders[i] ?? null} />
         ))}

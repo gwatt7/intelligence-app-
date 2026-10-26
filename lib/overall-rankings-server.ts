@@ -106,7 +106,6 @@ export async function getOverallRankings(seasonId: string, rankingGroup: Ranking
               assists: v(c.assists),
               shots: v(c.shots),
               scoringChances: v(c.scoringChances),
-              takeaways: v(c.takeaways),
               giveaways: v(c.giveaways),
               hits: v(c.hits),
               blocks: v(c.blocks),
@@ -121,7 +120,7 @@ export async function getOverallRankings(seasonId: string, rankingGroup: Ranking
       result.notes.unshift(
         rankingGroup === "goalies"
           ? "Rated from the imported season report cards. They don't include goalie kills, so Kills is left out (not counted as zero) and the other categories are re-weighted."
-          : "Rated from the imported season report cards. They don't include zone entry/exit success, opportunity quality, disruptions or faceoff counts, so those categories are left out (not counted as zero) and the rest are re-weighted."
+          : "Rated from the imported season report cards. They don't include zone entry/exit success, disruptions or faceoff counts, so those categories are left out (not counted as zero) and the rest are re-weighted."
       );
       return { result, source: "report-cards", through: null, hasMovement: false };
     }

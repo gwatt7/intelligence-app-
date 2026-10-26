@@ -74,7 +74,6 @@ export interface ReportCardRow {
   goals: number | null;
   assists: number | null;
   shots: number | null;
-  takeaways: number | null;
   plusMinus: number | null;
   blocks: number | null;
 }
@@ -112,7 +111,6 @@ export function teamLeaders(rows: ReportCardRow[]): (Leader | null)[] {
     leaderFor(rows, "Goals", (r) => r.goals),
     leaderFor(rows, "Assists", (r) => r.assists),
     leaderFor(rows, "Plus / Minus", (r) => r.plusMinus, true),
-    leaderFor(rows, "Takeaways", (r) => r.takeaways),
     leaderFor(rows, "Blocked Shots", (r) => r.blocks),
   ];
 }

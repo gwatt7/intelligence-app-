@@ -40,7 +40,7 @@ import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
 import { QuickAccessCard } from "@/components/dashboard/QuickAccessCard";
 import { WeeklyPerformanceSection } from "@/components/dashboard/WeeklyPerformanceSection";
 
-const TREND_KEYS = ["shots", "scoringChances", "goals", "takeaways", "blocks", "hits"] as const;
+const TREND_KEYS = ["shots", "scoringChances", "goals", "disruptions", "blocks", "hits"] as const;
 
 export default async function DashboardPage() {
   const season = await getCurrentSeason();
@@ -153,7 +153,6 @@ export default async function DashboardPage() {
       goals: r.goals,
       assists: r.assists,
       shots: r.shots,
-      takeaways: r.takeaways,
       plusMinus: r.plusMinus,
       blocks: r.blocks,
     }));

@@ -42,15 +42,12 @@ const OFFENSE_FIELDS: FieldDef[] = [
   { key: "assists", label: "Assists" },
   { key: "shots", label: "Shots" },
   { key: "scoringChances", label: "Scoring Chances" },
-  { key: "goodOpportunities", label: "Good Opportunities" },
-  { key: "badOpportunities", label: "Bad Opportunities" },
 ];
 
 const DEFENSE_FIELDS: FieldDef[] = [
   { key: "disruptions", label: "Disruptions" },
   { key: "hits", label: "Hits" },
   { key: "blocks", label: "Blocks" },
-  { key: "takeaways", label: "Takeaways" },
   { key: "giveaways", label: "Giveaways" },
 ];
 

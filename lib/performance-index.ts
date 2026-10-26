@@ -12,7 +12,7 @@ export const SKATER_WEIGHTS = {
   zoneExitPct: 0.2,
   pointsPerGame: 0.2,
   scoringChancesPerGame: 0.15,
-  takeawayGiveawayPerGame: 0.15,
+  disruptionGiveawayPerGame: 0.15,
   physicalPerGame: 0.1,
 } as const;
 
@@ -45,7 +45,7 @@ export function calculateSkaterPerformanceIndex(
   const exitPct = zoneExitPct(totals) ?? 0;
   const ptsPerGame = points(totals) / games;
   const chancesPerGame = totals.scoringChances / games;
-  const takeawayGiveawayPerGame = (totals.takeaways - totals.giveaways) / games;
+  const disruptionGiveawayPerGame = (totals.disruptions - totals.giveaways) / games;
   const physicalPerGame = (totals.hits + totals.blocks) / games;
 
   const components = [
@@ -62,9 +62,9 @@ export function calculateSkaterPerformanceIndex(
       scaledValue: scaleRate(chancesPerGame, 5), // 5 chances/game -> full score
     },
     {
-      label: "Takeaway − Giveaway / Game",
-      weight: SKATER_WEIGHTS.takeawayGiveawayPerGame,
-      scaledValue: scaleRate(takeawayGiveawayPerGame + 3, 6), // shift so 0 net sits mid-scale
+      label: "Disruption − Giveaway / Game",
+      weight: SKATER_WEIGHTS.disruptionGiveawayPerGame,
+      scaledValue: scaleRate(disruptionGiveawayPerGame + 3, 6), // shift so 0 net sits mid-scale
     },
     {
       label: "Physical Play / Game",

@@ -52,23 +52,21 @@ type Weights = Record<string, number>;
 /** Skater weights by position. Each set sums to 1. */
 export const SKATER_WEIGHTS: Record<"FORWARD" | "DEFENSE", Weights> = {
   FORWARD: {
-    production: 0.22,
-    generation: 0.13,
-    quality: 0.08,
-    entries: 0.12,
-    exits: 0.1,
-    possession: 0.15,
-    defense: 0.12,
-    faceoffs: 0.08,
+    production: 0.24,
+    generation: 0.14,
+    entries: 0.13,
+    exits: 0.11,
+    possession: 0.16,
+    defense: 0.13,
+    faceoffs: 0.09,
   },
   DEFENSE: {
-    production: 0.16,
-    generation: 0.1,
-    quality: 0.06,
-    entries: 0.1,
-    exits: 0.16,
-    possession: 0.18,
-    defense: 0.24,
+    production: 0.17,
+    generation: 0.11,
+    entries: 0.11,
+    exits: 0.17,
+    possession: 0.19,
+    defense: 0.25,
   },
 };
 
@@ -98,6 +96,8 @@ interface CategoryDef {
   /** Human-readable underlying stats. */
   detail: (t: StatTotals, games: number) => string;
   format: (v: number) => string;
+  /** True when a smaller value is better (e.g. giveaways). */
+  lowerIsBetter?: boolean;
   /** Shown when the player has games but this category can't be scored. */
   missing: string;
 }
@@ -137,19 +137,6 @@ export const SKATER_CATEGORIES: CategoryDef[] = [
     format: (v) => `${per(v)} /game`,
   },
   {
-    key: "quality",
-    missing: "No opportunities recorded",
-    label: "Opportunity Quality",
-    why: "Rewards choosing good opportunities over bad ones (the app's Good / Bad Opportunities counts).",
-    measure: "Good ÷ (good + bad) opportunities",
-    raw: (t) => (has(t.goodOpportunities, t.badOpportunities) && t.goodOpportunities! + t.badOpportunities! > 0
-      ? { num: t.goodOpportunities!, den: t.goodOpportunities! + t.badOpportunities! }
-      : null),
-    shrink: { k: 10 },
-    detail: (t) => `${n(t.goodOpportunities)} good · ${n(t.badOpportunities)} bad`,
-    format: pctText,
-  },
-  {
     key: "entries",
     missing: "No zone entries recorded",
     label: "Zone Entries",
@@ -179,12 +166,13 @@ export const SKATER_CATEGORIES: CategoryDef[] = [
     key: "possession",
     missing: "Not recorded in this period",
     label: "Puck Management",
-    why: "Takeaways win the puck back; giveaways lose it. Using the net count rewards both and penalizes turnovers.",
-    measure: "(Takeaways − giveaways) per game",
-    raw: (t, g) => (has(t.takeaways, t.giveaways) && g > 0 ? { num: t.takeaways! - t.giveaways!, den: g } : null),
+    why: "Giveaways hand the puck to the opponent, so fewer per game scores higher. (Winning the puck back is counted through Disruptions in Defensive & Physical, so it isn't counted twice here.)",
+    measure: "Giveaways per game (fewer is better)",
+    raw: (t, g) => (t.giveaways !== null && g > 0 ? { num: t.giveaways, den: g } : null),
     shrink: { k: 2 },
-    detail: (t, g) => `${n(t.takeaways)} takeaways · ${n(t.giveaways)} giveaways in ${g} GP`,
-    format: (v) => `${v >= 0 ? "+" : ""}${per(v)} /game`,
+    lowerIsBetter: true,
+    detail: (t, g) => `${n(t.giveaways)} giveaways in ${g} GP`,
+    format: (v) => `${per(v)} /game`,
   },
   {
     key: "defense",
@@ -337,8 +325,8 @@ function markUntracked(samples: PlayerSample[], keys: StatKey[]): { samples: Pla
 }
 
 const SKATER_KEYS: StatKey[] = [
-  "goals", "assists", "shots", "scoringChances", "goodOpportunities", "badOpportunities", "zoneEntries",
-  "successfulZoneEntries", "zoneExits", "successfulZoneExits", "takeaways", "giveaways", "disruptions",
+  "goals", "assists", "shots", "scoringChances", "zoneEntries",
+  "successfulZoneEntries", "zoneExits", "successfulZoneExits", "giveaways", "disruptions",
   "blocks", "hits", "faceoffsWon", "faceoffsLost",
 ];
 const GOALIE_KEYS: StatKey[] = ["saves", "shotsAgainst", "goalsAgainst", "kills"];
@@ -373,7 +361,8 @@ function scoreCategories(
       // Team-relative: 50 = average of the skaters compared, via a z-score → percentile.
       const mean = adjusted.reduce((a, x) => a + x.adj, 0) / adjusted.length;
       const sd = Math.sqrt(adjusted.reduce((a, x) => a + (x.adj - mean) ** 2, 0) / adjusted.length);
-      scoreOf = (adj) => (adjusted.length < 2 || sd < 1e-9 ? 50 : 100 * normalCdf((adj - mean) / sd));
+      const sign = def.lowerIsBetter ? -1 : 1;
+      scoreOf = (adj) => (adjusted.length < 2 || sd < 1e-9 ? 50 : 100 * normalCdf((sign * (adj - mean)) / sd));
     } else if (def.key === "savePct") {
       scoreOf = (adj) => clamp(((adj - 0.86) / 0.08) * 100);
     } else if (def.key === "goalsAgainst") {

@@ -6,6 +6,9 @@ import { METRIC_LABEL } from "@/lib/objectives";
 import type { ObjectiveDraft } from "@/lib/actions/war-room";
 
 const METRICS = Object.keys(METRIC_LABEL) as (keyof typeof METRIC_LABEL)[];
+// Takeaways is no longer tracked (Disruptions covers it), so it can't be picked
+// for new objectives. An objective already linked to it keeps showing it.
+const RETIRED_METRICS: string[] = ["TAKEAWAYS"];
 
 export function ObjectivesEditor({
   objectives,
@@ -45,7 +48,7 @@ export function ObjectivesEditor({
               onChange={(e) => update(i, { metric: (e.target.value || null) as ObjectiveDraft["metric"] })}
             >
               <option value="">No linked stat</option>
-              {METRICS.map((m) => (
+              {METRICS.filter((m) => !RETIRED_METRICS.includes(m) || o.metric === m).map((m) => (
                 <option key={m} value={m}>
                   {METRIC_LABEL[m]}
                 </option>

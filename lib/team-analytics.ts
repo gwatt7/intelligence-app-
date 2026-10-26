@@ -50,7 +50,6 @@ export const TREND_METRICS = [
   { key: "scoringChances", label: "Scoring Chances", isPct: false },
   { key: "goals", label: "Goals", isPct: false },
   { key: "shots", label: "Shots", isPct: false },
-  { key: "takeaways", label: "Takeaways", isPct: false },
   { key: "giveaways", label: "Giveaways", isPct: false },
   { key: "disruptions", label: "Disruptions", isPct: false },
   { key: "hits", label: "Hits", isPct: false },

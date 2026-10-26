@@ -27,7 +27,6 @@ const MINI_GAME_OFFENSE_ITEMS = [
 ] as const;
 
 const MINI_GAME_DEFENSE_ITEMS = [
-  { key: "takeaways", label: "Takeaways" },
   { key: "giveaways", label: "Giveaways" },
   { key: "hits", label: "Hits" },
   { key: "blocks", label: "Blocks" },

@@ -138,7 +138,6 @@ export function HistoricalSeasonStatsCard({
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted mb-2">Defense</p>
             <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatRow label="Takeaways" value={fmtNum(stat.takeaways)} />
               <StatRow label="Giveaways" value={fmtNum(stat.giveaways)} />
               <StatRow label="Hits" value={fmtNum(stat.hits)} />
               <StatRow label="Blocks" value={fmtNum(stat.blocks)} />
