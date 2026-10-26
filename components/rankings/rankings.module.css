@@ -1,0 +1,8 @@
+/* Rankings page only: let the content area shrink beside the sidebar so wide
+   tables scroll inside their own boxes instead of widening the page. */
+.root {
+  min-width: 0;
+}
+:global(main):has(.root) {
+  min-width: 0;
+}

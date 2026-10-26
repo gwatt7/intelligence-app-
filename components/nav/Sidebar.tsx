@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords } from "lucide-react";
+import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords, ListOrdered } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
@@ -15,6 +15,7 @@ const TABS = [
   { href: "/games", label: "Games", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/weekly-rankings", label: "Weekly Rankings", icon: Trophy },
+  { href: "/rankings", label: "Overall Rankings", icon: ListOrdered },
   { href: "/war-room", label: "War Room", icon: Swords },
 ] as const;
 

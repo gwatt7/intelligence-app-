@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Calendar, ChartLine, ChevronDown, Gamepad2, LayoutGrid, Trophy, User, Users, X } from "lucide-react";
+import { Calendar, ChartLine, ListOrdered, ChevronDown, Gamepad2, LayoutGrid, Trophy, User, Users, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { dashFontVars } from "@/components/dashboard/dashboardFonts";
 import { display, shortSeason } from "@/components/dashboard/dashboardUi";
@@ -31,6 +31,7 @@ const GROUPS = [
     items: [
       { href: "/analytics", label: "Analytics", icon: ChartLine },
       { href: "/weekly-rankings", label: "Weekly Rankings", icon: Trophy },
+      { href: "/rankings", label: "Overall Rankings", icon: ListOrdered },
     ],
   },
 ] as const;
