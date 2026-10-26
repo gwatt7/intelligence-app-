@@ -3,7 +3,8 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { gameSchema, statLineSchema } from "@/lib/validation";
+import { gameSchema, situationStatSchema, statLineSchema } from "@/lib/validation";
+import { parseIceTime, SITUATION_FIELDS, SITUATION_LABEL, type Situation } from "@/lib/situation-stats";
 import { logActivity } from "@/lib/activity";
 import type { ActionResult } from "./team";
 export type { ActionResult };
@@ -155,4 +156,55 @@ export async function importGameStatsFromCsv(
   revalidatePath("/weekly-rankings");
   revalidatePath("/dashboard");
   return { ok: true, imported, skipped };
+}
+
+// ---------------------------------------------------------------------------
+// Power Play / Penalty Kill stats (GameSituationStat). Separate from the
+// 5-on-5 line above (GamePlayerStat) — saving one never changes the other.
+
+function revalidateSituation(gameId: string, playerId: string) {
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath(`/players/${playerId}`);
+}
+
+export async function saveGameSituationStat(
+  gameId: string,
+  playerId: string,
+  situation: Situation,
+  formData: FormData
+): Promise<ActionResult> {
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) return { ok: false, error: "Game not found" };
+
+  // Only the fields that belong to this situation are read; the rest stay 0.
+  const raw: Record<string, unknown> = { situation };
+  for (const f of SITUATION_FIELDS[situation]) {
+    if (f.key === "timeOnIceSeconds") {
+      const seconds = parseIceTime(String(formData.get("timeOnIce") ?? ""));
+      if (seconds === null) return { ok: false, error: "Enter power-play ice time as minutes:seconds, e.g. 3:45" };
+      raw.timeOnIceSeconds = seconds;
+    } else {
+      raw[f.key] = formData.get(f.key) ?? 0;
+    }
+  }
+  const parsed = situationStatSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid statistics" };
+
+  const { situation: _s, ...data } = parsed.data;
+  void _s;
+  await prisma.gameSituationStat.upsert({
+    where: { gameId_playerId_situation: { gameId, playerId, situation } },
+    create: { gameId, playerId, situation, ...data },
+    update: data,
+  });
+
+  await logActivity(game.seasonId, "GAME_LOGGED", `${SITUATION_LABEL[situation]} stats updated for game vs ${game.opponent}`);
+  revalidateSituation(gameId, playerId);
+  return { ok: true };
+}
+
+export async function clearGameSituationStat(gameId: string, playerId: string, situation: Situation): Promise<ActionResult> {
+  await prisma.gameSituationStat.deleteMany({ where: { gameId, playerId, situation } });
+  revalidateSituation(gameId, playerId);
+  return { ok: true };
 }

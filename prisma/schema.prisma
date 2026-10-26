@@ -117,6 +117,7 @@ model Player {
 
   miniGameStats        MiniGamePlayerStat[]
   gameStats            GamePlayerStat[]
+  situationStats       GameSituationStat[]
   highlights           PlayerHighlight[]
   seasonStats          PlayerSeasonStat[]
   weeklyRankingEntries WeeklyRankingEntry[]
@@ -332,6 +333,7 @@ model Game {
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   playerStats GamePlayerStat[]
+  situationStats GameSituationStat[]
   warRoom     WarRoom?
 
   createdAt DateTime @default(now())
@@ -582,4 +584,49 @@ model WeeklyRankingEntry {
   createdAt DateTime @default(now())
 
   @@unique([weeklyRankingId, playerId])
+}
+
+// ---------------------------------------------------------------------------
+// Power Play / Penalty Kill stats (player profile 5-on-5 / PP / PK toggle)
+//
+// Kept in their own table on purpose. GamePlayerStat is the 5-on-5 stat line,
+// and every existing calculation (profiles, rankings, weekly rankings, team
+// analytics, War Room objectives) reads only GamePlayerStat — so special-teams
+// numbers can never leak into 5-on-5 totals or percentages. Power Play and
+// Penalty Kill are separate rows (one per situation), never summed together.
+enum GameSituation {
+  POWER_PLAY
+  PENALTY_KILL
+}
+
+model GameSituationStat {
+  id String @id @default(cuid())
+
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  situation GameSituation
+
+  // Power Play only
+  goals            Int @default(0)
+  assists          Int @default(0)
+  shots            Int @default(0) // shots on goal
+  shotAttempts     Int @default(0) // all attempts: on goal + missed + blocked
+  timeOnIceSeconds Int @default(0) // power-play ice time
+
+  // Penalty Kill only
+  blocks Int @default(0)
+  clears Int @default(0)
+
+  // Both situations
+  faceoffsWon  Int @default(0)
+  faceoffsLost Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, playerId, situation])
 }

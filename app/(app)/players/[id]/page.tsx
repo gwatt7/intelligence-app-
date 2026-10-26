@@ -15,6 +15,9 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { HistoricalSeasonStatsCard } from "@/components/stats/HistoricalSeasonStatsCard";
 import { format } from "date-fns";
 import type { RawStatLine } from "@/lib/stats";
+import { SituationToggle } from "@/components/players/SituationToggle";
+import { situationFromParam } from "@/lib/situation-stats";
+import { SituationStatsPanel, type SituationGameEntry } from "@/components/players/SituationStatsPanel";
 
 const MINI_GAME_OFFENSE_ITEMS = [
   { key: "goals", label: "Goals" },
@@ -44,8 +47,15 @@ const MINI_GAME_GOALTENDING_ITEMS = [
   { key: "losses", label: "Losses" },
 ] as const;
 
-export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PlayerProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ situation?: string }>;
+}) {
   const { id } = await params;
+  const { situation: situationParam } = await searchParams;
   const player = await prisma.player.findUnique({ where: { id } });
   if (!player) notFound();
 
@@ -78,6 +88,14 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
     miniGameEntries.map((e) => [e.miniGameId, e.stat])
   );
 
+  // --- Power Play / Penalty Kill (GameSituationStat only — separate from the 5-on-5 GamePlayerStat line above) ---
+  const situationRows = await prisma.gameSituationStat.findMany({ where: { playerId: id }, include: { game: true } });
+  situationRows.sort((a, b) => a.game.date.getTime() - b.game.date.getTime());
+  const situationEntries = (situation: "POWER_PLAY" | "PENALTY_KILL"): SituationGameEntry[] =>
+    situationRows
+      .filter((r) => r.situation === situation)
+      .map((r) => ({ id: r.id, label: `${format(r.game.date, "MMM d")} vs ${r.game.opponent}`, stat: r }));
+
   return (
     <div className="space-y-6">
       <PlayerProfileHero player={player} />
@@ -90,227 +108,252 @@ export default async function PlayerProfilePage({ params }: { params: Promise<{ 
         />
       )}
 
-      {/* =================================================================
-          OFFICIAL GAME STATS — reads only GamePlayerStat. Never combined
-          with Mini Game data below.
-          ================================================================= */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Official Game Stats</h2>
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <PerformanceIndexCard breakdown={index} />
-            <Card>
-              <CardTitle>Recent Trend</CardTitle>
-              <div className="mt-1">
-                <TrendBadge value={trend} />
-              </div>
-              <p className="text-xs text-muted mt-2">Change vs. season average heading into the most recent official game.</p>
-            </Card>
-            <Card>
-              <CardTitle>Sample Size</CardTitle>
-              <p className="text-3xl font-bold text-foreground">{entries.length}</p>
-              <p className="text-xs text-muted mt-1">Official games logged this season</p>
-            </Card>
-          </div>
-
-          {entries.length > 0 ? (
-            <>
-              {player.position === "GOALIE" ? (
-                <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
-              ) : (
-                <>
-                  <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
-                  <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
-                  <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
-                  {player.position === "FORWARD" && (
-                    <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card>
-                      <CardTitle>Zone Entry % Over Time</CardTitle>
-                      <TrendChart data={entryPctSeries} unit="%" />
-                    </Card>
-                    <Card>
-                      <CardTitle>Zone Exit % Over Time</CardTitle>
-                      <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
-                    </Card>
+      <SituationToggle
+        initial={situationFromParam(situationParam)}
+        views={{
+          EVEN: (
+            <div className="space-y-6">
+          {/* =================================================================
+              OFFICIAL GAME STATS — reads only GamePlayerStat. Never combined
+              with Mini Game data below.
+              ================================================================= */}
+          <div>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Official Game Stats · 5-on-5</h2>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <PerformanceIndexCard breakdown={index} />
+                <Card>
+                  <CardTitle>Recent Trend</CardTitle>
+                  <div className="mt-1">
+                    <TrendBadge value={trend} />
                   </div>
+                  <p className="text-xs text-muted mt-2">Change vs. season average heading into the most recent official game.</p>
+                </Card>
+                <Card>
+                  <CardTitle>Sample Size</CardTitle>
+                  <p className="text-3xl font-bold text-foreground">{entries.length}</p>
+                  <p className="text-xs text-muted mt-1">Official games logged this season</p>
+                </Card>
+              </div>
+
+              {entries.length > 0 ? (
+                <>
+                  {player.position === "GOALIE" ? (
+                    <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
+                  ) : (
+                    <>
+                      <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
+                      <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
+                      <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
+                      {player.position === "FORWARD" && (
+                        <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <Card>
+                          <CardTitle>Zone Entry % Over Time</CardTitle>
+                          <TrendChart data={entryPctSeries} unit="%" />
+                        </Card>
+                        <Card>
+                          <CardTitle>Zone Exit % Over Time</CardTitle>
+                          <TrendChart data={exitPctSeries} unit="%" color="#f3f3ee" />
+                        </Card>
+                      </div>
+                    </>
+                  )}
                 </>
-              )}
-            </>
-          ) : (
-            <Card>
-              <p className="text-sm text-muted">
-                No official games logged for {player.firstName} yet this season. Category breakdowns and trend
-                charts will appear here once stats are entered.
-              </p>
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* =================================================================
-          MINI GAME STATS — reads only MiniGamePlayerStat. Completely
-          separate system: never combined with Official Game stats above.
-          ================================================================= */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Mini Game Stats</h2>
-        <div className="space-y-4">
-          <Card>
-            <CardTitle>Log / Edit {player.firstName}&apos;s Mini Game Stats</CardTitle>
-            <PlayerMiniGameStatForm
-              playerId={player.id}
-              isGoalie={player.position === "GOALIE"}
-              isForward={player.position === "FORWARD"}
-              miniGames={miniGameOptions}
-              statsByMiniGame={statsByMiniGame}
-            />
-          </Card>
-
-          {miniGameEntries.length === 0 ? (
-            <Card>
-              <p className="text-sm text-muted">
-                No Mini Games logged for {player.firstName} yet. Totals, progression, and weekly trend will appear
-                here once stats are entered above (or from the Mini Games tab).
-              </p>
-            </Card>
-          ) : (
-            <>
-            <Card>
-              <CardTitle>Mini Game Sample Size</CardTitle>
-              <p className="text-3xl font-bold text-foreground">{miniGameEntries.length}</p>
-              <p className="text-xs text-muted mt-1">Mini Games logged this season</p>
-            </Card>
-
-            {player.position === "GOALIE" ? (
-              <StatCategoryCard
-                title="Mini Game Totals — Goaltending"
-                items={derivedCategories.goaltending}
-                stat={miniGameTotals}
-              />
-            ) : (
-              <>
-                <StatCategoryCard title="Mini Game Totals — Offense" items={derivedCategories.offense} stat={miniGameTotals} />
-                <StatCategoryCard title="Mini Game Totals — Defense" items={derivedCategories.defense} stat={miniGameTotals} />
-                {player.position === "FORWARD" && (
-                  <StatCategoryCard title="Mini Game Totals — Faceoffs" items={derivedCategories.faceoffs} stat={miniGameTotals} />
-                )}
-              </>
-            )}
-
-            {player.position === "GOALIE" ? (
-              <MiniGameProgressionCard
-                title="Mini Game Progression — Goaltending (vs. previous Mini Game)"
-                items={MINI_GAME_GOALTENDING_ITEMS}
-                progression={miniGameProgression}
-              />
-            ) : (
-              <>
-                <MiniGameProgressionCard
-                  title="Mini Game Progression (vs. previous Mini Game)"
-                  items={MINI_GAME_OFFENSE_ITEMS}
-                  progression={miniGameProgression}
-                />
-                <MiniGameProgressionCard
-                  title="Mini Game Progression — Defense (vs. previous Mini Game)"
-                  items={MINI_GAME_DEFENSE_ITEMS}
-                  progression={miniGameProgression}
-                />
-                {player.position === "FORWARD" && (
-                  <MiniGameProgressionCard
-                    title="Mini Game Progression — Faceoffs (vs. previous Mini Game)"
-                    items={MINI_GAME_FACEOFF_ITEMS}
-                    progression={miniGameProgression}
-                  />
-                )}
-              </>
-            )}
-
-            <div>
-              <MiniGameProgressionCard
-                title="Mini Game Weekly Trend"
-                items={player.position === "GOALIE" ? MINI_GAME_GOALTENDING_ITEMS : MINI_GAME_OFFENSE_ITEMS}
-                progression={miniGameWeekly?.progression ?? null}
-              />
-              {miniGameWeekly && (
-                <p className="text-xs text-muted-2 mt-1.5">
-                  This week ({format(miniGameWeekly.weekStart, "MMM d")}–{format(miniGameWeekly.weekEnd, "MMM d")}) vs.
-                  last week · {miniGameWeekly.currentWeekCount} Mini Game(s) this week, {miniGameWeekly.previousWeekCount}{" "}
-                  last week
-                </p>
+              ) : (
+                <Card>
+                  <p className="text-sm text-muted">
+                    No official games logged for {player.firstName} yet this season. Category breakdowns and trend
+                    charts will appear here once stats are entered.
+                  </p>
+                </Card>
               )}
             </div>
+          </div>
 
-            <Card>
-              <CardTitle>Mini Game History</CardTitle>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-muted uppercase tracking-wide text-left">
-                      <th className="py-2 pr-4">Date</th>
-                      {player.position === "GOALIE" ? (
-                        <>
-                          <th className="py-2 pr-4">Saves</th>
-                          <th className="py-2 pr-4">Goals Against</th>
-                          <th className="py-2 pr-4">Shots Against</th>
-                          <th className="py-2 pr-4">Kills</th>
-                          <th className="py-2 pr-4">Freeze %</th>
-                          <th className="py-2 pr-4">Win %</th>
-                        </>
-                      ) : (
-                        <>
-                          <th className="py-2 pr-4">Goals</th>
-                          <th className="py-2 pr-4">Assists</th>
-                          <th className="py-2 pr-4">Points</th>
-                          <th className="py-2 pr-4">Shots</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[...miniGameEntries].reverse().map((e) => (
-                      <tr key={e.id} className="border-t border-border">
-                        <td className="py-2 pr-4 text-muted">{e.label}</td>
-                        {player.position === "GOALIE" ? (
-                          <>
-                            <td className="py-2 pr-4">{e.stat.saves}</td>
-                            <td className="py-2 pr-4">{e.stat.goalsAgainst}</td>
-                            <td className="py-2 pr-4">{e.stat.shotsAgainst}</td>
-                            <td className="py-2 pr-4">{e.stat.kills}</td>
-                            <td className="py-2 pr-4">
-                              {formatPct(freezePct(e.stat))}
-                              <span className="text-muted-2">
-                                {" "}
-                                ({e.stat.freezes}/{e.stat.freezeOpportunities})
-                              </span>
-                            </td>
-                            <td className="py-2 pr-4">
-                              {formatPct(winPct(e.stat))}
-                              <span className="text-muted-2">
-                                {" "}
-                                ({e.stat.wins}/{e.stat.wins + e.stat.losses})
-                              </span>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="py-2 pr-4">{e.stat.goals}</td>
-                            <td className="py-2 pr-4">{e.stat.assists}</td>
-                            <td className="py-2 pr-4">{points(e.stat)}</td>
-                            <td className="py-2 pr-4">{e.stat.shots}</td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-            </>
-          )}
-        </div>
-      </div>
+          {/* =================================================================
+              MINI GAME STATS — reads only MiniGamePlayerStat. Completely
+              separate system: never combined with Official Game stats above.
+              ================================================================= */}
+          <div>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Mini Game Stats</h2>
+            <div className="space-y-4">
+              <Card>
+                <CardTitle>Log / Edit {player.firstName}&apos;s Mini Game Stats</CardTitle>
+                <PlayerMiniGameStatForm
+                  playerId={player.id}
+                  isGoalie={player.position === "GOALIE"}
+                  isForward={player.position === "FORWARD"}
+                  miniGames={miniGameOptions}
+                  statsByMiniGame={statsByMiniGame}
+                />
+              </Card>
+
+              {miniGameEntries.length === 0 ? (
+                <Card>
+                  <p className="text-sm text-muted">
+                    No Mini Games logged for {player.firstName} yet. Totals, progression, and weekly trend will appear
+                    here once stats are entered above (or from the Mini Games tab).
+                  </p>
+                </Card>
+              ) : (
+                <>
+                <Card>
+                  <CardTitle>Mini Game Sample Size</CardTitle>
+                  <p className="text-3xl font-bold text-foreground">{miniGameEntries.length}</p>
+                  <p className="text-xs text-muted mt-1">Mini Games logged this season</p>
+                </Card>
+
+                {player.position === "GOALIE" ? (
+                  <StatCategoryCard
+                    title="Mini Game Totals — Goaltending"
+                    items={derivedCategories.goaltending}
+                    stat={miniGameTotals}
+                  />
+                ) : (
+                  <>
+                    <StatCategoryCard title="Mini Game Totals — Offense" items={derivedCategories.offense} stat={miniGameTotals} />
+                    <StatCategoryCard title="Mini Game Totals — Defense" items={derivedCategories.defense} stat={miniGameTotals} />
+                    {player.position === "FORWARD" && (
+                      <StatCategoryCard title="Mini Game Totals — Faceoffs" items={derivedCategories.faceoffs} stat={miniGameTotals} />
+                    )}
+                  </>
+                )}
+
+                {player.position === "GOALIE" ? (
+                  <MiniGameProgressionCard
+                    title="Mini Game Progression — Goaltending (vs. previous Mini Game)"
+                    items={MINI_GAME_GOALTENDING_ITEMS}
+                    progression={miniGameProgression}
+                  />
+                ) : (
+                  <>
+                    <MiniGameProgressionCard
+                      title="Mini Game Progression (vs. previous Mini Game)"
+                      items={MINI_GAME_OFFENSE_ITEMS}
+                      progression={miniGameProgression}
+                    />
+                    <MiniGameProgressionCard
+                      title="Mini Game Progression — Defense (vs. previous Mini Game)"
+                      items={MINI_GAME_DEFENSE_ITEMS}
+                      progression={miniGameProgression}
+                    />
+                    {player.position === "FORWARD" && (
+                      <MiniGameProgressionCard
+                        title="Mini Game Progression — Faceoffs (vs. previous Mini Game)"
+                        items={MINI_GAME_FACEOFF_ITEMS}
+                        progression={miniGameProgression}
+                      />
+                    )}
+                  </>
+                )}
+
+                <div>
+                  <MiniGameProgressionCard
+                    title="Mini Game Weekly Trend"
+                    items={player.position === "GOALIE" ? MINI_GAME_GOALTENDING_ITEMS : MINI_GAME_OFFENSE_ITEMS}
+                    progression={miniGameWeekly?.progression ?? null}
+                  />
+                  {miniGameWeekly && (
+                    <p className="text-xs text-muted-2 mt-1.5">
+                      This week ({format(miniGameWeekly.weekStart, "MMM d")}–{format(miniGameWeekly.weekEnd, "MMM d")}) vs.
+                      last week · {miniGameWeekly.currentWeekCount} Mini Game(s) this week, {miniGameWeekly.previousWeekCount}{" "}
+                      last week
+                    </p>
+                  )}
+                </div>
+
+                <Card>
+                  <CardTitle>Mini Game History</CardTitle>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-xs text-muted uppercase tracking-wide text-left">
+                          <th className="py-2 pr-4">Date</th>
+                          {player.position === "GOALIE" ? (
+                            <>
+                              <th className="py-2 pr-4">Saves</th>
+                              <th className="py-2 pr-4">Goals Against</th>
+                              <th className="py-2 pr-4">Shots Against</th>
+                              <th className="py-2 pr-4">Kills</th>
+                              <th className="py-2 pr-4">Freeze %</th>
+                              <th className="py-2 pr-4">Win %</th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="py-2 pr-4">Goals</th>
+                              <th className="py-2 pr-4">Assists</th>
+                              <th className="py-2 pr-4">Points</th>
+                              <th className="py-2 pr-4">Shots</th>
+                            </>
+                          )}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...miniGameEntries].reverse().map((e) => (
+                          <tr key={e.id} className="border-t border-border">
+                            <td className="py-2 pr-4 text-muted">{e.label}</td>
+                            {player.position === "GOALIE" ? (
+                              <>
+                                <td className="py-2 pr-4">{e.stat.saves}</td>
+                                <td className="py-2 pr-4">{e.stat.goalsAgainst}</td>
+                                <td className="py-2 pr-4">{e.stat.shotsAgainst}</td>
+                                <td className="py-2 pr-4">{e.stat.kills}</td>
+                                <td className="py-2 pr-4">
+                                  {formatPct(freezePct(e.stat))}
+                                  <span className="text-muted-2">
+                                    {" "}
+                                    ({e.stat.freezes}/{e.stat.freezeOpportunities})
+                                  </span>
+                                </td>
+                                <td className="py-2 pr-4">
+                                  {formatPct(winPct(e.stat))}
+                                  <span className="text-muted-2">
+                                    {" "}
+                                    ({e.stat.wins}/{e.stat.wins + e.stat.losses})
+                                  </span>
+                                </td>
+                              </>
+                            ) : (
+                              <>
+                                <td className="py-2 pr-4">{e.stat.goals}</td>
+                                <td className="py-2 pr-4">{e.stat.assists}</td>
+                                <td className="py-2 pr-4">{points(e.stat)}</td>
+                                <td className="py-2 pr-4">{e.stat.shots}</td>
+                              </>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+                </>
+              )}
+            </div>
+          </div>
+            </div>
+          ),
+          POWER_PLAY: (
+            <SituationStatsPanel
+              situation="POWER_PLAY"
+              entries={situationEntries("POWER_PLAY")}
+              firstName={player.firstName}
+              isGoalie={player.position === "GOALIE"}
+            />
+          ),
+          PENALTY_KILL: (
+            <SituationStatsPanel
+              situation="PENALTY_KILL"
+              entries={situationEntries("PENALTY_KILL")}
+              firstName={player.firstName}
+              isGoalie={player.position === "GOALIE"}
+            />
+          ),
+        }}
+      />
     </div>
   );
 }

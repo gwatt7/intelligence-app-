@@ -1,0 +1,9 @@
+/* Player profiles only: let the content area shrink beside the sidebar so
+   wide stat tables scroll inside their own boxes on phones instead of
+   widening the whole page. */
+.root {
+  min-width: 0;
+}
+:global(main):has(.root) {
+  min-width: 0;
+}
