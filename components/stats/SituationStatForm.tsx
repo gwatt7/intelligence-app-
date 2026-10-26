@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { startTransition, useActionState, useTransition } from "react";
 import { Field, Input } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
 import type { ActionResult } from "@/lib/actions/team";
@@ -25,7 +25,14 @@ export function SituationStatForm({
   const label = SITUATION_LABEL[situation];
 
   return (
-    <form action={formAction}>
+    <form
+      onSubmit={(e) => {
+        // Submit without React's automatic form reset, so typed values stay if the save is rejected.
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        startTransition(() => formAction(fd));
+      }}
+    >
       <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
         {SITUATION_FIELDS[situation].map((f) =>

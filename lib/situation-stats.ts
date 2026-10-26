@@ -18,11 +18,20 @@ export const SITUATION_LABEL: Record<ProfileSituation, string> = {
   PENALTY_KILL: "Penalty Kill",
 };
 
-/** URL value for each view (?situation=pp / pk); 5-on-5 is the default. */
-export const SITUATION_PARAM: Record<ProfileSituation, string> = { EVEN: "5v5", POWER_PLAY: "pp", PENALTY_KILL: "pk" };
+/** Player profile views. ALL = Overall / All Situations (5-on-5 + PP + PK combined). */
+export type ProfileView = "ALL" | Situation;
 
-export function situationFromParam(value: string | undefined): ProfileSituation {
-  return value === "pp" ? "POWER_PLAY" : value === "pk" ? "PENALTY_KILL" : "EVEN";
+export const PROFILE_VIEW_LABEL: Record<ProfileView, string> = {
+  ALL: "Overall / All Situations",
+  POWER_PLAY: "Power Play (PP)",
+  PENALTY_KILL: "Penalty Kill (PK)",
+};
+
+/** URL value for each view (?situation=pp / pk); Overall is the default. */
+export const SITUATION_PARAM: Record<ProfileView, string> = { ALL: "all", POWER_PLAY: "pp", PENALTY_KILL: "pk" };
+
+export function situationFromParam(value: string | undefined): ProfileView {
+  return value === "pp" ? "POWER_PLAY" : value === "pk" ? "PENALTY_KILL" : "ALL";
 }
 
 /** Raw counts stored per situation row. */

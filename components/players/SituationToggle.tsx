@@ -3,12 +3,12 @@
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import styles from "@/components/players/situationToggle.module.css";
-import { SITUATION_LABEL, SITUATION_PARAM as PARAM, type ProfileSituation } from "@/lib/situation-stats";
+import { PROFILE_VIEW_LABEL, SITUATION_PARAM as PARAM, type ProfileView } from "@/lib/situation-stats";
 
-const ORDER: ProfileSituation[] = ["EVEN", "POWER_PLAY", "PENALTY_KILL"];
+const ORDER: ProfileView[] = ["ALL", "POWER_PLAY", "PENALTY_KILL"];
 
 /**
- * 5-on-5 / Power Play / Penalty Kill switch for the player profile.
+ * Overall / Power Play / Penalty Kill switch for the player profile.
  * All three views stay mounted (only the selected one is visible), so
  * switching is instant and never discards anything typed into a form in
  * another view. The choice is mirrored in the URL (?situation=pp) without
@@ -18,15 +18,15 @@ export function SituationToggle({
   initial,
   views,
 }: {
-  initial: ProfileSituation;
-  views: Record<ProfileSituation, ReactNode>;
+  initial: ProfileView;
+  views: Record<ProfileView, ReactNode>;
 }) {
-  const [selected, setSelected] = useState<ProfileSituation>(initial);
+  const [selected, setSelected] = useState<ProfileView>(initial);
 
-  const select = (s: ProfileSituation) => {
+  const select = (s: ProfileView) => {
     setSelected(s);
     const url = new URL(window.location.href);
-    if (s === "EVEN") url.searchParams.delete("situation");
+    if (s === "ALL") url.searchParams.delete("situation");
     else url.searchParams.set("situation", PARAM[s]);
     window.history.replaceState(window.history.state, "", url);
   };
@@ -49,11 +49,11 @@ export function SituationToggle({
                 selected === s ? "bg-accent text-accent-contrast" : "text-muted hover:bg-surface-raised hover:text-foreground"
               )}
             >
-              {SITUATION_LABEL[s]}
+              {PROFILE_VIEW_LABEL[s]}
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-2">Official game stats by situation. 5-on-5, Power Play and Penalty Kill are tracked separately.</p>
+        <p className="text-xs text-muted-2">Official game stats. Overall combines 5-on-5, Power Play and Penalty Kill; each is recorded separately.</p>
       </div>
 
       {ORDER.map((s) => (

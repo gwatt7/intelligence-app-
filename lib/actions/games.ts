@@ -208,3 +208,43 @@ export async function clearGameSituationStat(gameId: string, playerId: string, s
   revalidateSituation(gameId, playerId);
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Team special teams (Power Play % / Penalty Kill %). Blank = not recorded
+// (stored as null, never 0). PP goals are not entered here — they come from
+// the players' Power Play lines.
+
+function optionalCount(v: FormDataEntryValue | null): number | null | "invalid" {
+  const s = String(v ?? "").trim();
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isInteger(n) && n >= 0 && n <= 99 ? n : "invalid";
+}
+
+export async function saveGameSpecialTeams(gameId: string, formData: FormData): Promise<ActionResult> {
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) return { ok: false, error: "Game not found" };
+
+  const powerPlayOpportunities = optionalCount(formData.get("powerPlayOpportunities"));
+  const penaltyKillOpportunities = optionalCount(formData.get("penaltyKillOpportunities"));
+  const powerPlayGoalsAgainst = optionalCount(formData.get("powerPlayGoalsAgainst"));
+  if ([powerPlayOpportunities, penaltyKillOpportunities, powerPlayGoalsAgainst].includes("invalid")) {
+    return { ok: false, error: "Enter whole numbers from 0 to 99, or leave a box blank if it wasn't recorded" };
+  }
+  if ((penaltyKillOpportunities === null) !== (powerPlayGoalsAgainst === null)) {
+    return { ok: false, error: "Enter both Times Shorthanded and Power-Play Goals Against (or leave both blank)" };
+  }
+
+  await prisma.game.update({
+    where: { id: gameId },
+    data: {
+      powerPlayOpportunities: powerPlayOpportunities as number | null,
+      penaltyKillOpportunities: penaltyKillOpportunities as number | null,
+      powerPlayGoalsAgainst: powerPlayGoalsAgainst as number | null,
+    },
+  });
+  await logActivity(game.seasonId, "GAME_LOGGED", `Special teams updated for game vs ${game.opponent}`);
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath("/analytics");
+  return { ok: true };
+}

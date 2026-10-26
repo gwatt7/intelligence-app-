@@ -323,6 +323,13 @@ model Game {
 
   ourScore      Int?
   opponentScore Int?
+
+  // Team special teams (box score). Null = not recorded for this game — never
+  // treated as 0. Power-play goals are not stored here: they come from the
+  // players' Power Play stat lines (GameSituationStat), the single source.
+  powerPlayOpportunities   Int? // our power plays
+  penaltyKillOpportunities Int? // times shorthanded (opponent power plays)
+  powerPlayGoalsAgainst    Int? // opponent power-play goals
   isCompleted   Boolean @default(false)
 
   whatWentWell  String?

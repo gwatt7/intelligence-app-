@@ -19,13 +19,18 @@ import { TimeFilterSelector } from "@/components/analytics/TimeFilterSelector";
 import { RankingCard } from "@/components/analytics/RankingCard";
 import { cn } from "@/lib/cn";
 import { format } from "date-fns";
+import { getSeasonAnalyticsGames } from "@/lib/game-situations-server";
+import { viewFromParam } from "@/lib/game-situations";
+import { GameStatsFilters } from "@/components/analytics/GameStatsFilters";
+import { GameAnalytics } from "@/components/analytics/GameAnalytics";
+import styles from "@/components/analytics/analytics.module.css";
 
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>;
+  searchParams: Promise<{ filter?: string; situation?: string; game?: string }>;
 }) {
-  const { filter: filterParam } = await searchParams;
+  const { filter: filterParam, situation: situationParam, game: gameParam } = await searchParams;
   const season = await getCurrentSeason();
 
   if (!season) {
@@ -48,10 +53,40 @@ export default async function AnalyticsPage({
 
   const rankings = await buildRankings(season.id);
 
+  // Team game statistics by situation (All / 5-on-5 / PP / PK) — lib/game-situations.ts
+  const view = viewFromParam(situationParam);
+  const analyticsGames = (await getSeasonAnalyticsGames(season.id)).filter((g) => g.hasData);
+  const selectedGame = analyticsGames.find((g) => g.id === gameParam) ?? null;
+  const scopedGames = selectedGame ? [selectedGame] : analyticsGames;
+  const gameOptions = [...analyticsGames].reverse().map((g) => ({
+    id: g.id,
+    label: `${format(g.date, "MMM d")} ${g.homeAway === "AWAY" ? "at" : "vs"} ${g.opponent}`,
+  }));
+  const gameStatsSection = (
+    <div className={styles.root}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-medium text-muted">Overall Game Statistics</h2>
+        <GameStatsFilters view={view} gameId={selectedGame?.id ?? null} games={gameOptions} />
+      </div>
+      {analyticsGames.length === 0 ? (
+        <Card>
+          <p className="text-sm text-muted">No game stats, results or special-teams numbers recorded yet this season.</p>
+        </Card>
+      ) : (
+        <GameAnalytics
+          games={scopedGames}
+          view={view}
+          scopeLabel={selectedGame ? gameOptions.find((o) => o.id === selectedGame.id)!.label : `Season ${season.name}`}
+        />
+      )}
+    </div>
+  );
+
   if (allEntries.length === 0) {
     return (
       <div className="space-y-6">
         <PageHeader title="Analytics" subtitle={`Season ${season.name}`} />
+        {gameStatsSection}
         <EmptyState
           title="No data yet"
           description="Log a game to see team trends here. (Mini Game trends live on the Mini Games tab, kept separate from official game analytics.)"
@@ -64,9 +99,11 @@ export default async function AnalyticsPage({
     <div className="space-y-8">
       <PageHeader title="Analytics" subtitle={`Season ${season.name}`} />
 
+      {gameStatsSection}
+
       <div>
         <div className="flex items-center justify-between mb-3 flex-wrap gap-3">
-          <h2 className="text-sm font-medium text-muted">Team Trends — {TIME_FILTER_LABEL[filter]} vs. Season Average</h2>
+          <h2 className="text-sm font-medium text-muted">5-on-5 Team Trends — {TIME_FILTER_LABEL[filter]} vs. Season Average</h2>
           <TimeFilterSelector current={filter} />
         </div>
         <Card padded={false}>
@@ -105,7 +142,7 @@ export default async function AnalyticsPage({
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-muted mb-3">Per-Game Breakdown</h2>
+        <h2 className="text-sm font-medium text-muted mb-3">5-on-5 Per-Game Breakdown</h2>
         <Card padded={false}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -142,7 +179,7 @@ export default async function AnalyticsPage({
       </div>
 
       <div>
-        <h2 className="text-sm font-medium text-muted mb-3">Player Rankings</h2>
+        <h2 className="text-sm font-medium text-muted mb-3">Player Rankings · 5-on-5</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <RankingCard title="Top Performance Index" players={rankings.topPerformanceIndex} digits={1} />
           <RankingCard title="Most Improved" players={rankings.mostImproved} unit="%" digits={1} />

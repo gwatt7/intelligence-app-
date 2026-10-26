@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/Badge";
 import { GameResultNotesForm } from "@/components/forms/GameResultNotesForm";
 import { StatEntryList } from "@/components/stats/StatEntryList";
 import { CsvImportPanel } from "@/components/shared/CsvImportPanel";
-import { clearGameSituationStat, importGameStatsFromCsv, saveGameSituationStat, saveGamePlayerStat } from "@/lib/actions/games";
+import { clearGameSituationStat, importGameStatsFromCsv, saveGameSituationStat, saveGamePlayerStat, saveGameSpecialTeams } from "@/lib/actions/games";
+import { SpecialTeamsForm } from "@/components/forms/SpecialTeamsForm";
 import type { Situation, SituationLine } from "@/lib/situation-stats";
 import { ButtonLink } from "@/components/ui/Button";
 import type { RawStatLine } from "@/lib/stats";
@@ -105,6 +106,17 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
           whatWentWell={game.whatWentWell}
           whatWentWrong={game.whatWentWrong}
           coachNotes={game.coachNotes}
+        />
+      </Card>
+
+      <Card>
+        <CardTitle>Special Teams</CardTitle>
+        <SpecialTeamsForm
+          save={saveGameSpecialTeams.bind(null, game.id)}
+          powerPlayOpportunities={game.powerPlayOpportunities}
+          penaltyKillOpportunities={game.penaltyKillOpportunities}
+          powerPlayGoalsAgainst={game.powerPlayGoalsAgainst}
+          powerPlayGoals={situationRows.filter((r) => r.situation === "POWER_PLAY").reduce((a, r) => a + r.goals, 0)}
         />
       </Card>
 

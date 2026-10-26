@@ -17,6 +17,9 @@ import { format } from "date-fns";
 import type { RawStatLine } from "@/lib/stats";
 import { SituationToggle } from "@/components/players/SituationToggle";
 import { situationFromParam } from "@/lib/situation-stats";
+import { getPlayerSituationTotals } from "@/lib/game-situations-server";
+import { count } from "@/lib/game-situations";
+import { SituationStats, type StatGroupKey } from "@/components/stats/SituationStats";
 import { SituationStatsPanel, type SituationGameEntry } from "@/components/players/SituationStatsPanel";
 
 const MINI_GAME_OFFENSE_ITEMS = [
@@ -90,6 +93,20 @@ export default async function PlayerProfilePage({
   // --- Power Play / Penalty Kill (GameSituationStat only — separate from the 5-on-5 GamePlayerStat line above) ---
   const situationRows = await prisma.gameSituationStat.findMany({ where: { playerId: id }, include: { game: true } });
   situationRows.sort((a, b) => a.game.date.getTime() - b.game.date.getTime());
+  // --- Overall / All Situations: 5-on-5 + PP + PK lines combined (lib/game-situations.ts) ---
+  const overall = await getPlayerSituationTotals(id);
+  const overallGroups: StatGroupKey[] =
+    player.position === "GOALIE"
+      ? ["goaltending"]
+      : [
+          "scoring",
+          ...(player.position === "FORWARD" || (count(overall.totals, "ALL", "faceoffsWon").value ?? 0) + (count(overall.totals, "ALL", "faceoffsLost").value ?? 0) > 0
+            ? (["faceoffs"] as const)
+            : []),
+          "defense",
+          "iceTime",
+        ];
+
   const situationEntries = (situation: "POWER_PLAY" | "PENALTY_KILL"): SituationGameEntry[] =>
     situationRows
       .filter((r) => r.situation === situation)
@@ -110,14 +127,31 @@ export default async function PlayerProfilePage({
       <SituationToggle
         initial={situationFromParam(situationParam)}
         views={{
-          EVEN: (
+          ALL: (
             <div className="space-y-6">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-1">Overall / All Situations</h2>
+                <p className="mb-3 text-xs text-muted-2">
+                  5-on-5, Power Play and Penalty Kill combined from each game&apos;s recorded lines ({overall.games} official game
+                  {overall.games === 1 ? "" : "s"}). Each number shows which situations it includes; N/A means it isn&apos;t recorded.
+                  This is not the same as 5-on-5 — see the 5-on-5 section below.
+                </p>
+                {overall.games === 0 ? (
+                  <Card>
+                    <p className="text-sm text-muted">No official game stats logged for {player.firstName} yet this season.</p>
+                  </Card>
+                ) : (
+                  <SituationStats totals={overall.totals} view="ALL" groups={overallGroups} titlePrefix="All Situations" />
+                )}
+              </div>
+
           {/* =================================================================
               OFFICIAL GAME STATS — reads only GamePlayerStat. Never combined
               with Mini Game data below.
               ================================================================= */}
           <div>
-            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Official Game Stats · 5-on-5</h2>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-1">5-on-5 Only · Official Game Stats</h2>
+                <p className="mb-3 text-xs text-muted-2">True 5-on-5 — excludes Power Play and Penalty Kill. Used for the Performance Index, rankings and trends.</p>
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <PerformanceIndexCard breakdown={index} />
