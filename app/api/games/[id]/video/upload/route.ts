@@ -43,7 +43,7 @@ export async function POST(request: Request) {
       onBeforeGenerateToken: async () => ({
         allowedContentTypes: ["video/mp4"],
         addRandomSuffix: true,
-        maximumSizeInBytes: 5 * 1024 * 1024 * 1024, // 5 GB — generous ceiling for a full game recording
+        maximumSizeInBytes: 20 * 1024 * 1024 * 1024, // 20 GB — raised from 5 GB, which rejected a real 9.8 GB game recording
       }),
       onUploadCompleted: async () => {},
     });
