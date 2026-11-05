@@ -29,6 +29,13 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(jsonResponse);
   } catch (error) {
+    // @vercel/blob/client's upload() discards this response body on any
+    // non-2xx status and shows a fixed generic message in the browser (see
+    // VideoUploadPanel's describeUploadError) — this log is the only place
+    // the real reason (almost always a missing/invalid
+    // BLOB_READ_WRITE_TOKEN) is visible. Check this route's logs in the
+    // Vercel dashboard (or the terminal in local dev) when uploads fail.
+    console.error("[video-upload] token request failed:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Upload token request failed" }, { status: 400 });
   }
 }

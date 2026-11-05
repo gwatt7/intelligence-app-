@@ -30,6 +30,30 @@ function formatFileSize(bytes: number): string {
 }
 
 /**
+ * @vercel/blob/client's upload() throws a fixed, generic "Failed to [ ]
+ * retrieve the client token" message for EVERY non-2xx response from the
+ * token endpoint, discarding whatever specific reason the server actually
+ * returned (confirmed by reading node_modules/@vercel/blob/dist/
+ * chunk-XKVPKJPO.js's retrieveClientToken(), which does `if (!res.ok) throw
+ * new BlobError(...)` before ever looking at the response body — note the
+ * SDK's own source has a double space in that exact string, "Failed to  retrieve",
+ * so this matches on "retrieve the client token" alone rather than the
+ * literal "Failed to retrieve" prefix). The real reason — in practice
+ * always a missing/invalid BLOB_READ_WRITE_TOKEN, since that's the only way
+ * onBeforeGenerateToken can fail in
+ * app/api/games/[id]/video/upload/route.ts — only reaches that route's own
+ * server logs, never the browser. This swaps the SDK's unhelpful generic
+ * message for actionable setup guidance; any other error (e.g. a rejected
+ * file type) passes through unchanged. */
+function describeUploadError(e: unknown): string {
+  const message = e instanceof Error ? e.message : "";
+  if (message.includes("retrieve the client token")) {
+    return "Video storage isn't configured yet — the server has no Vercel Blob token. Ask your administrator to connect a Blob store to this project (Vercel dashboard → Storage → Create Database → Blob) and redeploy.";
+  }
+  return message || "Upload failed. Please try again.";
+}
+
+/**
  * Game video upload — Stage 1 of the video-analysis feature. Uploads go
  * straight from the browser to Vercel Blob (see upload() below and
  * app/api/games/[id]/video/upload/route.ts), never through this app's own
@@ -79,7 +103,7 @@ export function VideoUploadPanel({ gameId, video }: { gameId: string; video: Exi
         });
         if (!result.ok) setError(result.error);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
+        setError(describeUploadError(e));
       } finally {
         setUploading(false);
         setPendingName(null);
