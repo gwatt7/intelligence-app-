@@ -13,6 +13,11 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
+// Force Node.js (never Edge) so there's no ambiguity about which runtime
+// this route executes on while diagnosing why BLOB_READ_WRITE_TOKEN isn't
+// reaching it.
+export const runtime = "nodejs";
+
 /** Temporary diagnostic — visit this route's URL directly in a browser
  * (GET, not the POST the upload flow uses) to see, without digging through
  * Vercel's dashboard, whether BLOB_READ_WRITE_TOKEN is actually visible to
