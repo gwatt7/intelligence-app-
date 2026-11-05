@@ -13,6 +13,27 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
 
+/** Temporary diagnostic — visit this route's URL directly in a browser
+ * (GET, not the POST the upload flow uses) to see, without digging through
+ * Vercel's dashboard, whether BLOB_READ_WRITE_TOKEN is actually visible to
+ * this exact running deployment. Never returns the token itself — only
+ * whether it's set, its length, and its first few characters (enough to
+ * confirm it looks like a real Blob token, e.g. "vercel_blob_rw_...",
+ * without exposing anything secret). Safe to remove once the integration
+ * is confirmed working. */
+export async function GET() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  const storeId = process.env.BLOB_STORE_ID;
+  return NextResponse.json({
+    BLOB_READ_WRITE_TOKEN_present: Boolean(token),
+    BLOB_READ_WRITE_TOKEN_length: token?.length ?? 0,
+    BLOB_READ_WRITE_TOKEN_prefix: token ? token.slice(0, 20) : null,
+    BLOB_STORE_ID_present: Boolean(storeId),
+    BLOB_STORE_ID: storeId ?? null,
+    VERCEL_ENV: process.env.VERCEL_ENV ?? null,
+  });
+}
+
 export async function POST(request: Request) {
   const body = (await request.json()) as HandleUploadBody;
 
