@@ -93,6 +93,12 @@ export function VideoUploadPanel({ gameId, video }: { gameId: string; video: Exi
         const blob = await upload(`games/${gameId}/${file.name}`, file, {
           access: "public",
           handleUploadUrl: `/api/games/${gameId}/video/upload`,
+          // Full-game videos are large (up to the 5GB ceiling set in the
+          // upload route) — multipart splits the upload into independently
+          // retried chunks. Without it, the whole file is one HTTP request;
+          // any blip anywhere in a multi-hundred-MB transfer restarts the
+          // entire upload from 0% with no visible error.
+          multipart: true,
           onUploadProgress: (p) => setProgress(Math.round(p.percentage)),
         });
         const result = await saveGameVideo(gameId, {
