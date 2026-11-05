@@ -333,11 +333,40 @@ model Game {
 
   playerStats GamePlayerStat[]
   warRoom     WarRoom?
+  video       GameVideo?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([seasonId, date, opponent])
+}
+
+// Full-game MP4, stored in Vercel Blob (not in Postgres — this table holds
+// only the pointer). One video per Game; re-uploading replaces it (see
+// saveGameVideo / deleteGameVideo in lib/actions/games.ts). This is Stage 1
+// of the video-analysis feature: upload + storage + association only — no
+// event/shift/stat data is derived from the video yet. Later stages add
+// GameEvent/Shift models that reference this video's timestamps; nothing
+// here assumes or requires that any automated analysis ever runs.
+model GameVideo {
+  id String @id @default(cuid())
+
+  gameId String @unique
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  // `url` is the public Blob CDN URL used for playback; `pathname` is the
+  // Blob store key, used only to delete the object via del(pathname) — never
+  // shown to the user.
+  url             String
+  pathname        String
+  filename        String
+  fileSizeBytes   Int
+  // Probed client-side from the video element's own metadata once it loads
+  // (see VideoUploadPanel) — null until then. Never guessed server-side.
+  durationSeconds Int?
+
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model GamePlayerStat {

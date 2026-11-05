@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { GameResultNotesForm } from "@/components/forms/GameResultNotesForm";
 import { StatEntryList } from "@/components/stats/StatEntryList";
 import { CsvImportPanel } from "@/components/shared/CsvImportPanel";
+import { VideoUploadPanel } from "@/components/games/VideoUploadPanel";
 import { importGameStatsFromCsv, saveGamePlayerStat } from "@/lib/actions/games";
 import { ButtonLink } from "@/components/ui/Button";
 import type { RawStatLine } from "@/lib/stats";
@@ -23,7 +24,7 @@ const GAME_TYPE_LABEL = { PRESEASON: "Preseason", REGULAR_SEASON: "Regular Seaso
 export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const game = await prisma.game.findUnique({ where: { id }, include: { playerStats: true } });
+  const game = await prisma.game.findUnique({ where: { id }, include: { playerStats: true, video: true } });
   if (!game) notFound();
 
   const players = await prisma.player.findMany({
@@ -87,6 +88,23 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
             </div>
           )}
         </dl>
+      </Card>
+
+      <Card>
+        <CardTitle>Game Video</CardTitle>
+        <VideoUploadPanel
+          gameId={game.id}
+          video={
+            game.video
+              ? {
+                  url: game.video.url,
+                  filename: game.video.filename,
+                  fileSizeBytes: game.video.fileSizeBytes,
+                  durationSeconds: game.video.durationSeconds,
+                }
+              : null
+          }
+        />
       </Card>
 
       <Card>

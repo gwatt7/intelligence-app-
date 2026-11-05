@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { del } from "@vercel/blob";
 import { gameSchema, statLineSchema } from "@/lib/validation";
 import { logActivity } from "@/lib/activity";
 import type { ActionResult } from "./team";
@@ -155,4 +156,68 @@ export async function importGameStatsFromCsv(
   revalidatePath("/weekly-rankings");
   revalidatePath("/");
   return { ok: true, imported, skipped };
+}
+
+// ---------------------------------------------------------------------------
+// Game video (Stage 1 of the video-analysis feature — upload, storage, and
+// game association only; no automated analysis happens anywhere in this
+// file). The browser uploads the MP4 directly to Vercel Blob via
+// @vercel/blob/client (see app/api/games/[id]/video/upload/route.ts for the
+// token endpoint and VideoUploadPanel for the upload UI); these actions only
+// ever touch the small pointer row (url/pathname/filename/size), never the
+// video bytes themselves.
+// ---------------------------------------------------------------------------
+
+export async function saveGameVideo(
+  gameId: string,
+  data: { url: string; pathname: string; filename: string; fileSizeBytes: number }
+): Promise<ActionResult> {
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) return { ok: false, error: "Game not found" };
+
+  await prisma.gameVideo.upsert({
+    where: { gameId },
+    create: { gameId, ...data },
+    update: data,
+  });
+
+  await logActivity(game.seasonId, "GAME_LOGGED", `Game video uploaded for game vs ${game.opponent}`);
+
+  revalidatePath(`/games/${gameId}`);
+  return { ok: true };
+}
+
+/** Duration is probed client-side from the uploaded video's own metadata
+ * (see VideoUploadPanel's onLoadedMetadata) the first time it's played back
+ * — never estimated or guessed server-side. */
+export async function setGameVideoDuration(gameId: string, durationSeconds: number): Promise<ActionResult> {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    return { ok: false, error: "Invalid video duration" };
+  }
+  const video = await prisma.gameVideo.findUnique({ where: { gameId } });
+  if (!video) return { ok: false, error: "No video uploaded for this game" };
+
+  await prisma.gameVideo.update({ where: { gameId }, data: { durationSeconds: Math.round(durationSeconds) } });
+  revalidatePath(`/games/${gameId}`);
+  return { ok: true };
+}
+
+export async function deleteGameVideo(gameId: string): Promise<ActionResult> {
+  const video = await prisma.gameVideo.findUnique({ where: { gameId } });
+  if (!video) return { ok: false, error: "No video to remove" };
+
+  try {
+    await del(video.pathname);
+  } catch {
+    // Already gone from Blob storage (or storage isn't configured in this
+    // environment) — still clear our own record so the UI doesn't keep
+    // pointing at a dead reference.
+  }
+  await prisma.gameVideo.delete({ where: { gameId } });
+
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (game) await logActivity(game.seasonId, "GAME_LOGGED", `Game video removed for game vs ${game.opponent}`);
+
+  revalidatePath(`/games/${gameId}`);
+  return { ok: true };
 }
