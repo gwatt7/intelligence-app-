@@ -7,6 +7,7 @@ import { del } from "@vercel/blob";
 import { gameSchema, situationStatSchema, statLineSchema } from "@/lib/validation";
 import { parseIceTime, SITUATION_FIELDS, SITUATION_LABEL, type Situation } from "@/lib/situation-stats";
 import { logActivity } from "@/lib/activity";
+import { resolveBlobReadWriteToken } from "@/lib/blob-token";
 import type { ActionResult } from "./team";
 export type { ActionResult };
 
@@ -208,7 +209,7 @@ export async function deleteGameVideo(gameId: string): Promise<ActionResult> {
   if (!video) return { ok: false, error: "No video to remove" };
 
   try {
-    await del(video.pathname);
+    await del(video.pathname, { token: resolveBlobReadWriteToken() });
   } catch {
     // Already gone from Blob storage (or storage isn't configured in this
     // environment) — still clear our own record so the UI doesn't keep
