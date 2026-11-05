@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## App structure
+
+| Route | What it is |
+| --- | --- |
+| `/` | Northstar homepage (logo, slogan, team selection, ENTER button) |
+| `/dashboard` | Analytics dashboard |
+| `/team`, `/players`, `/games`, `/mini-games`, `/analytics`, `/weekly-rankings`, `/war-room` | Dashboard tabs |
+
+- The homepage logo is `public/northstar.png`.
+- Dashboard pages live in `app/(app)/`, which holds the sidebar layout. The homepage (`app/page.tsx`) has no sidebar.
+- There is no login. Anyone with the link can open the dashboard, same as before the homepage was added.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

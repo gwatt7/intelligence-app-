@@ -189,7 +189,6 @@ const CONTRIBUTION_STAT_KEYS: { key: keyof RawStatLine; label: string }[] = [
   { key: "scoringChances", label: "Scoring Chances" },
   { key: "successfulZoneEntries", label: "Successful Zone Entries" },
   { key: "successfulZoneExits", label: "Successful Zone Exits" },
-  { key: "takeaways", label: "Takeaways" },
   { key: "disruptions", label: "Disruptions" },
   { key: "hits", label: "Hits" },
   { key: "blocks", label: "Blocks" },
@@ -238,14 +237,11 @@ export const derivedCategories = {
     { key: "points", label: "Points", derived: true },
     { key: "shots", label: "Shots" },
     { key: "scoringChances", label: "Scoring Chances" },
-    { key: "goodOpportunities", label: "Good Opportunities" },
-    { key: "badOpportunities", label: "Bad Opportunities" },
   ],
   defense: [
     { key: "disruptions", label: "Disruptions" },
     { key: "hits", label: "Hits" },
     { key: "blocks", label: "Blocks" },
-    { key: "takeaways", label: "Takeaways" },
     { key: "giveaways", label: "Giveaways" },
   ],
   // Forwards only — callers gate rendering on player.position === "FORWARD"

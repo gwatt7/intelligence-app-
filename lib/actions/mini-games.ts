@@ -24,7 +24,7 @@ export async function createMiniGame(seasonId: string, formData: FormData): Prom
   await logActivity(seasonId, "MINI_GAME_LOGGED", `Mini Game (${parsed.data.date}) created`);
 
   revalidatePath("/mini-games");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   redirect(`/mini-games/${miniGame.id}`);
 }
 
@@ -67,7 +67,7 @@ export async function saveMiniGamePlayerStat(
   revalidatePath(`/mini-games/${miniGameId}`);
   revalidatePath("/mini-games");
   revalidatePath(`/players`);
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -110,7 +110,7 @@ export async function importMiniGameStatsFromCsv(
   revalidatePath(`/mini-games/${miniGameId}`);
   revalidatePath("/mini-games");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, imported, skipped };
 }
 
@@ -123,6 +123,6 @@ export async function deleteMiniGame(miniGameId: string): Promise<ActionResult> 
 
   revalidatePath("/mini-games");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   redirect("/mini-games");
 }

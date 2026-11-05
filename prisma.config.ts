@@ -8,7 +8,13 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
+  // Prisma CLI only (migrate deploy in the build). Migrations need a direct,
+  // non-pooled connection: Prisma's migration lock doesn't work reliably
+  // through Neon's connection pooler (it caused "advisory lock" build
+  // failures). Vercel's Neon integration provides DATABASE_URL_UNPOOLED;
+  // without it this falls back to DATABASE_URL. The app itself still uses
+  // DATABASE_URL (see lib/db.ts).
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL_UNPOOLED"] || process.env["POSTGRES_URL_NON_POOLING"] || process.env["DATABASE_URL"],
   },
 });

@@ -8,7 +8,15 @@ import { GameResultNotesForm } from "@/components/forms/GameResultNotesForm";
 import { StatEntryList } from "@/components/stats/StatEntryList";
 import { CsvImportPanel } from "@/components/shared/CsvImportPanel";
 import { VideoUploadPanel } from "@/components/games/VideoUploadPanel";
-import { importGameStatsFromCsv, saveGamePlayerStat } from "@/lib/actions/games";
+import {
+  clearGameSituationStat,
+  importGameStatsFromCsv,
+  saveGameSituationStat,
+  saveGamePlayerStat,
+  saveGameSpecialTeams,
+} from "@/lib/actions/games";
+import { SpecialTeamsForm } from "@/components/forms/SpecialTeamsForm";
+import type { Situation, SituationLine } from "@/lib/situation-stats";
 import { ButtonLink } from "@/components/ui/Button";
 import type { RawStatLine } from "@/lib/stats";
 import {
@@ -36,6 +44,11 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
 
   const boundImport = importGameStatsFromCsv.bind(null, game.id, game.seasonId);
   const boundSave = saveGamePlayerStat.bind(null, game.id);
+
+  // Power Play / Penalty Kill lines (separate table from the 5-on-5 line above).
+  const situationRows = await prisma.gameSituationStat.findMany({ where: { gameId: game.id } });
+  const situationStatsByPlayer: Record<string, Partial<Record<Situation, SituationLine>>> = {};
+  for (const r of situationRows) (situationStatsByPlayer[r.playerId] ??= {})[r.situation] = r;
 
   const arena = gameArenaLabel(game);
   const cityState = gameCityStateLabel(game);
@@ -121,6 +134,17 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
       </Card>
 
       <Card>
+        <CardTitle>Special Teams</CardTitle>
+        <SpecialTeamsForm
+          save={saveGameSpecialTeams.bind(null, game.id)}
+          powerPlayOpportunities={game.powerPlayOpportunities}
+          penaltyKillOpportunities={game.penaltyKillOpportunities}
+          powerPlayGoalsAgainst={game.powerPlayGoalsAgainst}
+          powerPlayGoals={situationRows.filter((r) => r.situation === "POWER_PLAY").reduce((a, r) => a + r.goals, 0)}
+        />
+      </Card>
+
+      <Card>
         <CardTitle>Import from CSV / Excel Export</CardTitle>
         <CsvImportPanel onImport={boundImport} />
       </Card>
@@ -130,7 +154,16 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
         {players.length === 0 ? (
           <p className="text-sm text-muted">No players on the roster yet.</p>
         ) : (
-          <StatEntryList saveAction={boundSave} players={players} statsByPlayer={statsByPlayer} />
+          <StatEntryList
+            saveAction={boundSave}
+            players={players}
+            statsByPlayer={statsByPlayer}
+            situational={{
+              save: saveGameSituationStat.bind(null, game.id),
+              clear: clearGameSituationStat.bind(null, game.id),
+              statsByPlayer: situationStatsByPlayer,
+            }}
+          />
         )}
       </div>
     </div>

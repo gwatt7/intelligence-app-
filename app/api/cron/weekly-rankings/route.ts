@@ -49,7 +49,7 @@ export async function GET(request: Request) {
   // for some unrelated stat edit (or the next deploy) to refresh them.
   if (anyArchived) {
     revalidatePath("/weekly-rankings");
-    revalidatePath("/");
+    revalidatePath("/dashboard");
   }
 
   return NextResponse.json({ ok: true, ranAt: new Date().toISOString(), results });

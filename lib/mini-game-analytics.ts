@@ -162,7 +162,7 @@ export function miniGameWeeklyTrend(entries: MiniGameStatEntry[], now = new Date
 // never surface a defenseman's or goalie's real improvement, since they
 // often have 0 points most games; counting every tracked stat's direction
 // of change lets a goalie's save/goals-against swing, or a defenseman's
-// hits/takeaways swing, count the same as a forward's scoring swing.
+// hits/disruptions swing, count the same as a forward's scoring swing.
 // Purely Mini Game data; players with fewer than 2 Mini Games logged aren't
 // ranked (nothing to compare yet) — never a fabricated progression.
 
@@ -174,7 +174,6 @@ const POSITIVE_WHEN_UP: { key: keyof RawStatLine; label: string }[] = [
   { key: "scoringChances", label: "Scoring Chances" },
   { key: "successfulZoneEntries", label: "Successful Zone Entries" },
   { key: "successfulZoneExits", label: "Successful Zone Exits" },
-  { key: "takeaways", label: "Takeaways" },
   { key: "disruptions", label: "Disruptions" },
   { key: "hits", label: "Hits" },
   { key: "blocks", label: "Blocks" },

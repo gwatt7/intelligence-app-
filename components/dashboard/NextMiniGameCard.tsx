@@ -1,37 +1,46 @@
 import Link from "next/link";
 import { format } from "date-fns";
 import { Gamepad2 } from "lucide-react";
-import { flatPanel } from "@/components/dashboard/dashboardCardStyles";
+import { CardHeader, SoftIconTile, panel } from "@/components/dashboard/dashboardUi";
 
 interface MiniGameLite {
   id: string;
   date: Date;
 }
 
-/** Dashboard-only "Next Mini Game" card — reads the same Mini Game schedule
- * data as the Mini Games tab; shows the existing empty state when none is
- * scheduled. */
+/** "Next Mini Game" card — the same Mini Game schedule data as the Mini Games tab. */
 export function NextMiniGameCard({ miniGame }: { miniGame: MiniGameLite | null }) {
   return (
-    <div className={`${flatPanel} p-5 flex flex-col min-h-[250px]`}>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-5 bottom-5 h-24 w-24 rounded-2xl border border-border flex items-center justify-center"
-      >
-        <Gamepad2 strokeWidth={1.5} className="h-11 w-11 text-muted-2 opacity-60 select-none" />
-      </div>
-      <h3 className="relative text-xs font-semibold tracking-wide text-foreground">Next Mini Game</h3>
-
+    <section className={panel}>
+      <CardHeader
+        title="Next Mini Game"
+        action={
+          <Link href="/mini-games/new" className="text-[13px] font-semibold text-[#5b626b] hover:text-[#0d1116]">
+            + Schedule
+          </Link>
+        }
+      />
       {miniGame ? (
-        <Link
-          href={`/mini-games/${miniGame.id}`}
-          className="relative mt-3 text-sm font-semibold text-foreground hover:text-accent-strong transition-colors"
-        >
-          {format(miniGame.date, "MMM d, yyyy")}
+        <Link href={`/mini-games/${miniGame.id}`} className="flex items-center gap-[14px] px-[18px] py-[18px] hover:bg-[#fafafa]">
+          <SoftIconTile>
+            <Gamepad2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </SoftIconTile>
+          <div>
+            <p className="text-[15px] font-semibold text-[#0d1116]">{format(miniGame.date, "EEE, MMM d, yyyy")}</p>
+            <p className="text-[13px] text-[#5b626b]">Open the Mini Game to log stats.</p>
+          </div>
         </Link>
       ) : (
-        <p className="relative mt-3 text-sm text-muted">None scheduled</p>
+        <div className="flex items-center gap-[14px] px-[18px] py-[18px]">
+          <SoftIconTile>
+            <Gamepad2 className="h-[18px] w-[18px]" strokeWidth={1.75} />
+          </SoftIconTile>
+          <div>
+            <p className="text-[15px] font-semibold text-[#0d1116]">Nothing scheduled</p>
+            <p className="text-[13px] text-[#5b626b]">Set up a skills challenge or scrimmage.</p>
+          </div>
+        </div>
       )}
-    </div>
+    </section>
   );
 }

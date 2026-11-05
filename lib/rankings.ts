@@ -40,7 +40,6 @@ export async function buildRankings(seasonId: string) {
     mostImproved: rank((p) => recentTrendForEntries(entriesByPlayer.get(p.id) ?? [], p.position)),
     bestZoneEntryPct: rank((p) => zoneEntryPct(totalsByPlayer.get(p.id)!)),
     bestZoneExitPct: rank((p) => zoneExitPct(totalsByPlayer.get(p.id)!)),
-    mostTakeaways: rank((p) => totalsByPlayer.get(p.id)!.takeaways),
     lowestGiveaways: rank((p) => totalsByPlayer.get(p.id)!.giveaways, false),
     mostScoringChances: rank((p) => totalsByPlayer.get(p.id)!.scoringChances),
   };

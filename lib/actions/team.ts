@@ -53,7 +53,7 @@ export async function updateTeamInfo(seasonId: string, formData: FormData): Prom
 
   await prisma.team.update({ where: { seasonId }, data: parsed.data });
   revalidatePath("/team");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 

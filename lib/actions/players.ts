@@ -46,7 +46,7 @@ export async function createPlayer(seasonId: string, formData: FormData): Promis
 
   revalidatePath("/team");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -83,7 +83,7 @@ export async function updatePlayer(playerId: string, formData: FormData): Promis
   revalidatePath("/team");
   revalidatePath("/players");
   revalidatePath(`/players/${playerId}`);
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -96,7 +96,7 @@ export async function deletePlayer(playerId: string): Promise<ActionResult> {
 
   revalidatePath("/team");
   revalidatePath("/players");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -154,7 +154,7 @@ export async function updatePlayerPhoto(playerId: string, photoDataUri: string |
   revalidatePath(`/players/${playerId}`);
   revalidatePath("/players");
   revalidatePath("/team");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -217,6 +217,6 @@ export async function updatePlayerHeroImage(
   revalidatePath(`/players/${playerId}`);
   revalidatePath("/players");
   revalidatePath("/team");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

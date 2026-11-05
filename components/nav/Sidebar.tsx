@@ -3,17 +3,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords } from "lucide-react";
+import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords, ListOrdered } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
 const TABS = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/team", label: "Team", icon: Users },
   { href: "/players", label: "Players", icon: User },
   { href: "/mini-games", label: "Mini Games", icon: Gamepad2 },
   { href: "/games", label: "Games", icon: BookOpen },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/weekly-rankings", label: "Weekly Rankings", icon: Trophy },
+  { href: "/rankings", label: "Overall Rankings", icon: ListOrdered },
   { href: "/war-room", label: "War Room", icon: Swords },
 ] as const;
 
@@ -29,6 +31,12 @@ export function Sidebar({
   seasonName?: string | null;
 }) {
   const pathname = usePathname();
+
+  // The dashboard uses its own design (components/dashboard). Every other
+  // page keeps this sidebar unchanged.
+  if (pathname === "/dashboard") {
+    return <DashboardSidebar buildSha={buildSha} buildEnv={buildEnv} seasonName={seasonName} />;
+  }
 
   return (
     <aside className="relative sticky top-0 z-30 flex h-screen w-16 md:w-56 shrink-0 flex-col overflow-hidden border-r border-border bg-background">
@@ -51,7 +59,7 @@ export function Sidebar({
         style={{ background: "radial-gradient(circle, #fcd306, transparent 70%)" }}
       />
 
-      <Link href="/" className="relative flex items-center gap-2 px-3 md:px-4 h-14 shrink-0 border-b border-border">
+      <Link href="/dashboard" className="relative flex items-center gap-2 px-3 md:px-4 h-14 shrink-0 border-b border-border">
         <Image
           src="/uws-logo.png"
           alt="University of Wisconsin–Superior"
@@ -68,7 +76,7 @@ export function Sidebar({
 
       <nav className="relative flex flex-1 flex-col gap-1.5 overflow-y-auto p-3">
         {TABS.map((tab) => {
-          const active = tab.href === "/" ? pathname === "/" : pathname.startsWith(tab.href);
+          const active = pathname.startsWith(tab.href);
           const Icon = tab.icon;
           return (
             <Link

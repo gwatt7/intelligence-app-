@@ -40,12 +40,9 @@ export const statLineSchema = z
     assists: nonNegativeInt.default(0),
     shots: nonNegativeInt.default(0),
     scoringChances: nonNegativeInt.default(0),
-    goodOpportunities: nonNegativeInt.default(0),
-    badOpportunities: nonNegativeInt.default(0),
     disruptions: nonNegativeInt.default(0),
     hits: nonNegativeInt.default(0),
     blocks: nonNegativeInt.default(0),
-    takeaways: nonNegativeInt.default(0),
     giveaways: nonNegativeInt.default(0),
     faceoffsWon: nonNegativeInt.default(0),
     faceoffsLost: nonNegativeInt.default(0),
@@ -137,3 +134,25 @@ export type PlayerBioInput = z.infer<typeof playerBioSchema>;
 export type StatLineInput = z.infer<typeof statLineSchema>;
 export type MiniGameInput = z.infer<typeof miniGameSchema>;
 export type GameInput = z.infer<typeof gameSchema>;
+
+/** Power Play / Penalty Kill stat line (GameSituationStat). Ice time arrives already converted to seconds. */
+export const situationStatSchema = z
+  .object({
+    situation: z.enum(["POWER_PLAY", "PENALTY_KILL"]),
+    goals: nonNegativeInt.default(0),
+    assists: nonNegativeInt.default(0),
+    shots: nonNegativeInt.default(0),
+    shotAttempts: nonNegativeInt.default(0),
+    timeOnIceSeconds: nonNegativeInt.default(0),
+    blocks: nonNegativeInt.default(0),
+    clears: nonNegativeInt.default(0),
+    faceoffsWon: nonNegativeInt.default(0),
+    faceoffsLost: nonNegativeInt.default(0),
+  })
+  .refine((s) => s.goals <= s.shots, { message: "Power-play goals can't exceed power-play shots on goal", path: ["goals"] })
+  .refine((s) => s.shots <= s.shotAttempts, {
+    message: "Shot attempts include shots on goal, so they can't be fewer than shots",
+    path: ["shotAttempts"],
+  });
+
+export type SituationStatInput = z.infer<typeof situationStatSchema>;

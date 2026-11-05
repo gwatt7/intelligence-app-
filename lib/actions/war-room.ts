@@ -71,7 +71,7 @@ export async function saveMissionBrief(gameId: string, payload: MissionBriefPayl
 
   revalidatePath(`/war-room/${gameId}`);
   revalidatePath("/war-room");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -126,6 +126,6 @@ export async function saveAfterActionReport(gameId: string, payload: AfterAction
 
   revalidatePath(`/war-room/${gameId}`);
   revalidatePath("/war-room");
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

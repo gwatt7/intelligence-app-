@@ -34,7 +34,6 @@ const ROWS: Row[] = [
   { label: "Points", format: (s) => points(s.totals) },
   { label: "Shots", format: (s) => s.totals.shots },
   { label: "Goals", format: (s) => s.totals.goals },
-  { label: "Takeaways", format: (s) => s.totals.takeaways },
   { label: "Giveaways", format: (s) => s.totals.giveaways, lowerIsBetter: true },
   { label: "Disruptions", format: (s) => s.totals.disruptions },
   { label: "Hits", format: (s) => s.totals.hits },

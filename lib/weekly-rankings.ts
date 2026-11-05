@@ -97,8 +97,8 @@ function describeComponent(label: string, totals: RawStatLine): string | null {
       return `${points(totals)} points (${totals.goals}G, ${totals.assists}A)`;
     case "Scoring Chances / Game":
       return `${totals.scoringChances} scoring chances`;
-    case "Takeaway − Giveaway / Game":
-      return `${totals.takeaways} takeaways, ${totals.giveaways} giveaways`;
+    case "Disruption − Giveaway / Game":
+      return `${totals.disruptions} disruptions, ${totals.giveaways} giveaways`;
     case "Physical Play / Game":
       return `${totals.hits} hits, ${totals.blocks} blocks`;
     case "Save %": {
