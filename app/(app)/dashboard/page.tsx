@@ -7,7 +7,7 @@ import { metricValue, change } from "@/lib/team-analytics";
 import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
 import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
-import { getGameStatContributions } from "@/lib/player-analytics";
+import { getGameStatContributions, getSeasonStatEntriesByPlayer, getSeasonPlusMinusByPlayer } from "@/lib/player-analytics";
 import { DEFAULT_WEEK_TIMEZONE } from "@/lib/calendar-week";
 import { formatChange, formatPct, getStatValue, pct, sumStatLines, zoneEntryPct, zoneExitPct } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -113,12 +113,18 @@ export default async function DashboardPage() {
 
   // ---- Display data for the dashboard design (read-only) -------------------
 
-  const [seasonGames, rosterCount, reportCards] = await Promise.all([
+  const [seasonGames, roster, reportCards] = await Promise.all([
     prisma.game.findMany({ where: { seasonId: season.id }, orderBy: { date: "asc" } }),
-    prisma.player.count({ where: { seasonId: season.id } }),
-    prisma.playerSeasonStat.findMany({ include: { player: true, season: true } }),
+    prisma.player.findMany({ where: { seasonId: season.id } }),
+    // Excludes the active season so this can only ever resolve to a genuinely
+    // past season's imported report cards, never the live season below.
+    prisma.playerSeasonStat.findMany({
+      where: { season: { name: { not: season.name } } },
+      include: { player: true, season: true },
+    }),
   ]);
   const schedule: ScheduleGame[] = seasonGames;
+  const rosterCount = roster.length;
 
   const upcoming = schedule.filter((g) => g.date >= now);
   const nextScheduled = nextGame ? schedule.find((g) => g.id === nextGame.id) ?? null : null;
@@ -137,7 +143,9 @@ export default async function DashboardPage() {
   const arena = homeArena(schedule);
   const subtitle = [`${shortSeason(season.name, "–")} Season`, arena].filter(Boolean).join(" · ");
 
-  // Most recent season that has imported report cards (e.g. 2025-2026).
+  // Most recent PAST season with imported report cards (e.g. 2025-2026) —
+  // used only for the "Last season's report cards" link below, never for
+  // the live Team Leaders section, which reads the active season instead.
   const reportSeason = [...new Set(reportCards.map((r) => r.season.name))].sort().pop() ?? null;
   const reportRows: ReportCardRow[] = reportCards
     .filter((r) => r.season.name === reportSeason)
@@ -157,9 +165,47 @@ export default async function DashboardPage() {
       blocks: r.blocks,
     }));
   const reportLabel = reportSeason ? shortSeason(reportSeason) : null;
-  const leaders = teamLeaders(reportRows);
-  const spotlight = spotlightPlayer(reportRows);
   const lastSeasonTop = pointsLeader(reportRows);
+
+  // Live Team Leaders + Player Spotlight for the ACTIVE season — Points,
+  // Goals, Assists, Plus/Minus, Blocked Shots, all from this season's own
+  // GamePlayerStat (availability-aware: see getSeasonStatEntriesByPlayer /
+  // getSeasonPlusMinusByPlayer in lib/player-analytics.ts). A player with 0
+  // games played this season gets null fields (not a fabricated 0), so an
+  // empty-handed roster never falsely "leads" a category. Reuses the same
+  // teamLeaders()/spotlightPlayer() helpers the old historical-only version
+  // used — they're already generic over ReportCardRow, regardless of source.
+  const [currentSeasonEntries, currentSeasonPlusMinus] = await Promise.all([
+    getSeasonStatEntriesByPlayer(season.id),
+    getSeasonPlusMinusByPlayer(season.id),
+  ]);
+  const currentSeasonRows: ReportCardRow[] = roster.map((p) => {
+    const entries = currentSeasonEntries.get(p.id) ?? [];
+    const base = {
+      playerId: p.id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      jerseyNumber: p.jerseyNumber,
+      heroImageUrl: p.heroImageUrl,
+      heroImageFocalX: p.heroImageFocalX,
+      heroImageFocalY: p.heroImageFocalY,
+    };
+    if (entries.length === 0) {
+      return { ...base, gamesPlayed: null, goals: null, assists: null, shots: null, plusMinus: null, blocks: null };
+    }
+    const totals = sumStatLines(entries.map((e) => e.stat));
+    return {
+      ...base,
+      gamesPlayed: entries.length,
+      goals: totals.goals,
+      assists: totals.assists,
+      shots: totals.shots,
+      plusMinus: currentSeasonPlusMinus.get(p.id) ?? 0,
+      blocks: totals.blocks,
+    };
+  });
+  const leaders = teamLeaders(currentSeasonRows);
+  const spotlight = spotlightPlayer(currentSeasonRows);
 
   // Official games already played (scheduled future games have no stats yet).
   const playedEntries = teamEntries.filter((e) => e.date <= now);
@@ -272,18 +318,19 @@ export default async function DashboardPage() {
           </div>
         </section>
 
-        {/* Last season's team leaders (imported report cards) */}
-        {reportLabel && (
-          <section className="pt-[11px]">
-            <SectionHeading
-              title={`${reportLabel} Team Leaders`}
-              action={
-                lastSeasonTop ? <HeadingLink href={`/players/${lastSeasonTop.playerId}`}>Last season&apos;s report cards →</HeadingLink> : undefined
-              }
-            />
-            <TeamLeaders spotlight={spotlight} leaders={leaders} />
-          </section>
-        )}
+        {/* Active-season team leaders (live GamePlayerStat data). The "Last
+            season's report cards" link is the one place historical
+            PlayerSeasonStat data still surfaces here — kept as a separate
+            link, per the active season never being conflated with it. */}
+        <section className="pt-[11px]">
+          <SectionHeading
+            title={`${shortSeason(season.name)} Team Leaders`}
+            action={
+              lastSeasonTop ? <HeadingLink href={`/players/${lastSeasonTop.playerId}`}>Last season&apos;s report cards →</HeadingLink> : undefined
+            }
+          />
+          <TeamLeaders spotlight={spotlight} leaders={leaders} />
+        </section>
 
         <div className="grid grid-cols-1 items-start gap-[24px] lg:grid-cols-[minmax(0,708fr)_minmax(0,383fr)]">
           <TeamTrendsCard games={trendGames} />
