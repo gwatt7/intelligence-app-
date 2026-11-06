@@ -8,6 +8,7 @@ import { gameSchema, situationStatSchema, statLineSchema } from "@/lib/validatio
 import { parseIceTime, SITUATION_FIELDS, SITUATION_LABEL, type Situation } from "@/lib/situation-stats";
 import { logActivity } from "@/lib/activity";
 import { resolveBlobReadWriteToken } from "@/lib/blob-token";
+import { setPlayerGameStatus, type PlayerGameStatus } from "@/lib/player-availability";
 import type { ActionResult } from "./team";
 export type { ActionResult };
 
@@ -227,6 +228,34 @@ export async function deleteGameVideo(gameId: string): Promise<ActionResult> {
   if (game) await logActivity(game.seasonId, "GAME_LOGGED", `Game video removed for game vs ${game.opponent}`);
 
   revalidatePath(`/games/${gameId}`);
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Player availability (Dressed / Scratched / Injured) for one game. Never
+// touches that player's GamePlayerStat/GameSituationStat rows for the game
+// — status only governs whether lib/player-analytics.ts and
+// lib/game-situations-server.ts include those rows when they read, so
+// flipping status back to Dressed later restores whatever was entered
+// without re-entering it.
+
+export async function setGamePlayerStatusAction(
+  gameId: string,
+  playerId: string,
+  status: PlayerGameStatus
+): Promise<ActionResult> {
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (!game) return { ok: false, error: "Game not found" };
+
+  await setPlayerGameStatus(gameId, playerId, status);
+
+  revalidatePath(`/games/${gameId}`);
+  revalidatePath(`/players/${playerId}`);
+  revalidatePath("/players");
+  revalidatePath("/analytics");
+  revalidatePath("/rankings");
+  revalidatePath("/weekly-rankings");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 

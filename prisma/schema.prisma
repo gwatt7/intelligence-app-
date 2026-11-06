@@ -118,6 +118,7 @@ model Player {
   miniGameStats        MiniGamePlayerStat[]
   gameStats            GamePlayerStat[]
   situationStats       GameSituationStat[]
+  availability         GamePlayerAvailability[]
   highlights           PlayerHighlight[]
   seasonStats          PlayerSeasonStat[]
   weeklyRankingEntries WeeklyRankingEntry[]
@@ -345,6 +346,7 @@ model Game {
 
   playerStats    GamePlayerStat[]
   situationStats GameSituationStat[]
+  availability   GamePlayerAvailability[]
   warRoom        WarRoom?
   video          GameVideo?
 
@@ -352,6 +354,42 @@ model Game {
   updatedAt DateTime @updatedAt
 
   @@unique([seasonId, date, opponent])
+}
+
+// Player availability per game — Dressed, Scratched, or Injured. Dressed is
+// the default and is NEVER stored as a row: only Scratched/Injured get a
+// row, so a player with no row here is simply dressed. Setting a player back
+// to Dressed deletes the row rather than storing a third enum value (see
+// setPlayerGameStatus in lib/actions/games.ts) — this mirrors the sparse-row
+// convention already used by GameSituationStat (clearGameSituationStat) and
+// the team special-teams fields (null = not recorded, never a stored zero).
+//
+// This status governs which games count toward a player's games-played,
+// averages, percentages, rankings, comparisons, and Time on Ice (see
+// lib/player-availability.ts, the single place every one of those read
+// paths filters through) — it never deletes or alters the player's actual
+// GamePlayerStat/GameSituationStat rows for that game, so flipping a status
+// back to Dressed later restores exactly what was already entered.
+enum GameAvailabilityStatus {
+  SCRATCHED
+  INJURED
+}
+
+model GamePlayerAvailability {
+  id String @id @default(cuid())
+
+  gameId String
+  game   Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  status GameAvailabilityStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([gameId, playerId])
 }
 
 // Full-game MP4, stored in Vercel Blob (not in Postgres — this table holds

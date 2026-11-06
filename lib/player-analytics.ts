@@ -7,8 +7,9 @@
 // query in this file.
 
 import { prisma } from "@/lib/db";
-import { RawStatLine, sumStatLines, change, topStatContributions, type StatContribution } from "@/lib/stats";
+import { RawStatLine, EMPTY_STAT_LINE, sumStatLines, change, topStatContributions, type StatContribution } from "@/lib/stats";
 import { calculatePerformanceIndex, PerformanceIndexBreakdown } from "@/lib/performance-index";
+import { getSeasonAvailabilityExclusions, getPlayerAvailabilityExclusions, isPlayedGame } from "@/lib/player-availability";
 
 export type StatSource = "GAME";
 
@@ -21,45 +22,79 @@ export interface StatEntry {
   stat: RawStatLine;
 }
 
-/** Bulk-loads every official-game stat line for a season, grouped by player, in chronological order. Avoids N+1 queries when computing stats for a whole roster at once (player list, rankings, dashboard). */
+/**
+ * Bulk-loads every official-game stat line for a season, grouped by player,
+ * in chronological order. Avoids N+1 queries when computing stats for a
+ * whole roster at once (player list, rankings, dashboard).
+ *
+ * Availability-aware: a player Scratched or Injured for a game gets no
+ * entry for it at all (never a zero-performance game). A Dressed player
+ * (the default — see lib/player-availability.ts) gets an entry for every
+ * game that's actually been played, using their real GamePlayerStat row if
+ * one exists or an all-zero line if not — so "games played" always reflects
+ * availability, never just whether a box score happened to be typed in.
+ */
 export async function getSeasonStatEntriesByPlayer(seasonId: string): Promise<Map<string, StatEntry[]>> {
-  const gameStats = await prisma.gamePlayerStat.findMany({
-    where: { game: { seasonId } },
-    include: { game: true },
-  });
+  const [players, games, gameStats, exclusions] = await Promise.all([
+    prisma.player.findMany({ where: { seasonId }, select: { id: true } }),
+    prisma.game.findMany({ where: { seasonId }, select: { id: true, date: true, opponent: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId } } }),
+    getSeasonAvailabilityExclusions(seasonId),
+  ]);
+
+  const gameIdsWithStats = new Set(gameStats.map((s) => s.gameId));
+  const playedGames = games.filter((g) => isPlayedGame(g, gameIdsWithStats)).sort((a, b) => a.date.getTime() - b.date.getTime());
+  const statByKey = new Map(gameStats.map((s) => [`${s.playerId}:${s.gameId}`, s]));
 
   const byPlayer = new Map<string, StatEntry[]>();
-
-  for (const s of gameStats) {
-    const entry: StatEntry = {
-      id: s.id,
-      playerId: s.playerId,
-      date: s.game.date,
-      source: "GAME",
-      label: `vs ${s.game.opponent}`,
-      stat: s,
-    };
-    byPlayer.set(s.playerId, [...(byPlayer.get(s.playerId) ?? []), entry]);
-  }
-
-  for (const entries of byPlayer.values()) {
-    entries.sort((a, b) => a.date.getTime() - b.date.getTime());
+  for (const p of players) {
+    const entries: StatEntry[] = [];
+    for (const g of playedGames) {
+      if (exclusions.has(`${p.id}:${g.id}`)) continue; // Scratched/Injured — fully excluded
+      const row = statByKey.get(`${p.id}:${g.id}`);
+      entries.push({
+        id: row?.id ?? `dressed-${g.id}`,
+        playerId: p.id,
+        date: g.date,
+        source: "GAME",
+        label: `vs ${g.opponent}`,
+        stat: row ?? EMPTY_STAT_LINE,
+      });
+    }
+    if (entries.length > 0) byPlayer.set(p.id, entries);
   }
 
   return byPlayer;
 }
 
 export async function getPlayerStatEntries(playerId: string): Promise<StatEntry[]> {
-  const gameStats = await prisma.gamePlayerStat.findMany({ where: { playerId }, include: { game: true } });
+  const player = await prisma.player.findUnique({ where: { id: playerId }, select: { seasonId: true } });
+  if (!player) return [];
 
-  const entries: StatEntry[] = gameStats.map((s) => ({
-    id: s.id,
-    playerId: s.playerId,
-    date: s.game.date,
-    source: "GAME" as const,
-    label: `vs ${s.game.opponent}`,
-    stat: s,
-  }));
+  const [games, allSeasonGameStats, playerGameStats, exclusions] = await Promise.all([
+    prisma.game.findMany({ where: { seasonId: player.seasonId }, select: { id: true, date: true, opponent: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId: player.seasonId } }, select: { gameId: true } }),
+    prisma.gamePlayerStat.findMany({ where: { playerId } }),
+    getPlayerAvailabilityExclusions(playerId),
+  ]);
+
+  const gameIdsWithStats = new Set(allSeasonGameStats.map((s) => s.gameId));
+  const playedGames = games.filter((g) => isPlayedGame(g, gameIdsWithStats));
+  const statByGameId = new Map(playerGameStats.map((s) => [s.gameId, s]));
+
+  const entries: StatEntry[] = [];
+  for (const g of playedGames) {
+    if (exclusions.has(g.id)) continue; // Scratched/Injured — fully excluded
+    const row = statByGameId.get(g.id);
+    entries.push({
+      id: row?.id ?? `dressed-${g.id}`,
+      playerId,
+      date: g.date,
+      source: "GAME",
+      label: `vs ${g.opponent}`,
+      stat: row ?? EMPTY_STAT_LINE,
+    });
+  }
 
   entries.sort((a, b) => a.date.getTime() - b.date.getTime());
   return entries;
@@ -127,11 +162,23 @@ export interface PlayerToiSummary {
 }
 
 export async function getPlayerToiSummary(playerId: string): Promise<PlayerToiSummary> {
-  const [gameStats, situationStats] = await Promise.all([
-    prisma.gamePlayerStat.findMany({ where: { playerId }, include: { game: true } }),
+  const player = await prisma.player.findUnique({ where: { id: playerId }, select: { seasonId: true } });
+  if (!player) {
+    return { games: [], seasonEvenSeconds: 0, seasonPowerPlaySeconds: 0, seasonPenaltyKillSeconds: 0, seasonTotalSeconds: 0, averagePerGameSeconds: null };
+  }
+
+  const [seasonGames, allSeasonGameStats, playerGameStats, situationStats, exclusions] = await Promise.all([
+    prisma.game.findMany({ where: { seasonId: player.seasonId }, select: { id: true, date: true, opponent: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId: player.seasonId } }, select: { gameId: true } }),
+    prisma.gamePlayerStat.findMany({ where: { playerId } }),
     prisma.gameSituationStat.findMany({ where: { playerId } }),
+    getPlayerAvailabilityExclusions(playerId),
   ]);
 
+  const gameIdsWithStats = new Set(allSeasonGameStats.map((s) => s.gameId));
+  const playedGames = seasonGames.filter((g) => isPlayedGame(g, gameIdsWithStats) && !exclusions.has(g.id));
+
+  const evenByGame = new Map(playerGameStats.map((s) => [s.gameId, s.timeOnIceSeconds]));
   const situationByGame = new Map<string, { POWER_PLAY?: number; PENALTY_KILL?: number }>();
   for (const s of situationStats) {
     const entry = situationByGame.get(s.gameId) ?? {};
@@ -139,16 +186,16 @@ export async function getPlayerToiSummary(playerId: string): Promise<PlayerToiSu
     situationByGame.set(s.gameId, entry);
   }
 
-  const games: GameToiRow[] = gameStats
+  const games: GameToiRow[] = playedGames
     .map((g) => {
-      const sit = situationByGame.get(g.gameId) ?? {};
-      const evenSeconds = g.timeOnIceSeconds;
+      const sit = situationByGame.get(g.id) ?? {};
+      const evenSeconds = evenByGame.get(g.id) ?? 0;
       const powerPlaySeconds = sit.POWER_PLAY ?? 0;
       const penaltyKillSeconds = sit.PENALTY_KILL ?? 0;
       return {
-        gameId: g.gameId,
-        date: g.game.date,
-        label: `vs ${g.game.opponent}`,
+        gameId: g.id,
+        date: g.date,
+        label: `vs ${g.opponent}`,
         evenSeconds,
         powerPlaySeconds,
         penaltyKillSeconds,

@@ -14,7 +14,9 @@ import {
   saveGameSituationStat,
   saveGamePlayerStat,
   saveGameSpecialTeams,
+  setGamePlayerStatusAction,
 } from "@/lib/actions/games";
+import { getGameAvailability } from "@/lib/player-availability";
 import { SpecialTeamsForm } from "@/components/forms/SpecialTeamsForm";
 import type { Situation, SituationLine } from "@/lib/situation-stats";
 import { ButtonLink } from "@/components/ui/Button";
@@ -49,6 +51,10 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
   const situationRows = await prisma.gameSituationStat.findMany({ where: { gameId: game.id } });
   const situationStatsByPlayer: Record<string, Partial<Record<Situation, SituationLine>>> = {};
   for (const r of situationRows) (situationStatsByPlayer[r.playerId] ??= {})[r.situation] = r;
+
+  // Dressed / Scratched / Injured — see lib/player-availability.ts. Absence from this map means Dressed.
+  const availabilityMap = await getGameAvailability(game.id);
+  const statusByPlayer = Object.fromEntries(availabilityMap);
 
   const arena = gameArenaLabel(game);
   const cityState = gameCityStateLabel(game);
@@ -162,6 +168,10 @@ export default async function GameDetailPage({ params }: { params: Promise<{ id:
               save: saveGameSituationStat.bind(null, game.id),
               clear: clearGameSituationStat.bind(null, game.id),
               statsByPlayer: situationStatsByPlayer,
+            }}
+            availability={{
+              statusByPlayer,
+              onChange: setGamePlayerStatusAction.bind(null, game.id),
             }}
           />
         )}

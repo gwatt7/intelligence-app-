@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries, getPlayerToiSummary } from "@/lib/player-analytics";
 import { TimeOnIceCard } from "@/components/players/TimeOnIceCard";
+import { getPlayerAvailabilitySummary } from "@/lib/player-availability";
+import { AvailabilityCard } from "@/components/players/AvailabilityCard";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
 import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
@@ -70,6 +72,7 @@ export default async function PlayerProfilePage({
   // --- Official Game stats (GamePlayerStat only — see lib/player-analytics.ts) ---
   const entries = await getPlayerStatEntries(id);
   const toiSummary = await getPlayerToiSummary(id);
+  const availabilitySummary = await getPlayerAvailabilitySummary(id);
   const totals = sumStatLines(entries.map((e) => e.stat));
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
@@ -125,6 +128,8 @@ export default async function PlayerProfilePage({
           seasonName={season?.name ?? "Season"}
         />
       )}
+
+      <AvailabilityCard summary={availabilitySummary} />
 
       <SituationToggle
         initial={situationFromParam(situationParam)}

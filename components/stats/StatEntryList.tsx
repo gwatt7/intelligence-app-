@@ -10,6 +10,7 @@ import type { ActionResult } from "@/lib/actions/team";
 import { SituationStatForm } from "@/components/stats/SituationStatForm";
 import { SITUATION_LABEL, type ProfileSituation, type Situation, type SituationLine } from "@/lib/situation-stats";
 import { cn } from "@/lib/cn";
+import { PlayerGameStatusSelector, type PlayerGameStatus } from "@/components/stats/PlayerGameStatusSelector";
 
 type Player = {
   id: string;
@@ -28,6 +29,12 @@ export interface SituationalEntry {
   statsByPlayer: Record<string, Partial<Record<Situation, SituationLine>>>;
 }
 
+/** Optional per-game Dressed/Scratched/Injured status (official Games only — Mini Games don't pass this). Absence of a player from statusByPlayer means Dressed. */
+export interface AvailabilityEntry {
+  statusByPlayer: Record<string, PlayerGameStatus>;
+  onChange: (playerId: string, status: PlayerGameStatus) => Promise<ActionResult>;
+}
+
 const SITUATIONS: ProfileSituation[] = ["EVEN", "POWER_PLAY", "PENALTY_KILL"];
 
 /** Shared "select a player, enter their stat line" UI for Mini Games and official Games — the save action is bound to the mini-game/game id by the caller and only needs a playerId + FormData. Purely presentational: it never mixes the two, since each caller binds its own action against its own separate table. */
@@ -36,6 +43,7 @@ export function StatEntryList({
   players,
   statsByPlayer,
   situational,
+  availability,
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   players: Player[];
@@ -43,6 +51,7 @@ export function StatEntryList({
   // (official Games) — Mini Games (also a StatEntryList caller) never set it.
   statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number }>;
   situational?: SituationalEntry;
+  availability?: AvailabilityEntry;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -55,6 +64,8 @@ export function StatEntryList({
           player={p}
           stat={statsByPlayer.get(p.id)}
           situational={situational}
+          status={availability?.statusByPlayer[p.id] ?? "DRESSED"}
+          onStatusChange={availability ? (status) => availability.onChange(p.id, status) : undefined}
           open={openId === p.id}
           onToggle={() => setOpenId(openId === p.id ? null : p.id)}
         />
@@ -68,6 +79,8 @@ function PlayerRow({
   player,
   stat,
   situational,
+  status,
+  onStatusChange,
   open,
   onToggle,
 }: {
@@ -75,6 +88,8 @@ function PlayerRow({
   player: Player;
   stat?: RawStatLine & { timeOnIceSeconds?: number };
   situational?: SituationalEntry;
+  status: PlayerGameStatus;
+  onStatusChange?: (status: PlayerGameStatus) => Promise<ActionResult>;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -88,41 +103,44 @@ function PlayerRow({
 
   const hasStats = !!stat;
 
+  const unavailable = status !== "DRESSED";
+
   return (
     <div className="bg-surface">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-surface-raised"
-      >
-        <span className="text-sm font-medium text-foreground">
-          #{player.jerseyNumber} {player.firstName} {player.lastName}
-        </span>
-        <span className="flex items-center gap-3 text-xs text-muted">
-          {hasStats ? (
-            <>
-              {player.position === "GOALIE" ? (
-                <>
-                  <span>Saves {stat!.saves}</span>
-                  <span>Save% {formatPct(savePct(stat!))}</span>
-                </>
-              ) : (
-                <>
-                  <span>Entry {formatPct(zoneEntryPct(stat!))}</span>
-                  <span>Exit {formatPct(zoneExitPct(stat!))}</span>
-                </>
-              )}
-              {!!situational && !!stat!.timeOnIceSeconds && <span>TOI {formatIceTime(stat!.timeOnIceSeconds)}</span>}
-              <Badge tone="positive">Logged</Badge>
-            </>
-          ) : (
-            <Badge tone="neutral">No stats</Badge>
-          )}
-          {showSituations && situationStats.POWER_PLAY && <Badge tone="accent">PP</Badge>}
-          {showSituations && situationStats.PENALTY_KILL && <Badge tone="accent">PK</Badge>}
-          <span>{open ? "▲" : "▼"}</span>
-        </span>
-      </button>
+      <div className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface-raised">
+        <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
+          <span className={cn("text-sm font-medium truncate", unavailable ? "text-muted-2" : "text-foreground")}>
+            #{player.jerseyNumber} {player.firstName} {player.lastName}
+          </span>
+          <span className="flex shrink-0 items-center gap-3 text-xs text-muted">
+            {unavailable ? (
+              <Badge tone={status === "INJURED" ? "negative" : "neutral"}>{status === "INJURED" ? "Injured" : "Scratched"}</Badge>
+            ) : hasStats ? (
+              <>
+                {player.position === "GOALIE" ? (
+                  <>
+                    <span>Saves {stat!.saves}</span>
+                    <span>Save% {formatPct(savePct(stat!))}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Entry {formatPct(zoneEntryPct(stat!))}</span>
+                    <span>Exit {formatPct(zoneExitPct(stat!))}</span>
+                  </>
+                )}
+                {!!situational && !!stat!.timeOnIceSeconds && <span>TOI {formatIceTime(stat!.timeOnIceSeconds)}</span>}
+                <Badge tone="positive">Logged</Badge>
+              </>
+            ) : (
+              <Badge tone="neutral">No stats</Badge>
+            )}
+            {!unavailable && showSituations && situationStats.POWER_PLAY && <Badge tone="accent">PP</Badge>}
+            {!unavailable && showSituations && situationStats.PENALTY_KILL && <Badge tone="accent">PK</Badge>}
+            <span>{open ? "▲" : "▼"}</span>
+          </span>
+        </button>
+        {onStatusChange && <PlayerGameStatusSelector status={status} onChange={onStatusChange} />}
+      </div>
       {open && showSituations && (
         <div className="px-4 pb-3">
           <div role="tablist" aria-label="Game situation" className="inline-flex rounded-lg border border-border bg-surface-raised p-1">

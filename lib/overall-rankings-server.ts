@@ -10,6 +10,7 @@
 
 import { prisma } from "@/lib/db";
 import { EMPTY_STAT_LINE, type RawStatLine } from "@/lib/stats";
+import { getSeasonStatEntriesByPlayer } from "@/lib/player-analytics";
 import {
   applyMovement,
   computeRankings,
@@ -81,8 +82,18 @@ export async function getOverallRankings(seasonId: string, rankingGroup: Ranking
     const rows = await prisma.miniGamePlayerStat.findMany({ where: { miniGame: { seasonId } }, include: { miniGame: { select: { date: true } } } });
     byPlayer = group(rows.map((r) => ({ ...r, date: r.miniGame.date })), (r) => r);
   } else {
-    const rows = await prisma.gamePlayerStat.findMany({ where: { game: { seasonId } }, include: { game: { select: { date: true } } } });
-    byPlayer = group(rows.map((r) => ({ ...r, date: r.game.date })), (r) => r);
+    // Availability-aware (Dressed/Scratched/Injured — see
+    // lib/player-availability.ts): reuses the same season entry list the
+    // main Rankings page and Performance Index already read from, instead
+    // of querying GamePlayerStat directly, so a scratched/injured game is
+    // excluded here too and a dressed zero-stat game still counts.
+    const entriesByPlayer = await getSeasonStatEntriesByPlayer(seasonId);
+    byPlayer = new Map(
+      [...entriesByPlayer.entries()].map(([playerId, entries]) => [
+        playerId,
+        [...entries].sort((a, b) => a.date.getTime() - b.date.getTime()).map((e) => ({ date: e.date, stat: e.stat })),
+      ])
+    );
   }
 
   const hasEntries = [...byPlayer.values()].some((l) => l.length > 0);
