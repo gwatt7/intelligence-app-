@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries, getPlayerToiSummary } from "@/lib/player-analytics";
+import {
+  getPlayerStatEntries,
+  performanceIndexForEntries,
+  recentTrendForEntries,
+  getPlayerToiSummary,
+  getPlayerPlusMinusSummary,
+} from "@/lib/player-analytics";
 import { TimeOnIceCard } from "@/components/players/TimeOnIceCard";
+import { PlusMinusCard } from "@/components/players/PlusMinusCard";
 import { getPlayerAvailabilitySummary } from "@/lib/player-availability";
 import { AvailabilityCard } from "@/components/players/AvailabilityCard";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
@@ -73,6 +80,7 @@ export default async function PlayerProfilePage({
   const entries = await getPlayerStatEntries(id);
   const toiSummary = await getPlayerToiSummary(id);
   const availabilitySummary = await getPlayerAvailabilitySummary(id);
+  const plusMinusSummary = player.position !== "GOALIE" ? await getPlayerPlusMinusSummary(id) : null;
   const totals = sumStatLines(entries.map((e) => e.stat));
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
@@ -161,6 +169,17 @@ export default async function PlayerProfilePage({
             <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Time on Ice</h2>
             <TimeOnIceCard summary={toiSummary} firstName={player.firstName} />
           </div>
+
+          {/* =================================================================
+              PLUS/MINUS — skaters only (goalies never get a Plus/Minus
+              value — see schema.prisma's GamePlayerStat.plusMinus comment).
+              ================================================================= */}
+          {plusMinusSummary && (
+            <div>
+              <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Plus/Minus</h2>
+              <PlusMinusCard summary={plusMinusSummary} firstName={player.firstName} />
+            </div>
+          )}
 
           {/* =================================================================
               OFFICIAL GAME STATS — reads only GamePlayerStat. Never combined

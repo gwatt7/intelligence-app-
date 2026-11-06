@@ -110,13 +110,21 @@ export async function saveGamePlayerStat(gameId: string, playerId: string, formD
     if (seconds === null) return { ok: false, error: "Enter ice time as minutes:seconds, e.g. 14:35" };
     data.timeOnIceSeconds = seconds;
   }
+  const plusMinusRaw = formData.get("plusMinus");
+  if (plusMinusRaw !== null) {
+    const plusMinus = Number(plusMinusRaw);
+    if (!Number.isInteger(plusMinus) || plusMinus < -20 || plusMinus > 20) {
+      return { ok: false, error: "Enter Plus/Minus as a whole number from -20 to 20" };
+    }
+    data.plusMinus = plusMinus;
+  }
 
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return { ok: false, error: "Game not found" };
 
   await prisma.gamePlayerStat.upsert({
     where: { gameId_playerId: { gameId, playerId } },
-    create: { gameId, playerId, timeOnIceSeconds: 0, ...data },
+    create: { gameId, playerId, timeOnIceSeconds: 0, plusMinus: 0, ...data },
     update: data,
   });
 

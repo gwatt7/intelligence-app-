@@ -218,3 +218,78 @@ export async function getPlayerToiSummary(playerId: string): Promise<PlayerToiSu
     averagePerGameSeconds: games.length ? Math.round(seasonTotalSeconds / games.length) : null,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Plus/Minus — official Games only, skaters only. Like timeOnIceSeconds,
+// deliberately NOT part of RawStatLine: Mini Games have no equivalent
+// column, and it's the one field in this whole stat system that can be
+// negative, so it's kept out of the shared non-negative-int interface.
+// Availability-aware the same way getPlayerStatEntries is: a Scratched/
+// Injured game never contributes, a Dressed game with no entry contributes
+// 0 (changing the games-played denominator without fabricating a number).
+
+export interface GamePlusMinusRow {
+  gameId: string;
+  date: Date;
+  label: string;
+  plusMinus: number;
+}
+
+export interface PlayerPlusMinusSummary {
+  games: GamePlusMinusRow[];
+  seasonTotal: number;
+  averagePerGame: number | null;
+}
+
+/** Every skater's season Plus/Minus total at once — for rankings/comparisons, avoiding N+1 queries. Availability-aware, same rules as getPlayerPlusMinusSummary. Goalies are included in the map (0 if untouched) — callers that must exclude them from a skater-only ranking do so themselves by position, same as every other skater-only stat in this app. */
+export async function getSeasonPlusMinusByPlayer(seasonId: string): Promise<Map<string, number>> {
+  const [players, games, gameStats, exclusions] = await Promise.all([
+    prisma.player.findMany({ where: { seasonId }, select: { id: true } }),
+    prisma.game.findMany({ where: { seasonId }, select: { id: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId } } }),
+    getSeasonAvailabilityExclusions(seasonId),
+  ]);
+
+  const gameIdsWithStats = new Set(gameStats.map((s) => s.gameId));
+  const playedGameIds = new Set(games.filter((g) => isPlayedGame(g, gameIdsWithStats)).map((g) => g.id));
+  const plusMinusByKey = new Map(gameStats.map((s) => [`${s.playerId}:${s.gameId}`, s.plusMinus]));
+
+  const totals = new Map<string, number>();
+  for (const p of players) {
+    let total = 0;
+    for (const gameId of playedGameIds) {
+      if (exclusions.has(`${p.id}:${gameId}`)) continue;
+      total += plusMinusByKey.get(`${p.id}:${gameId}`) ?? 0;
+    }
+    totals.set(p.id, total);
+  }
+  return totals;
+}
+
+export async function getPlayerPlusMinusSummary(playerId: string): Promise<PlayerPlusMinusSummary> {
+  const player = await prisma.player.findUnique({ where: { id: playerId }, select: { seasonId: true } });
+  if (!player) return { games: [], seasonTotal: 0, averagePerGame: null };
+
+  const [seasonGames, allSeasonGameStats, playerGameStats, exclusions] = await Promise.all([
+    prisma.game.findMany({ where: { seasonId: player.seasonId }, select: { id: true, date: true, opponent: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId: player.seasonId } }, select: { gameId: true } }),
+    prisma.gamePlayerStat.findMany({ where: { playerId } }),
+    getPlayerAvailabilityExclusions(playerId),
+  ]);
+
+  const gameIdsWithStats = new Set(allSeasonGameStats.map((s) => s.gameId));
+  const playedGames = seasonGames.filter((g) => isPlayedGame(g, gameIdsWithStats) && !exclusions.has(g.id));
+  const plusMinusByGame = new Map(playerGameStats.map((s) => [s.gameId, s.plusMinus]));
+
+  const games: GamePlusMinusRow[] = playedGames
+    .map((g) => ({ gameId: g.id, date: g.date, label: `vs ${g.opponent}`, plusMinus: plusMinusByGame.get(g.id) ?? 0 }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const seasonTotal = games.reduce((a, g) => a + g.plusMinus, 0);
+
+  return {
+    games,
+    seasonTotal,
+    averagePerGame: games.length ? seasonTotal / games.length : null,
+  };
+}

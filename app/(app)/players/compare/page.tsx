@@ -1,7 +1,13 @@
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
-import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries, getPlayerToiSummary } from "@/lib/player-analytics";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points, formatPct, formatChange } from "@/lib/stats";
+import {
+  getPlayerStatEntries,
+  performanceIndexForEntries,
+  recentTrendForEntries,
+  getPlayerToiSummary,
+  getPlayerPlusMinusSummary,
+} from "@/lib/player-analytics";
+import { sumStatLines, zoneEntryPct, zoneExitPct, points, formatPct, formatChange, formatPlusMinus } from "@/lib/stats";
 import { formatIceTime } from "@/lib/situation-stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -17,7 +23,8 @@ async function buildPlayerSummary(playerId: string) {
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
   const toi = await getPlayerToiSummary(playerId);
-  return { player, totals, index, trend, toi };
+  const plusMinus = player.position !== "GOALIE" ? await getPlayerPlusMinusSummary(playerId) : null;
+  return { player, totals, index, trend, toi, plusMinus };
 }
 
 type Row = {
@@ -25,6 +32,7 @@ type Row = {
   format: (s: NonNullable<Awaited<ReturnType<typeof buildPlayerSummary>>>) => number | null;
   isPct?: boolean;
   isTime?: boolean;
+  isSigned?: boolean;
   lowerIsBetter?: boolean;
 };
 
@@ -44,6 +52,9 @@ const ROWS: Row[] = [
   { label: "Total TOI", format: (s) => s.toi.seasonTotalSeconds, isTime: true },
   { label: "Avg TOI / Game", format: (s) => s.toi.averagePerGameSeconds, isTime: true },
   { label: "5-on-5 TOI", format: (s) => s.toi.seasonEvenSeconds, isTime: true },
+  // null for goalies — Plus/Minus is skaters only, never assigned a value for a goalie.
+  { label: "Plus/Minus (Season)", format: (s) => s.plusMinus?.seasonTotal ?? null, isSigned: true },
+  { label: "Avg Plus/Minus / Game", format: (s) => s.plusMinus?.averagePerGame ?? null, isSigned: true },
 ];
 
 export default async function ComparePlayersPage({
@@ -118,9 +129,13 @@ export default async function ComparePlayersPage({
                       ? valA !== null
                         ? formatIceTime(valA)
                         : "—"
-                      : row.label.includes("Trend")
-                        ? formatChange(valA)
-                        : (valA ?? "—")}
+                      : row.isSigned
+                        ? valA !== null
+                          ? formatPlusMinus(Math.round(valA * 100) / 100)
+                          : "—"
+                        : row.label.includes("Trend")
+                          ? formatChange(valA)
+                          : (valA ?? "—")}
                 </div>
                 <div className={cn("p-4 text-center font-medium", bWins && "text-positive")}>
                   {row.isPct
@@ -129,9 +144,13 @@ export default async function ComparePlayersPage({
                       ? valB !== null
                         ? formatIceTime(valB)
                         : "—"
-                      : row.label.includes("Trend")
-                        ? formatChange(valB)
-                        : (valB ?? "—")}
+                      : row.isSigned
+                        ? valB !== null
+                          ? formatPlusMinus(Math.round(valB * 100) / 100)
+                          : "—"
+                        : row.label.includes("Trend")
+                          ? formatChange(valB)
+                          : (valB ?? "—")}
                 </div>
               </div>
             );

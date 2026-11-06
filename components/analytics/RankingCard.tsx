@@ -1,4 +1,5 @@
 import { Card, CardTitle } from "@/components/ui/Card";
+import { formatPlusMinus } from "@/lib/stats";
 import type { RankedPlayer } from "@/lib/rankings";
 
 export function RankingCard({
@@ -6,11 +7,14 @@ export function RankingCard({
   players,
   unit = "",
   digits = 0,
+  signed = false,
 }: {
   title: string;
   players: RankedPlayer[];
   unit?: string;
   digits?: number;
+  /** Shows a leading "+" for positive values (e.g. Plus/Minus) instead of the plain number. */
+  signed?: boolean;
 }) {
   return (
     <Card>
@@ -25,7 +29,7 @@ export function RankingCard({
                 <span className="text-muted-2 mr-1.5">{i + 1}.</span>#{p.jerseyNumber} {p.name}
               </span>
               <span className="font-mono text-muted">
-                {p.value.toFixed(digits)}
+                {signed ? formatPlusMinus(Math.round(p.value)) : p.value.toFixed(digits)}
                 {unit}
               </span>
             </li>

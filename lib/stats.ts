@@ -150,6 +150,11 @@ export function formatChange(value: number | null, digits = 1): string {
   return `${sign}${value.toFixed(digits)}%`;
 }
 
+/** 3 -> "+3", -3 -> "-3" (sign already in the number's own string form), 0 -> "0". */
+export function formatPlusMinus(value: number): string {
+  return value > 0 ? `+${value}` : String(value);
+}
+
 // --- Per-stat progression (shared by Mini Games and official Games) -------
 // One shared implementation of "current vs. previous" for a single stat,
 // with the explicit zero-value rules a plain (current-previous)/previous

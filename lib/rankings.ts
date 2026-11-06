@@ -1,6 +1,11 @@
 import { prisma } from "@/lib/db";
 import { sumStatLines, zoneEntryPct, zoneExitPct } from "@/lib/stats";
-import { getSeasonStatEntriesByPlayer, performanceIndexForEntries, recentTrendForEntries } from "@/lib/player-analytics";
+import {
+  getSeasonStatEntriesByPlayer,
+  performanceIndexForEntries,
+  recentTrendForEntries,
+  getSeasonPlusMinusByPlayer,
+} from "@/lib/player-analytics";
 
 export interface RankedPlayer {
   playerId: string;
@@ -14,6 +19,7 @@ export interface RankedPlayer {
 export async function buildRankings(seasonId: string) {
   const players = await prisma.player.findMany({ where: { seasonId } });
   const entriesByPlayer = await getSeasonStatEntriesByPlayer(seasonId);
+  const plusMinusByPlayer = await getSeasonPlusMinusByPlayer(seasonId);
 
   const withData = players.filter((p) => (entriesByPlayer.get(p.id) ?? []).length > 0);
 
@@ -42,6 +48,9 @@ export async function buildRankings(seasonId: string) {
     bestZoneExitPct: rank((p) => zoneExitPct(totalsByPlayer.get(p.id)!)),
     lowestGiveaways: rank((p) => totalsByPlayer.get(p.id)!.giveaways, false),
     mostShotAttempts: rank((p) => totalsByPlayer.get(p.id)!.shotAttempts),
+    // Skaters only — goalies are never ranked by Plus/Minus (see item 5 of
+    // the Plus/Minus feature request).
+    bestPlusMinus: rank((p) => (p.position === "GOALIE" ? null : (plusMinusByPlayer.get(p.id) ?? 0))),
   };
 }
 

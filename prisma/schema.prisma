@@ -484,6 +484,12 @@ model GamePlayerStat {
   // populate this from confirmed shifts, but nothing here assumes that.
   timeOnIceSeconds Int @default(0)
 
+  // Plus/Minus for this game. Signed — unlike every other field here, it can
+  // go negative — and, like timeOnIceSeconds above, deliberately NOT part of
+  // RawStatLine: official-Game-only, skaters only (goalies are never given a
+  // value — see StatLineFields/PlusMinusCard), no Mini Game equivalent.
+  plusMinus Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

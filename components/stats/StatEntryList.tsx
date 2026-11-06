@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { StatLineFields } from "@/components/forms/StatLineFields";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { zoneEntryPct, zoneExitPct, savePct, formatPct, type RawStatLine } from "@/lib/stats";
+import { zoneEntryPct, zoneExitPct, savePct, formatPct, formatPlusMinus, type RawStatLine } from "@/lib/stats";
 import { formatIceTime } from "@/lib/situation-stats";
 import type { ActionResult } from "@/lib/actions/team";
 import { SituationStatForm } from "@/components/stats/SituationStatForm";
@@ -47,9 +47,10 @@ export function StatEntryList({
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   players: Player[];
-  // timeOnIceSeconds is optional here because it only exists on GamePlayerStat
-  // (official Games) — Mini Games (also a StatEntryList caller) never set it.
-  statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number }>;
+  // timeOnIceSeconds/plusMinus are optional here because they only exist on
+  // GamePlayerStat (official Games) — Mini Games (also a StatEntryList
+  // caller) never set them.
+  statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number }>;
   situational?: SituationalEntry;
   availability?: AvailabilityEntry;
 }) {
@@ -86,7 +87,7 @@ function PlayerRow({
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   player: Player;
-  stat?: RawStatLine & { timeOnIceSeconds?: number };
+  stat?: RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number };
   situational?: SituationalEntry;
   status: PlayerGameStatus;
   onStatusChange?: (status: PlayerGameStatus) => Promise<ActionResult>;
@@ -129,6 +130,9 @@ function PlayerRow({
                   </>
                 )}
                 {!!situational && !!stat!.timeOnIceSeconds && <span>TOI {formatIceTime(stat!.timeOnIceSeconds)}</span>}
+                {!!situational && player.position !== "GOALIE" && stat!.plusMinus !== undefined && (
+                  <span>+/- {formatPlusMinus(stat!.plusMinus)}</span>
+                )}
                 <Badge tone="positive">Logged</Badge>
               </>
             ) : (
@@ -184,6 +188,8 @@ function PlayerRow({
             isForward={player.position === "FORWARD"}
             showIceTime={!!situational}
             iceTimeSeconds={stat?.timeOnIceSeconds}
+            showPlusMinus={!!situational}
+            plusMinusValue={stat?.plusMinus}
           />
           <div className="flex items-center gap-3 mt-4">
             <Button type="submit" disabled={pending}>

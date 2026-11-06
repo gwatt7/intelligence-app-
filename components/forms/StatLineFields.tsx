@@ -124,6 +124,8 @@ export function StatLineFields({
   isForward,
   showIceTime,
   iceTimeSeconds,
+  showPlusMinus,
+  plusMinusValue,
 }: {
   defaults?: Partial<RawStatLine>;
   isGoalie?: boolean;
@@ -133,6 +135,11 @@ export function StatLineFields({
    * time-on-ice field. */
   showIceTime?: boolean;
   iceTimeSeconds?: number;
+  /** Plus/Minus — official Games only, skaters only (never shown for a
+   * goalie, regardless of this flag). Mini Games never pass this, same
+   * reasoning as showIceTime above. */
+  showPlusMinus?: boolean;
+  plusMinusValue?: number;
 }) {
   // Transition/Offense/Defense are skater categories — a goalie's stat
   // line is Goaltending only, per the app's position-based stat rules.
@@ -140,19 +147,26 @@ export function StatLineFields({
 
   return (
     <div className="space-y-5">
-      {showIceTime && (
+      {(showIceTime || (showPlusMinus && isSkater)) && (
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted mb-2">Ice Time</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted mb-2">Ice Time &amp; Plus/Minus</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            <Field label="5-on-5 Ice Time" htmlFor="timeOnIce" hint="mm:ss">
-              <Input
-                id="timeOnIce"
-                name="timeOnIce"
-                inputMode="numeric"
-                placeholder="0:00"
-                defaultValue={iceTimeSeconds !== undefined ? formatIceTime(iceTimeSeconds) : ""}
-              />
-            </Field>
+            {showIceTime && (
+              <Field label="5-on-5 Ice Time" htmlFor="timeOnIce" hint="mm:ss">
+                <Input
+                  id="timeOnIce"
+                  name="timeOnIce"
+                  inputMode="numeric"
+                  placeholder="0:00"
+                  defaultValue={iceTimeSeconds !== undefined ? formatIceTime(iceTimeSeconds) : ""}
+                />
+              </Field>
+            )}
+            {showPlusMinus && isSkater && (
+              <Field label="Plus/Minus" htmlFor="plusMinus" hint="e.g. 2 or -1">
+                <Input id="plusMinus" name="plusMinus" type="number" step={1} defaultValue={plusMinusValue ?? 0} />
+              </Field>
+            )}
           </div>
         </div>
       )}
