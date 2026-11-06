@@ -29,6 +29,23 @@ function formatFileSize(bytes: number): string {
   return `${(mb / 1024).toFixed(2)} GB`;
 }
 
+/** Vercel Blob's multipart-upload endpoint (unlike a plain single-request
+ * put()) 400s on pathnames built from an unsanitized filename — commas,
+ * spaces, and other punctuation in a real-world filename like "uws vs
+ * bethel, october 30th .mp4" are enough to trigger it. The original
+ * filename is preserved as-is in the GameVideo row (see saveGameVideo) and
+ * shown in the UI; only the Blob storage path itself needs to be safe. */
+function toSafeBlobSegment(filename: string): string {
+  const dot = filename.lastIndexOf(".");
+  const base = dot > 0 ? filename.slice(0, dot) : filename;
+  const ext = dot > 0 ? filename.slice(dot + 1).replace(/[^a-zA-Z0-9]/g, "").toLowerCase() : "mp4";
+  const safeBase = base
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 100);
+  return `${safeBase || "video"}.${ext || "mp4"}`;
+}
+
 /**
  * @vercel/blob/client's upload() throws a fixed, generic "Failed to [ ]
  * retrieve the client token" message for EVERY non-2xx response from the
@@ -90,7 +107,7 @@ export function VideoUploadPanel({ gameId, video }: { gameId: string; video: Exi
       durationReportedRef.current = false;
 
       try {
-        const blob = await upload(`games/${gameId}/${file.name}`, file, {
+        const blob = await upload(`games/${gameId}/${toSafeBlobSegment(file.name)}`, file, {
           access: "public",
           handleUploadUrl: `/api/games/${gameId}/video/upload`,
           // Full-game videos are large (up to the 5GB ceiling set in the
