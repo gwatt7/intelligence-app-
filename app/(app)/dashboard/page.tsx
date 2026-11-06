@@ -34,6 +34,7 @@ import { SnapshotCard } from "@/components/dashboard/SnapshotCard";
 import { Sparkline } from "@/components/dashboard/Sparkline";
 import { TopPerformerSpotlightCard } from "@/components/dashboard/TopPerformerSpotlightCard";
 import { TeamLeaders } from "@/components/dashboard/TeamLeaders";
+import { PlayerStatsBar } from "@/components/dashboard/PlayerStatsBar";
 import { TeamTrendsCard, type TrendGame } from "@/components/dashboard/TeamTrendsCard";
 import { LastGameCard } from "@/components/dashboard/LastGameCard";
 import { NextMiniGameCard } from "@/components/dashboard/NextMiniGameCard";
@@ -330,6 +331,15 @@ export default async function DashboardPage() {
             }
           />
           <TeamLeaders spotlight={spotlight} leaders={leaders} />
+        </section>
+
+        {/* Player Statistics Bar — Goals/Assists/Points leaders, same live
+            `leaders` array as the Team Leaders section above, just a more
+            prominent standalone presentation. Additive — doesn't touch any
+            existing section. */}
+        <section className="pt-[11px]">
+          <SectionHeading title="Player Statistics" />
+          <PlayerStatsBar leaders={leaders} />
         </section>
 
         <div className="grid grid-cols-1 items-start gap-[24px] lg:grid-cols-[minmax(0,708fr)_minmax(0,383fr)]">
