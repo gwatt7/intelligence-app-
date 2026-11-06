@@ -8,6 +8,7 @@ import { getTeamStatEntries } from "@/lib/team-analytics-server";
 import { buildRankings } from "@/lib/rankings";
 import { getCurrentWeekRankings } from "@/lib/weekly-rankings";
 import { getGameStatContributions, getSeasonStatEntriesByPlayer, getSeasonPlusMinusByPlayer } from "@/lib/player-analytics";
+import { getSeasonAllSituationScoringByPlayer } from "@/lib/game-situations-server";
 import { DEFAULT_WEEK_TIMEZONE } from "@/lib/calendar-week";
 import { formatChange, formatPct, getStatValue, pct, sumStatLines, zoneEntryPct, zoneExitPct } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -168,17 +169,21 @@ export default async function DashboardPage() {
   const reportLabel = reportSeason ? shortSeason(reportSeason) : null;
   const lastSeasonTop = pointsLeader(reportRows);
 
-  // Live Team Leaders + Player Spotlight for the ACTIVE season — Points,
-  // Goals, Assists, Plus/Minus, Blocked Shots, all from this season's own
-  // GamePlayerStat (availability-aware: see getSeasonStatEntriesByPlayer /
-  // getSeasonPlusMinusByPlayer in lib/player-analytics.ts). A player with 0
+  // Live Team Leaders + Player Spotlight for the ACTIVE season. Goals/
+  // Assists/Points are the real season totals — 5-on-5 + Power Play +
+  // Penalty Kill combined (getSeasonAllSituationScoringByPlayer in
+  // lib/game-situations-server.ts), not just the 5-on-5 line, so a
+  // power-play goal or assist isn't silently dropped from "Points" here.
+  // Shots/Blocked-Shots stay 5-on-5-only (unchanged, out of scope — see
+  // Shot Attempts/Blocked Shots elsewhere in the app). A player with 0
   // games played this season gets null fields (not a fabricated 0), so an
   // empty-handed roster never falsely "leads" a category. Reuses the same
   // teamLeaders()/spotlightPlayer() helpers the old historical-only version
   // used — they're already generic over ReportCardRow, regardless of source.
-  const [currentSeasonEntries, currentSeasonPlusMinus] = await Promise.all([
+  const [currentSeasonEntries, currentSeasonPlusMinus, currentSeasonScoring] = await Promise.all([
     getSeasonStatEntriesByPlayer(season.id),
     getSeasonPlusMinusByPlayer(season.id),
+    getSeasonAllSituationScoringByPlayer(season.id),
   ]);
   const currentSeasonRows: ReportCardRow[] = roster.map((p) => {
     const entries = currentSeasonEntries.get(p.id) ?? [];
@@ -195,11 +200,12 @@ export default async function DashboardPage() {
       return { ...base, gamesPlayed: null, goals: null, assists: null, shots: null, plusMinus: null, blocks: null };
     }
     const totals = sumStatLines(entries.map((e) => e.stat));
+    const scoring = currentSeasonScoring.get(p.id) ?? { goals: 0, assists: 0 };
     return {
       ...base,
       gamesPlayed: entries.length,
-      goals: totals.goals,
-      assists: totals.assists,
+      goals: scoring.goals,
+      assists: scoring.assists,
       shots: totals.shots,
       plusMinus: currentSeasonPlusMinus.get(p.id) ?? 0,
       blocks: totals.blocks,

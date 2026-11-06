@@ -2,7 +2,8 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { getSeasonStatEntriesByPlayer, getSeasonPlusMinusByPlayer } from "@/lib/player-analytics";
-import { sumStatLines, points, formatPlusMinus, EMPTY_STAT_LINE } from "@/lib/stats";
+import { getSeasonAllSituationScoringByPlayer } from "@/lib/game-situations-server";
+import { sumStatLines, formatPlusMinus, EMPTY_STAT_LINE } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
@@ -27,27 +28,32 @@ export default async function StatisticsPage() {
     );
   }
 
-  const [roster, entriesByPlayer, plusMinusByPlayer] = await Promise.all([
+  const [roster, entriesByPlayer, plusMinusByPlayer, scoringByPlayer] = await Promise.all([
     prisma.player.findMany({ where: { seasonId: season.id }, orderBy: { jerseyNumber: "asc" } }),
     getSeasonStatEntriesByPlayer(season.id),
     getSeasonPlusMinusByPlayer(season.id),
+    getSeasonAllSituationScoringByPlayer(season.id),
   ]);
 
-  // Every player on the active-season roster, ranked by Points (goals +
-  // assists) highest to lowest — ties broken by goals, then jersey number.
-  // Availability-aware for free: entriesByPlayer already excludes
-  // Scratched/Injured games and counts a Dressed zero-stat game as played
-  // (see getSeasonStatEntriesByPlayer in lib/player-analytics.ts).
+  // Every player on the active-season roster, ranked by Points highest to
+  // lowest — ties broken by goals, then jersey number. Goals/Assists/Points
+  // are the real season totals (5-on-5 + Power Play + Penalty Kill
+  // combined, via getSeasonAllSituationScoringByPlayer) — a power-play
+  // goal or assist isn't dropped here. Shots/Shot Attempts stay
+  // 5-on-5-only (unchanged, out of scope). Availability-aware for free:
+  // entriesByPlayer already excludes Scratched/Injured games and counts a
+  // Dressed zero-stat game as played (see getSeasonStatEntriesByPlayer in
+  // lib/player-analytics.ts).
   const rows = roster.map((p) => {
     const entries = entriesByPlayer.get(p.id) ?? [];
     const totals = entries.length > 0 ? sumStatLines(entries.map((e) => e.stat)) : EMPTY_STAT_LINE;
-    const pts = points(totals);
+    const scoring = scoringByPlayer.get(p.id) ?? { goals: 0, assists: 0 };
     return {
       player: p,
       gamesPlayed: entries.length,
-      goals: totals.goals,
-      assists: totals.assists,
-      points: pts,
+      goals: scoring.goals,
+      assists: scoring.assists,
+      points: scoring.goals + scoring.assists,
       plusMinus: p.position === "GOALIE" ? null : (plusMinusByPlayer.get(p.id) ?? 0),
       shots: totals.shots,
       shotAttempts: totals.shotAttempts,

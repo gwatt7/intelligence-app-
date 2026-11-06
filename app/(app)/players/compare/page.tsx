@@ -7,7 +7,9 @@ import {
   getPlayerToiSummary,
   getPlayerPlusMinusSummary,
 } from "@/lib/player-analytics";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points, formatPct, formatChange, formatPlusMinus } from "@/lib/stats";
+import { getPlayerSituationTotals } from "@/lib/game-situations-server";
+import { count as situationCount } from "@/lib/game-situations";
+import { sumStatLines, zoneEntryPct, zoneExitPct, formatPct, formatChange, formatPlusMinus } from "@/lib/stats";
 import { formatIceTime } from "@/lib/situation-stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -24,7 +26,12 @@ async function buildPlayerSummary(playerId: string) {
   const trend = recentTrendForEntries(entries, player.position);
   const toi = await getPlayerToiSummary(playerId);
   const plusMinus = player.position !== "GOALIE" ? await getPlayerPlusMinusSummary(playerId) : null;
-  return { player, totals, index, trend, toi, plusMinus };
+  // 5-on-5 + Power Play + Penalty Kill combined — the real season Goals/
+  // Points, not just the 5-on-5 line (see Row definitions below).
+  const { totals: situationTotals } = await getPlayerSituationTotals(playerId);
+  const allSituationGoals = situationCount(situationTotals, "ALL", "goals").value ?? 0;
+  const allSituationAssists = situationCount(situationTotals, "ALL", "assists").value ?? 0;
+  return { player, totals, index, trend, toi, plusMinus, allSituationGoals, allSituationAssists };
 }
 
 type Row = {
@@ -42,9 +49,11 @@ const ROWS: Row[] = [
   { label: "Zone Entry %", format: (s) => zoneEntryPct(s.totals), isPct: true },
   { label: "Zone Exit %", format: (s) => zoneExitPct(s.totals), isPct: true },
   { label: "Shot Attempts", format: (s) => s.totals.shotAttempts },
-  { label: "Points", format: (s) => points(s.totals) },
+  // 5-on-5 + Power Play + Penalty Kill combined — see allSituationGoals/
+  // allSituationAssists in buildPlayerSummary above.
+  { label: "Points", format: (s) => s.allSituationGoals + s.allSituationAssists },
   { label: "Shots", format: (s) => s.totals.shots },
-  { label: "Goals", format: (s) => s.totals.goals },
+  { label: "Goals", format: (s) => s.allSituationGoals },
   { label: "Giveaways", format: (s) => s.totals.giveaways, lowerIsBetter: true },
   { label: "Disruptions", format: (s) => s.totals.disruptions },
   { label: "Hits", format: (s) => s.totals.hits },

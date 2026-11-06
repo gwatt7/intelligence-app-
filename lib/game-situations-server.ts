@@ -4,7 +4,7 @@
 
 import { prisma } from "@/lib/db";
 import { addLine, emptyTotals, type SituationTotals, type SpecialTeamsGame } from "@/lib/game-situations";
-import { getPlayerAvailabilityExclusions, isPlayedGame } from "@/lib/player-availability";
+import { getPlayerAvailabilityExclusions, getSeasonAvailabilityExclusions, isPlayedGame } from "@/lib/player-availability";
 
 export interface AnalyticsGame {
   id: string;
@@ -118,4 +118,44 @@ export async function getPlayerSituationTotals(playerId: string): Promise<{ tota
   // A dressed, played game with no recorded line at all still counts toward games-played.
   for (const id of playedGameIds) games.add(id);
   return { totals, games: games.size };
+}
+
+/**
+ * Every skater's season Goals + Assists combined across every situation
+ * (5-on-5 + Power Play + Penalty Kill) — the real "overall Points" total,
+ * since each goal/assist event lives in exactly one situation's row and is
+ * never recorded twice, so adding them together never double-counts. For
+ * batched leaderboard/table use (Dashboard Team Leaders, Player Statistics
+ * Bar, the Statistics page) where calling getPlayerSituationTotals per
+ * player would be an N+1 query. Availability-aware, same rules as
+ * getPlayerSituationTotals. Every roster player gets an entry (0 if
+ * untouched), so callers never need a fallback lookup.
+ */
+export async function getSeasonAllSituationScoringByPlayer(
+  seasonId: string
+): Promise<Map<string, { goals: number; assists: number }>> {
+  const [players, games, evenRows, situationRows, exclusions] = await Promise.all([
+    prisma.player.findMany({ where: { seasonId }, select: { id: true } }),
+    prisma.game.findMany({ where: { seasonId }, select: { id: true, isCompleted: true } }),
+    prisma.gamePlayerStat.findMany({ where: { game: { seasonId } }, select: { gameId: true, playerId: true, goals: true, assists: true } }),
+    prisma.gameSituationStat.findMany({ where: { game: { seasonId } }, select: { gameId: true, playerId: true, goals: true, assists: true } }),
+    getSeasonAvailabilityExclusions(seasonId),
+  ]);
+
+  const gameIdsWithStats = new Set(evenRows.map((r) => r.gameId));
+  const playedGameIds = new Set(games.filter((g) => isPlayedGame(g, gameIdsWithStats)).map((g) => g.id));
+
+  const totals = new Map<string, { goals: number; assists: number }>();
+  const add = (playerId: string, gameId: string, goals: number, assists: number) => {
+    if (!playedGameIds.has(gameId) || exclusions.has(`${playerId}:${gameId}`)) return;
+    const t = totals.get(playerId) ?? { goals: 0, assists: 0 };
+    t.goals += goals;
+    t.assists += assists;
+    totals.set(playerId, t);
+  };
+  for (const r of evenRows) add(r.playerId, r.gameId, r.goals, r.assists);
+  for (const r of situationRows) add(r.playerId, r.gameId, r.goals, r.assists);
+
+  for (const p of players) if (!totals.has(p.id)) totals.set(p.id, { goals: 0, assists: 0 });
+  return totals;
 }
