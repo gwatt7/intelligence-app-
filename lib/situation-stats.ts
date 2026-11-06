@@ -77,6 +77,7 @@ export const SITUATION_FIELDS: Record<Situation, { key: SituationKey; label: str
     { key: "clears", label: "PK Clears" },
     { key: "faceoffsWon", label: "PK Faceoffs Won" },
     { key: "faceoffsLost", label: "PK Faceoffs Lost" },
+    { key: "timeOnIceSeconds", label: "PK Ice Time", hint: "mm:ss" },
   ],
 };
 

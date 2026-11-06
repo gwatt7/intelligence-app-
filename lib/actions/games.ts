@@ -92,6 +92,12 @@ export async function updateGameResultAndNotes(gameId: string, formData: FormDat
 
 export async function saveGamePlayerStat(gameId: string, playerId: string, formData: FormData): Promise<ActionResult> {
   const raw = Object.fromEntries(formData.entries());
+  const timeOnIceRaw = formData.get("timeOnIce");
+  if (timeOnIceRaw !== null) {
+    const seconds = parseIceTime(String(timeOnIceRaw));
+    if (seconds === null) return { ok: false, error: "Enter ice time as minutes:seconds, e.g. 14:35" };
+    raw.timeOnIceSeconds = String(seconds);
+  }
   const parsed = statLineSchema.safeParse(raw);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid statistics" };

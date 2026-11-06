@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
-import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries } from "@/lib/player-analytics";
+import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries, getPlayerToiSummary } from "@/lib/player-analytics";
+import { TimeOnIceCard } from "@/components/players/TimeOnIceCard";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
 import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
@@ -68,6 +69,7 @@ export default async function PlayerProfilePage({
 
   // --- Official Game stats (GamePlayerStat only — see lib/player-analytics.ts) ---
   const entries = await getPlayerStatEntries(id);
+  const toiSummary = await getPlayerToiSummary(id);
   const totals = sumStatLines(entries.map((e) => e.stat));
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
@@ -144,6 +146,16 @@ export default async function PlayerProfilePage({
                   <SituationStats totals={overall.totals} view="ALL" groups={overallGroups} titlePrefix="All Situations" />
                 )}
               </div>
+
+          {/* =================================================================
+              TIME ON ICE — 5-on-5 (GamePlayerStat) + Power Play/Penalty Kill
+              (GameSituationStat) combined per game. Manually entered; see
+              TimeOnIceCard for the no-automated-tracking-yet note.
+              ================================================================= */}
+          <div>
+            <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide mb-3">Time on Ice</h2>
+            <TimeOnIceCard summary={toiSummary} firstName={player.firstName} />
+          </div>
 
           {/* =================================================================
               OFFICIAL GAME STATS — reads only GamePlayerStat. Never combined

@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
-import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries } from "@/lib/player-analytics";
+import { getPlayerStatEntries, performanceIndexForEntries, recentTrendForEntries, getPlayerToiSummary } from "@/lib/player-analytics";
 import { sumStatLines, zoneEntryPct, zoneExitPct, points, formatPct, formatChange } from "@/lib/stats";
+import { formatIceTime } from "@/lib/situation-stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card } from "@/components/ui/Card";
@@ -15,13 +16,15 @@ async function buildPlayerSummary(playerId: string) {
   const totals = sumStatLines(entries.map((e) => e.stat));
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
-  return { player, totals, index, trend };
+  const toi = await getPlayerToiSummary(playerId);
+  return { player, totals, index, trend, toi };
 }
 
 type Row = {
   label: string;
   format: (s: NonNullable<Awaited<ReturnType<typeof buildPlayerSummary>>>) => number | null;
   isPct?: boolean;
+  isTime?: boolean;
   lowerIsBetter?: boolean;
 };
 
@@ -38,6 +41,9 @@ const ROWS: Row[] = [
   { label: "Disruptions", format: (s) => s.totals.disruptions },
   { label: "Hits", format: (s) => s.totals.hits },
   { label: "Blocks", format: (s) => s.totals.blocks },
+  { label: "Total TOI", format: (s) => s.toi.seasonTotalSeconds, isTime: true },
+  { label: "Avg TOI / Game", format: (s) => s.toi.averagePerGameSeconds, isTime: true },
+  { label: "5-on-5 TOI", format: (s) => s.toi.seasonEvenSeconds, isTime: true },
 ];
 
 export default async function ComparePlayersPage({
@@ -106,10 +112,26 @@ export default async function ComparePlayersPage({
               <div key={row.label} className="grid grid-cols-3 border-b border-border last:border-b-0">
                 <div className="p-4 text-sm text-muted">{row.label}</div>
                 <div className={cn("p-4 text-center font-medium", aWins && "text-positive")}>
-                  {row.isPct ? formatPct(valA) : row.label.includes("Trend") ? formatChange(valA) : valA ?? "—"}
+                  {row.isPct
+                    ? formatPct(valA)
+                    : row.isTime
+                      ? valA !== null
+                        ? formatIceTime(valA)
+                        : "—"
+                      : row.label.includes("Trend")
+                        ? formatChange(valA)
+                        : (valA ?? "—")}
                 </div>
                 <div className={cn("p-4 text-center font-medium", bWins && "text-positive")}>
-                  {row.isPct ? formatPct(valB) : row.label.includes("Trend") ? formatChange(valB) : valB ?? "—"}
+                  {row.isPct
+                    ? formatPct(valB)
+                    : row.isTime
+                      ? valB !== null
+                        ? formatIceTime(valB)
+                        : "—"
+                      : row.label.includes("Trend")
+                        ? formatChange(valB)
+                        : (valB ?? "—")}
                 </div>
               </div>
             );

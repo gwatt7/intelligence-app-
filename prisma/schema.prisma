@@ -330,7 +330,7 @@ model Game {
   powerPlayOpportunities   Int? // our power plays
   penaltyKillOpportunities Int? // times shorthanded (opponent power plays)
   powerPlayGoalsAgainst    Int? // opponent power-play goals
-  isCompleted   Boolean @default(false)
+  isCompleted              Boolean @default(false)
 
   whatWentWell  String?
   whatWentWrong String?
@@ -339,10 +339,10 @@ model Game {
   seasonId String
   season   Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
-  playerStats GamePlayerStat[]
+  playerStats    GamePlayerStat[]
   situationStats GameSituationStat[]
-  warRoom     WarRoom?
-  video       GameVideo?
+  warRoom        WarRoom?
+  video          GameVideo?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,6 +429,14 @@ model GamePlayerStat {
   // never stored, same reasoning as Faceoff %/Freeze % above.
   wins   Int @default(0)
   losses Int @default(0)
+
+  // 5-on-5 time on ice for this game. Deliberately NOT part of RawStatLine
+  // (lib/stats.ts) — like GameSituationStat.timeOnIceSeconds below, time on
+  // ice is an official-Game-only concept with no Mini Game equivalent, so it
+  // stays out of the interface Mini Games also implements. Manually entered
+  // today (mm:ss — see StatLineFields); a future video-analysis stage may
+  // populate this from confirmed shifts, but nothing here assumes that.
+  timeOnIceSeconds Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

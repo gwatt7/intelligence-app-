@@ -5,6 +5,7 @@ import { StatLineFields } from "@/components/forms/StatLineFields";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { zoneEntryPct, zoneExitPct, savePct, formatPct, type RawStatLine } from "@/lib/stats";
+import { formatIceTime } from "@/lib/situation-stats";
 import type { ActionResult } from "@/lib/actions/team";
 import { SituationStatForm } from "@/components/stats/SituationStatForm";
 import { SITUATION_LABEL, type ProfileSituation, type Situation, type SituationLine } from "@/lib/situation-stats";
@@ -38,7 +39,9 @@ export function StatEntryList({
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   players: Player[];
-  statsByPlayer: Map<string, RawStatLine>;
+  // timeOnIceSeconds is optional here because it only exists on GamePlayerStat
+  // (official Games) — Mini Games (also a StatEntryList caller) never set it.
+  statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number }>;
   situational?: SituationalEntry;
 }) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -70,7 +73,7 @@ function PlayerRow({
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   player: Player;
-  stat?: RawStatLine;
+  stat?: RawStatLine & { timeOnIceSeconds?: number };
   situational?: SituationalEntry;
   open: boolean;
   onToggle: () => void;
@@ -109,6 +112,7 @@ function PlayerRow({
                   <span>Exit {formatPct(zoneExitPct(stat!))}</span>
                 </>
               )}
+              {!!situational && !!stat!.timeOnIceSeconds && <span>TOI {formatIceTime(stat!.timeOnIceSeconds)}</span>}
               <Badge tone="positive">Logged</Badge>
             </>
           ) : (
@@ -156,7 +160,13 @@ function PlayerRow({
       )}
       {open && (
         <form action={formAction} hidden={showSituations && situation !== "EVEN"} className="px-4 pb-4">
-          <StatLineFields defaults={stat} isGoalie={player.position === "GOALIE"} isForward={player.position === "FORWARD"} />
+          <StatLineFields
+            defaults={stat}
+            isGoalie={player.position === "GOALIE"}
+            isForward={player.position === "FORWARD"}
+            showIceTime={!!situational}
+            iceTimeSeconds={stat?.timeOnIceSeconds}
+          />
           <div className="flex items-center gap-3 mt-4">
             <Button type="submit" disabled={pending}>
               {pending ? "Saving…" : "Save Stats"}

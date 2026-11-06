@@ -152,6 +152,7 @@ export function SituationStatsPanel({
               { label: "Faceoffs Won", value: t.faceoffsWon },
               { label: "Faceoffs Lost", value: t.faceoffsLost },
               { label: "Faceoff %", value: na(situationFaceoffPct(t)) },
+              { label: "PK Ice Time", value: formatIceTime(t.timeOnIceSeconds), hint: "min:sec" },
             ]}
           />
         )}
@@ -185,6 +186,7 @@ export function SituationStatsPanel({
                     <th className="py-2 pr-4">Clears</th>
                     <th className="py-2 pr-4">FO</th>
                     <th className="py-2 pr-4">FO %</th>
+                    <th className="py-2 pr-4">Ice Time</th>
                   </>
                 )}
               </tr>
@@ -213,6 +215,7 @@ export function SituationStatsPanel({
                         {e.stat.faceoffsWon}-{e.stat.faceoffsLost}
                       </td>
                       <td className="py-2 pr-4">{na(situationFaceoffPct(e.stat))}</td>
+                      <td className="py-2 pr-4">{formatIceTime(e.stat.timeOnIceSeconds)}</td>
                     </>
                   )}
                 </tr>

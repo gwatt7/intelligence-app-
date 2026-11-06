@@ -72,10 +72,10 @@ export const TRACKED: Record<GameSituation, ReadonlySet<CountKey>> = {
   EVEN: new Set<CountKey>([
     "goals", "assists", "shots", "faceoffsWon", "faceoffsLost", "blocks", "hits", "disruptions", "giveaways",
     "scoringChances", "zoneEntries", "successfulZoneEntries", "zoneExits", "successfulZoneExits",
-    "shotsAgainst", "saves", "goalsAgainst",
+    "shotsAgainst", "saves", "goalsAgainst", "timeOnIceSeconds",
   ]),
   POWER_PLAY: new Set<CountKey>(["goals", "assists", "shots", "shotAttempts", "faceoffsWon", "faceoffsLost", "timeOnIceSeconds"]),
-  PENALTY_KILL: new Set<CountKey>(["blocks", "clears", "faceoffsWon", "faceoffsLost"]),
+  PENALTY_KILL: new Set<CountKey>(["blocks", "clears", "faceoffsWon", "faceoffsLost", "timeOnIceSeconds"]),
 };
 
 export const emptyCounts = (): Counts => Object.fromEntries(COUNT_KEYS.map((k) => [k, 0])) as Counts;

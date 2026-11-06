@@ -1,4 +1,5 @@
 import { Field, Input } from "@/components/forms/Field";
+import { formatIceTime } from "@/lib/situation-stats";
 
 type RawStatLine = {
   zoneEntries: number;
@@ -121,10 +122,17 @@ export function StatLineFields({
   defaults,
   isGoalie,
   isForward,
+  showIceTime,
+  iceTimeSeconds,
 }: {
   defaults?: Partial<RawStatLine>;
   isGoalie?: boolean;
   isForward?: boolean;
+  /** 5-on-5 Ice Time — official Games only (StatEntryList passes this); Mini
+   * Games (PlayerMiniGameStatForm) never do, since MiniGamePlayerStat has no
+   * time-on-ice field. */
+  showIceTime?: boolean;
+  iceTimeSeconds?: number;
 }) {
   // Transition/Offense/Defense are skater categories — a goalie's stat
   // line is Goaltending only, per the app's position-based stat rules.
@@ -132,6 +140,22 @@ export function StatLineFields({
 
   return (
     <div className="space-y-5">
+      {showIceTime && (
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted mb-2">Ice Time</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <Field label="5-on-5 Ice Time" htmlFor="timeOnIce" hint="mm:ss">
+              <Input
+                id="timeOnIce"
+                name="timeOnIce"
+                inputMode="numeric"
+                placeholder="0:00"
+                defaultValue={iceTimeSeconds !== undefined ? formatIceTime(iceTimeSeconds) : ""}
+              />
+            </Field>
+          </div>
+        </div>
+      )}
       <FieldGroup title="Transition" fields={TRANSITION_FIELDS} defaults={defaults} visible={isSkater} />
       <FieldGroup title="Offense" fields={OFFENSE_FIELDS} defaults={defaults} visible={isSkater} />
       <FieldGroup title="Defense" fields={DEFENSE_FIELDS} defaults={defaults} visible={isSkater} />

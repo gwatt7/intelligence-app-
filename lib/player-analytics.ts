@@ -98,3 +98,76 @@ export async function getGameStatContributions(playerId: string): Promise<StatCo
   const previous = entries[entries.length - 2].stat;
   return topStatContributions(current, previous);
 }
+
+// ---------------------------------------------------------------------------
+// Time on Ice — official Games only, manually entered (5-on-5 on
+// GamePlayerStat, Power Play / Penalty Kill on GameSituationStat — see
+// lib/game-situations.ts for how the three are tracked and summed). No
+// automated video-based shift detection exists in Northstar yet; every
+// number here comes from a coach's own entry, nothing is estimated.
+
+export interface GameToiRow {
+  gameId: string;
+  date: Date;
+  label: string;
+  evenSeconds: number;
+  powerPlaySeconds: number;
+  penaltyKillSeconds: number;
+  totalSeconds: number;
+}
+
+export interface PlayerToiSummary {
+  games: GameToiRow[];
+  seasonEvenSeconds: number;
+  seasonPowerPlaySeconds: number;
+  seasonPenaltyKillSeconds: number;
+  seasonTotalSeconds: number;
+  /** null when the player has no official games logged yet. */
+  averagePerGameSeconds: number | null;
+}
+
+export async function getPlayerToiSummary(playerId: string): Promise<PlayerToiSummary> {
+  const [gameStats, situationStats] = await Promise.all([
+    prisma.gamePlayerStat.findMany({ where: { playerId }, include: { game: true } }),
+    prisma.gameSituationStat.findMany({ where: { playerId } }),
+  ]);
+
+  const situationByGame = new Map<string, { POWER_PLAY?: number; PENALTY_KILL?: number }>();
+  for (const s of situationStats) {
+    const entry = situationByGame.get(s.gameId) ?? {};
+    entry[s.situation] = s.timeOnIceSeconds;
+    situationByGame.set(s.gameId, entry);
+  }
+
+  const games: GameToiRow[] = gameStats
+    .map((g) => {
+      const sit = situationByGame.get(g.gameId) ?? {};
+      const evenSeconds = g.timeOnIceSeconds;
+      const powerPlaySeconds = sit.POWER_PLAY ?? 0;
+      const penaltyKillSeconds = sit.PENALTY_KILL ?? 0;
+      return {
+        gameId: g.gameId,
+        date: g.game.date,
+        label: `vs ${g.game.opponent}`,
+        evenSeconds,
+        powerPlaySeconds,
+        penaltyKillSeconds,
+        totalSeconds: evenSeconds + powerPlaySeconds + penaltyKillSeconds,
+      };
+    })
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const seasonEvenSeconds = games.reduce((a, g) => a + g.evenSeconds, 0);
+  const seasonPowerPlaySeconds = games.reduce((a, g) => a + g.powerPlaySeconds, 0);
+  const seasonPenaltyKillSeconds = games.reduce((a, g) => a + g.penaltyKillSeconds, 0);
+  const seasonTotalSeconds = seasonEvenSeconds + seasonPowerPlaySeconds + seasonPenaltyKillSeconds;
+
+  return {
+    games,
+    seasonEvenSeconds,
+    seasonPowerPlaySeconds,
+    seasonPenaltyKillSeconds,
+    seasonTotalSeconds,
+    averagePerGameSeconds: games.length ? Math.round(seasonTotalSeconds / games.length) : null,
+  };
+}
