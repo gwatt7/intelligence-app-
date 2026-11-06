@@ -9,7 +9,7 @@ type RawStatLine = {
   goals: number;
   assists: number;
   shots: number;
-  scoringChances: number;
+  shotAttempts: number;
   goodOpportunities: number;
   badOpportunities: number;
   disruptions: number;
@@ -42,7 +42,7 @@ const OFFENSE_FIELDS: FieldDef[] = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
   { key: "shots", label: "Shots" },
-  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "shotAttempts", label: "Shot Attempts" },
 ];
 
 const DEFENSE_FIELDS: FieldDef[] = [

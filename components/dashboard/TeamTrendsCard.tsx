@@ -16,7 +16,7 @@ const TABS = {
     label: "Offense",
     series: [
       { key: "shots", label: "Shots", color: "#0d1116" },
-      { key: "scoringChances", label: "Scoring chances", color: "#a3a8b0" },
+      { key: "shotAttempts", label: "Shot attempts", color: "#a3a8b0" },
       { key: "goals", label: "Goals", color: "#e9b000", fill: true },
     ],
   },

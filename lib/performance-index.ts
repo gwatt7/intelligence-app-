@@ -11,7 +11,7 @@ export const SKATER_WEIGHTS = {
   zoneEntryPct: 0.2,
   zoneExitPct: 0.2,
   pointsPerGame: 0.2,
-  scoringChancesPerGame: 0.15,
+  shotAttemptsPerGame: 0.15,
   disruptionGiveawayPerGame: 0.15,
   physicalPerGame: 0.1,
 } as const;
@@ -44,7 +44,7 @@ export function calculateSkaterPerformanceIndex(
   const entryPct = zoneEntryPct(totals) ?? 0;
   const exitPct = zoneExitPct(totals) ?? 0;
   const ptsPerGame = points(totals) / games;
-  const chancesPerGame = totals.scoringChances / games;
+  const shotAttemptsPerGame = totals.shotAttempts / games;
   const disruptionGiveawayPerGame = (totals.disruptions - totals.giveaways) / games;
   const physicalPerGame = (totals.hits + totals.blocks) / games;
 
@@ -57,9 +57,12 @@ export function calculateSkaterPerformanceIndex(
       scaledValue: scaleRate(ptsPerGame, 2), // 2 pts/game -> full score
     },
     {
-      label: "Scoring Chances / Game",
-      weight: SKATER_WEIGHTS.scoringChancesPerGame,
-      scaledValue: scaleRate(chancesPerGame, 5), // 5 chances/game -> full score
+      label: "Shot Attempts / Game",
+      weight: SKATER_WEIGHTS.shotAttemptsPerGame,
+      // Shot attempts (on goal + missed + blocked) run higher than the old
+      // Scoring Chances metric did, so the reference rate is raised from 5
+      // to 10/game accordingly — a judgment call, not a measured baseline.
+      scaledValue: scaleRate(shotAttemptsPerGame, 10),
     },
     {
       label: "Disruption − Giveaway / Game",

@@ -41,7 +41,7 @@ export async function buildRankings(seasonId: string) {
     bestZoneEntryPct: rank((p) => zoneEntryPct(totalsByPlayer.get(p.id)!)),
     bestZoneExitPct: rank((p) => zoneExitPct(totalsByPlayer.get(p.id)!)),
     lowestGiveaways: rank((p) => totalsByPlayer.get(p.id)!.giveaways, false),
-    mostScoringChances: rank((p) => totalsByPlayer.get(p.id)!.scoringChances),
+    mostShotAttempts: rank((p) => totalsByPlayer.get(p.id)!.shotAttempts),
   };
 }
 

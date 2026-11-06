@@ -56,7 +56,7 @@ export default async function WarRoomDetailPage({ params }: { params: Promise<{ 
     { key: "zoneEntryPct", label: "Zone Entry %", isPct: true },
     { key: "zoneExitPct", label: "Zone Exit %", isPct: true },
     { key: "giveaways", label: "Giveaways", isPct: false },
-    { key: "scoringChances", label: "Scoring Chances", isPct: false },
+    { key: "shotAttempts", label: "Shot Attempts", isPct: false },
   ];
 
   return (

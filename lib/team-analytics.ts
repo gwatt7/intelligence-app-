@@ -47,7 +47,7 @@ export function filterEntries(entries: TeamStatEntry[], filter: TimeFilter, now 
 export const TREND_METRICS = [
   { key: "zoneEntryPct", label: "Zone Entry %", isPct: true },
   { key: "zoneExitPct", label: "Zone Exit %", isPct: true },
-  { key: "scoringChances", label: "Scoring Chances", isPct: false },
+  { key: "shotAttempts", label: "Shot Attempts", isPct: false },
   { key: "goals", label: "Goals", isPct: false },
   { key: "shots", label: "Shots", isPct: false },
   { key: "giveaways", label: "Giveaways", isPct: false },

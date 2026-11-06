@@ -186,7 +186,7 @@ export default async function AnalyticsPage({
           <RankingCard title="Best Zone Entry %" players={rankings.bestZoneEntryPct} unit="%" digits={1} />
           <RankingCard title="Best Zone Exit %" players={rankings.bestZoneExitPct} unit="%" digits={1} />
           <RankingCard title="Lowest Giveaways" players={rankings.lowestGiveaways} />
-          <RankingCard title="Most Scoring Chances" players={rankings.mostScoringChances} />
+          <RankingCard title="Most Shot Attempts" players={rankings.mostShotAttempts} />
         </div>
       </div>
     </div>

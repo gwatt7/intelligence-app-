@@ -14,7 +14,7 @@ const EXPECTED_COLUMNS = [
   "goals",
   "assists",
   "shots",
-  "scoringChances",
+  "shotAttempts",
   "disruptions",
   "hits",
   "blocks",

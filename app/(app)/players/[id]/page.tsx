@@ -27,7 +27,7 @@ const MINI_GAME_OFFENSE_ITEMS = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
   { key: "shots", label: "Shots" },
-  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "shotAttempts", label: "Shot Attempts" },
 ] as const;
 
 const MINI_GAME_DEFENSE_ITEMS = [
@@ -332,6 +332,7 @@ export default async function PlayerProfilePage({
                               <th className="py-2 pr-4">Assists</th>
                               <th className="py-2 pr-4">Points</th>
                               <th className="py-2 pr-4">Shots</th>
+                              <th className="py-2 pr-4">Shot Attempts</th>
                             </>
                           )}
                         </tr>
@@ -367,6 +368,7 @@ export default async function PlayerProfilePage({
                                 <td className="py-2 pr-4">{e.stat.assists}</td>
                                 <td className="py-2 pr-4">{points(e.stat)}</td>
                                 <td className="py-2 pr-4">{e.stat.shots}</td>
+                                <td className="py-2 pr-4">{e.stat.shotAttempts}</td>
                               </>
                             )}
                           </tr>

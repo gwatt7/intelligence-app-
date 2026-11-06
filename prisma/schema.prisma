@@ -247,7 +247,11 @@ model MiniGamePlayerStat {
   goals             Int @default(0)
   assists           Int @default(0)
   shots             Int @default(0)
+  // scoringChances is retired — no longer an active category (replaced by
+  // shotAttempts below). The column stays so existing historical rows are
+  // preserved; nothing active reads or writes it anymore.
   scoringChances    Int @default(0)
+  shotAttempts      Int @default(0)
   goodOpportunities Int @default(0)
   badOpportunities  Int @default(0)
 
@@ -397,7 +401,11 @@ model GamePlayerStat {
   goals             Int @default(0)
   assists           Int @default(0)
   shots             Int @default(0)
+  // scoringChances is retired — no longer an active category (replaced by
+  // shotAttempts below). The column stays so existing historical rows are
+  // preserved; nothing active reads or writes it anymore.
   scoringChances    Int @default(0)
+  shotAttempts      Int @default(0)
   goodOpportunities Int @default(0)
   badOpportunities  Int @default(0)
 
@@ -503,7 +511,11 @@ enum ObjectiveMetric {
   TAKEAWAYS
   ZONE_ENTRY_PCT
   ZONE_EXIT_PCT
+  // Retired — no longer offered for new objectives (see SHOT_ATTEMPTS
+  // below), kept in the enum only so any existing Objective row that
+  // already references it stays valid.
   SCORING_CHANCES
+  SHOT_ATTEMPTS
   GOALS
   SHOTS
   HITS

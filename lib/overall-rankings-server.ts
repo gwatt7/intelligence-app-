@@ -105,7 +105,11 @@ export async function getOverallRankings(seasonId: string, rankingGroup: Ranking
               goals: v(c.goals),
               assists: v(c.assists),
               shots: v(c.shots),
-              scoringChances: v(c.scoringChances),
+              // No shotAttempts field exists on historical PlayerSeasonStat
+              // imports — stays null (not recorded) via the STAT_KEYS
+              // default above. Deliberately NOT backfilled from the old
+              // scoringChances import field; that would fabricate data that
+              // was never actually tracked as shot attempts.
               giveaways: v(c.giveaways),
               hits: v(c.hits),
               blocks: v(c.blocks),

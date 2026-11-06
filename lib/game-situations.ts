@@ -54,7 +54,6 @@ export const COUNT_KEYS = [
   "hits",
   "disruptions",
   "giveaways",
-  "scoringChances",
   "zoneEntries",
   "successfulZoneEntries",
   "zoneExits",
@@ -70,8 +69,8 @@ export type Counts = Record<CountKey, number>;
 /** Which situations record each stat. */
 export const TRACKED: Record<GameSituation, ReadonlySet<CountKey>> = {
   EVEN: new Set<CountKey>([
-    "goals", "assists", "shots", "faceoffsWon", "faceoffsLost", "blocks", "hits", "disruptions", "giveaways",
-    "scoringChances", "zoneEntries", "successfulZoneEntries", "zoneExits", "successfulZoneExits",
+    "goals", "assists", "shots", "shotAttempts", "faceoffsWon", "faceoffsLost", "blocks", "hits", "disruptions", "giveaways",
+    "zoneEntries", "successfulZoneEntries", "zoneExits", "successfulZoneExits",
     "shotsAgainst", "saves", "goalsAgainst", "timeOnIceSeconds",
   ]),
   POWER_PLAY: new Set<CountKey>(["goals", "assists", "shots", "shotAttempts", "faceoffsWon", "faceoffsLost", "timeOnIceSeconds"]),

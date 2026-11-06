@@ -125,15 +125,15 @@ export const SKATER_CATEGORIES: CategoryDef[] = [
   {
     key: "generation",
     missing: "Not recorded in this period",
-    label: "Shot & Chance Generation",
-    why: "Creating chances drives future scoring. Shots are half-weighted because many shots are already counted as scoring chances.",
-    measure: "(Scoring chances + ½ × shots) per game",
+    label: "Shot Generation",
+    why: "Shot attempts (on goal + missed + blocked) measure how much offensive pressure a player creates, beyond just what reaches the goalie.",
+    measure: "Shot attempts per game",
     raw: (t, g) => {
-      if (g <= 0 || (t.scoringChances === null && t.shots === null)) return null;
-      return { num: (t.scoringChances ?? 0) + 0.5 * (t.shots ?? 0), den: g };
+      if (g <= 0 || t.shotAttempts === null) return null;
+      return { num: t.shotAttempts, den: g };
     },
     shrink: { k: 2 },
-    detail: (t, g) => `${recorded([[t.scoringChances, "scoring chances"], [t.shots, "shots"]])} in ${g} GP`,
+    detail: (t, g) => `${recorded([[t.shotAttempts, "shot attempts"], [t.shots, "shots"]])} in ${g} GP`,
     format: (v) => `${per(v)} /game`,
   },
   {
@@ -325,7 +325,7 @@ function markUntracked(samples: PlayerSample[], keys: StatKey[]): { samples: Pla
 }
 
 const SKATER_KEYS: StatKey[] = [
-  "goals", "assists", "shots", "scoringChances", "zoneEntries",
+  "goals", "assists", "shots", "shotAttempts", "zoneEntries",
   "successfulZoneEntries", "zoneExits", "successfulZoneExits", "giveaways", "disruptions",
   "blocks", "hits", "faceoffsWon", "faceoffsLost",
 ];

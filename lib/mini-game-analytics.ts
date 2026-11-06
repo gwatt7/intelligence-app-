@@ -171,7 +171,7 @@ const POSITIVE_WHEN_UP: { key: keyof RawStatLine; label: string }[] = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
   { key: "shots", label: "Shots" },
-  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "shotAttempts", label: "Shot Attempts" },
   { key: "successfulZoneEntries", label: "Successful Zone Entries" },
   { key: "successfulZoneExits", label: "Successful Zone Exits" },
   { key: "disruptions", label: "Disruptions" },

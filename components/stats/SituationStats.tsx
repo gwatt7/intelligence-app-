@@ -33,7 +33,6 @@ export const STAT_GROUPS = {
       { label: "Shot Attempts", get: c("shotAttempts") },
       { label: "Shot Conversion %", get: shotConversion, kind: "pct", hint: "Goals ÷ shots" },
       { label: "Shot Accuracy %", get: shotAccuracy, kind: "pct", hint: "Shots ÷ attempts" },
-      { label: "Scoring Chances", get: c("scoringChances") },
     ],
   },
   faceoffs: {

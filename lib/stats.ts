@@ -13,7 +13,7 @@ export interface RawStatLine {
   goals: number;
   assists: number;
   shots: number;
-  scoringChances: number;
+  shotAttempts: number;
   goodOpportunities: number;
   badOpportunities: number;
 
@@ -52,7 +52,7 @@ export const EMPTY_STAT_LINE: RawStatLine = {
   goals: 0,
   assists: 0,
   shots: 0,
-  scoringChances: 0,
+  shotAttempts: 0,
   goodOpportunities: 0,
   badOpportunities: 0,
   disruptions: 0,
@@ -186,7 +186,7 @@ const CONTRIBUTION_STAT_KEYS: { key: keyof RawStatLine; label: string }[] = [
   { key: "goals", label: "Goals" },
   { key: "assists", label: "Assists" },
   { key: "shots", label: "Shots" },
-  { key: "scoringChances", label: "Scoring Chances" },
+  { key: "shotAttempts", label: "Shot Attempts" },
   { key: "successfulZoneEntries", label: "Successful Zone Entries" },
   { key: "successfulZoneExits", label: "Successful Zone Exits" },
   { key: "disruptions", label: "Disruptions" },
@@ -236,7 +236,7 @@ export const derivedCategories = {
     { key: "assists", label: "Assists" },
     { key: "points", label: "Points", derived: true },
     { key: "shots", label: "Shots" },
-    { key: "scoringChances", label: "Scoring Chances" },
+    { key: "shotAttempts", label: "Shot Attempts" },
   ],
   defense: [
     { key: "disruptions", label: "Disruptions" },
