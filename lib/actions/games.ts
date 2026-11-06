@@ -93,15 +93,22 @@ export async function updateGameResultAndNotes(gameId: string, formData: FormDat
 
 export async function saveGamePlayerStat(gameId: string, playerId: string, formData: FormData): Promise<ActionResult> {
   const raw = Object.fromEntries(formData.entries());
+  const parsed = statLineSchema.safeParse(raw);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid statistics" };
+  }
+
+  // timeOnIceSeconds is merged in here rather than living in statLineSchema,
+  // which is shared with Mini Games (saveMiniGamePlayerStat) — MiniGamePlayerStat
+  // has no such column, so spreading it into that upsert would throw a Prisma
+  // "Unknown argument" error. Same reasoning applies to any other field that's
+  // official-Game-only (see plusMinus below).
+  const data: Record<string, unknown> = { ...parsed.data };
   const timeOnIceRaw = formData.get("timeOnIce");
   if (timeOnIceRaw !== null) {
     const seconds = parseIceTime(String(timeOnIceRaw));
     if (seconds === null) return { ok: false, error: "Enter ice time as minutes:seconds, e.g. 14:35" };
-    raw.timeOnIceSeconds = String(seconds);
-  }
-  const parsed = statLineSchema.safeParse(raw);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid statistics" };
+    data.timeOnIceSeconds = seconds;
   }
 
   const game = await prisma.game.findUnique({ where: { id: gameId } });
@@ -109,8 +116,8 @@ export async function saveGamePlayerStat(gameId: string, playerId: string, formD
 
   await prisma.gamePlayerStat.upsert({
     where: { gameId_playerId: { gameId, playerId } },
-    create: { gameId, playerId, ...parsed.data },
-    update: parsed.data,
+    create: { gameId, playerId, timeOnIceSeconds: 0, ...data },
+    update: data,
   });
 
   await logActivity(game.seasonId, "GAME_LOGGED", `Stats updated for game vs ${game.opponent}`);
