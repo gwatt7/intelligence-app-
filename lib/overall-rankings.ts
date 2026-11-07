@@ -70,7 +70,7 @@ export const SKATER_WEIGHTS: Record<"FORWARD" | "DEFENSE", Weights> = {
   },
 };
 
-/** Goalie weights. Sums to 1. Freezes are intentionally not used; wins/losses are shown for context only. */
+/** Goalie weights. Sums to 1. Wins/losses are shown for context only. */
 export const GOALIE_WEIGHTS: Weights = {
   savePct: 0.5,
   kills: 0.35,

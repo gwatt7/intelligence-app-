@@ -12,7 +12,7 @@ import { PlusMinusCard } from "@/components/players/PlusMinusCard";
 import { getPlayerAvailabilitySummary } from "@/lib/player-availability";
 import { AvailabilityCard } from "@/components/players/AvailabilityCard";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
-import { sumStatLines, sumTrackedStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
+import { sumStatLines, sumTrackedStatLines, zoneEntryPct, zoneExitPct, points, winPct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
 import { TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
@@ -54,7 +54,6 @@ const MINI_GAME_GOALTENDING_ITEMS = [
   { key: "goalsAgainst", label: "Goals Against" },
   { key: "shotsAgainst", label: "Shots Against" },
   { key: "kills", label: "Kills" },
-  { key: "freezes", label: "Freezes" },
   { key: "wins", label: "Wins" },
   { key: "losses", label: "Losses" },
 ] as const;
@@ -349,7 +348,6 @@ export default async function PlayerProfilePage({
                               <th className="py-2 pr-4">Goals Against</th>
                               <th className="py-2 pr-4">Shots Against</th>
                               <th className="py-2 pr-4">Kills</th>
-                              <th className="py-2 pr-4">Freeze %</th>
                               <th className="py-2 pr-4">Win %</th>
                             </>
                           ) : (
@@ -373,13 +371,6 @@ export default async function PlayerProfilePage({
                                 <td className="py-2 pr-4">{e.stat.goalsAgainst}</td>
                                 <td className="py-2 pr-4">{e.stat.shotsAgainst}</td>
                                 <td className="py-2 pr-4">{e.stat.kills}</td>
-                                <td className="py-2 pr-4">
-                                  {formatPct(freezePct(e.stat))}
-                                  <span className="text-muted-2">
-                                    {" "}
-                                    ({e.stat.freezes}/{e.stat.freezeOpportunities})
-                                  </span>
-                                </td>
                                 <td className="py-2 pr-4">
                                   {formatPct(winPct(e.stat))}
                                   <span className="text-muted-2">

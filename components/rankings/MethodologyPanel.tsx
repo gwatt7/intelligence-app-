@@ -55,7 +55,7 @@ export function MethodologyPanel({ group }: { group: "skaters" | "goalies" }) {
           <>
             <p>
               Goalies are rated with their own model and never compared with skaters. Save percentage and goals against use fixed scales; kills are
-              compared with the goalie group&apos;s average. Freezes are not used. Wins and losses are shown for context but don&apos;t affect the
+              compared with the goalie group&apos;s average. Wins and losses are shown for context but don&apos;t affect the
               rating, so a goalie isn&apos;t rewarded just for playing behind a stronger team.
             </p>
             <div className="overflow-x-auto">

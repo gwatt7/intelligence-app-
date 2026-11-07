@@ -25,8 +25,6 @@ const EXPECTED_COLUMNS = [
   "goalsAgainst",
   "saves",
   "kills",
-  "freezes",
-  "freezeOpportunities",
   "wins",
   "losses",
 ];

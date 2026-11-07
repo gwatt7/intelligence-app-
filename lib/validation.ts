@@ -50,8 +50,6 @@ export const statLineSchema = z
     goalsAgainst: nonNegativeInt.default(0),
     saves: nonNegativeInt.default(0),
     kills: nonNegativeInt.default(0),
-    freezes: nonNegativeInt.default(0),
-    freezeOpportunities: nonNegativeInt.default(0),
     wins: nonNegativeInt.default(0),
     losses: nonNegativeInt.default(0),
   })
@@ -66,10 +64,6 @@ export const statLineSchema = z
   .refine((s) => s.saves <= s.shotsAgainst, {
     message: "Saves can't exceed shots against",
     path: ["saves"],
-  })
-  .refine((s) => s.freezes <= s.freezeOpportunities, {
-    message: "Freezes can't exceed freeze opportunities",
-    path: ["freezes"],
   });
 
 export const miniGameSchema = z.object({

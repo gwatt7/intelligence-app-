@@ -275,13 +275,15 @@ model MiniGamePlayerStat {
   saves        Int @default(0)
   kills        Int @default(0)
 
-  // Freeze % is always derived from these two raw counts (see
-  // lib/stats.ts), never stored, same reasoning as Faceoff % above.
+  // Freezes/Freeze % is retired — no longer an active category (NORTHSTAR
+  // — REMOVE FREEZES AND FREEZE OPPORTUNITIES). The columns stay so
+  // existing historical rows are preserved; nothing active reads or
+  // writes them anymore (same pattern as scoringChances above).
   freezes             Int @default(0)
   freezeOpportunities Int @default(0)
 
   // Win % is always derived from these two raw counts (see lib/stats.ts),
-  // never stored, same reasoning as Faceoff %/Freeze % above.
+  // never stored, same reasoning as Faceoff % above.
   wins   Int @default(0)
   losses Int @default(0)
 
@@ -466,13 +468,15 @@ model GamePlayerStat {
   saves        Int @default(0)
   kills        Int @default(0)
 
-  // Freeze % is always derived from these two raw counts (see
-  // lib/stats.ts), never stored, same reasoning as Faceoff % above.
+  // Freezes/Freeze % is retired — no longer an active category (NORTHSTAR
+  // — REMOVE FREEZES AND FREEZE OPPORTUNITIES). The columns stay so
+  // existing historical rows are preserved; nothing active reads or
+  // writes them anymore (same pattern as scoringChances above).
   freezes             Int @default(0)
   freezeOpportunities Int @default(0)
 
   // Win % is always derived from these two raw counts (see lib/stats.ts),
-  // never stored, same reasoning as Faceoff %/Freeze % above.
+  // never stored, same reasoning as Faceoff % above.
   wins   Int @default(0)
   losses Int @default(0)
 

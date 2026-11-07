@@ -33,11 +33,6 @@ export interface RawStatLine {
   saves: number;
   kills: number;
 
-  // Goalies only — see freezePct() below. Freeze % is always derived from
-  // these two, never stored.
-  freezes: number;
-  freezeOpportunities: number;
-
   // Goalies only — see winPct() below. Win % is always derived from these
   // two, never stored.
   wins: number;
@@ -66,8 +61,6 @@ export const EMPTY_STAT_LINE: RawStatLine = {
   goalsAgainst: 0,
   saves: 0,
   kills: 0,
-  freezes: 0,
-  freezeOpportunities: 0,
   wins: 0,
   losses: 0,
 };
@@ -105,11 +98,6 @@ export function points(s: RawStatLine): number {
 
 export function savePct(s: RawStatLine): number | null {
   return pct(s.saves, s.shotsAgainst);
-}
-
-/** Freezes ÷ Freeze Opportunities × 100. Goalies only in practice (see StatLineFields), same 0-denominator handling as every other derived percentage — renders "—" via formatPct rather than NaN/Infinity when there are no freeze opportunities logged. */
-export function freezePct(s: RawStatLine): number | null {
-  return pct(s.freezes, s.freezeOpportunities);
 }
 
 /** Wins ÷ (Wins + Losses) × 100. Goalies only in practice (see StatLineFields), same 0-denominator handling as every other derived percentage — renders "—" via formatPct rather than NaN/Infinity when no decisions are logged. */
@@ -173,8 +161,6 @@ export const NOT_TRACKED_TOGGLE_FIELDS: (keyof RawStatLine)[] = [
   "goalsAgainst",
   "saves",
   "kills",
-  "freezes",
-  "freezeOpportunities",
   "wins",
   "losses",
 ];
@@ -242,9 +228,6 @@ export function trackedFaceoffPct(lines: readonly UntrackedAwareLine[]): number 
 export function trackedSavePct(lines: readonly UntrackedAwareLine[]): number | null {
   return trackedRatio(lines, ["saves"], ["shotsAgainst"]);
 }
-export function trackedFreezePct(lines: readonly UntrackedAwareLine[]): number | null {
-  return trackedRatio(lines, ["freezes"], ["freezeOpportunities"]);
-}
 export function trackedWinPct(lines: readonly UntrackedAwareLine[]): number | null {
   return trackedRatio(lines, ["wins"], ["wins", "losses"]);
 }
@@ -258,7 +241,6 @@ const DERIVED_STAT_DEPS: Record<string, (keyof RawStatLine)[]> = {
   zoneExitPct: ["zoneExits", "successfulZoneExits"],
   faceoffPct: ["faceoffsWon", "faceoffsLost"],
   savePct: ["saves", "shotsAgainst"],
-  freezePct: ["freezes", "freezeOpportunities"],
   winPct: ["wins", "losses"],
   points: [], // goals/assists are never a "Did Not Track" toggle field
 };
@@ -274,8 +256,6 @@ export function getTrackedStatValue(lines: readonly UntrackedAwareLine[], key: s
       return trackedFaceoffPct(lines);
     case "savePct":
       return trackedSavePct(lines);
-    case "freezePct":
-      return trackedFreezePct(lines);
     case "winPct":
       return trackedWinPct(lines);
     case "unsuccessfulZoneEntries":
@@ -443,9 +423,6 @@ export const derivedCategories = {
     { key: "saves", label: "Saves" },
     { key: "savePct", label: "Save %", derived: true, isPct: true },
     { key: "kills", label: "Kills" },
-    { key: "freezes", label: "Freezes" },
-    { key: "freezeOpportunities", label: "Freeze Opportunities" },
-    { key: "freezePct", label: "Freeze %", derived: true, isPct: true },
     { key: "wins", label: "Wins" },
     { key: "losses", label: "Losses" },
     { key: "winPct", label: "Win %", derived: true, isPct: true },
@@ -471,8 +448,6 @@ export function getStatValue(s: RawStatLine, key: string): number | null {
       return totalFaceoffs(s);
     case "faceoffPct":
       return faceoffPct(s);
-    case "freezePct":
-      return freezePct(s);
     case "winPct":
       return winPct(s);
     default:

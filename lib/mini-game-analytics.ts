@@ -180,7 +180,6 @@ const POSITIVE_WHEN_UP: { key: keyof RawStatLine; label: string }[] = [
   { key: "faceoffsWon", label: "Faceoffs Won" },
   { key: "saves", label: "Saves" },
   { key: "kills", label: "Kills" },
-  { key: "freezes", label: "Freezes" },
   { key: "wins", label: "Wins" },
 ];
 
