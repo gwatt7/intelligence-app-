@@ -490,6 +490,17 @@ model GamePlayerStat {
   // value — see StatLineFields/PlusMinusCard), no Mini Game equivalent.
   plusMinus Int @default(0)
 
+  // Field-level "Did Not Track" flags. Each entry is the exact RawStatLine
+  // key name of one stat that was NOT recorded for this player in this game
+  // — distinct from a real, recorded zero. The underlying numeric column
+  // for a flagged field is forced to 0 when saved and must never be read
+  // directly as if it were real data; every consumer goes through
+  // sumTrackedStatLines()/trackedRatio() in lib/stats.ts instead, which
+  // exclude it from sums, percentages, and "games with recorded data"
+  // counts. Official 5-on-5 Games only (GamePlayerStat) — Power Play,
+  // Penalty Kill (GameSituationStat) and Mini Games have no equivalent.
+  untrackedFields String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -22,7 +22,7 @@
 import { prisma } from "@/lib/db";
 import { getSeasonStatEntriesByPlayer, type StatEntry } from "@/lib/player-analytics";
 import { calculatePerformanceIndex, type PerformanceIndexBreakdown } from "@/lib/performance-index";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points, savePct, type RawStatLine } from "@/lib/stats";
+import { sumTrackedStatLines, zoneEntryPct, zoneExitPct, points, savePct, type RawStatLine } from "@/lib/stats";
 import { WEEKLY_RANKING_TIMEZONE, MIN_WEEKLY_ENTRIES_FOR_RANKING, WEEKLY_SCORING_VERSION } from "@/lib/weekly-rankings-config";
 import { getWeekBounds as getCalendarWeekBounds, nextWeekStart, weekNumberFor as calendarWeekNumberFor } from "@/lib/calendar-week";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -211,7 +211,9 @@ function computeWindow(
       continue;
     }
 
-    const totals = sumStatLines(weekEntries.map((e) => e.stat));
+    // "Did Not Track" aware — a field flagged untracked in a given game is
+    // excluded from this week's sum rather than counted as 0 (see lib/stats.ts).
+    const totals = sumTrackedStatLines(weekEntries).sums;
     const index = calculatePerformanceIndex(p.position, totals, weekEntries.length);
     candidates.push({
       playerId: p.id,

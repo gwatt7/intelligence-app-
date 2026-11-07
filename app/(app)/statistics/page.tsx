@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 import { getSeasonStatEntriesByPlayer, getSeasonPlusMinusByPlayer } from "@/lib/player-analytics";
 import { getSeasonAllSituationScoringByPlayer } from "@/lib/game-situations-server";
-import { sumStatLines, formatPlusMinus, EMPTY_STAT_LINE } from "@/lib/stats";
+import { sumTrackedStatLines, formatPlusMinus } from "@/lib/stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ButtonLink } from "@/components/ui/Button";
@@ -46,7 +46,9 @@ export default async function StatisticsPage() {
   // lib/player-analytics.ts).
   const rows = roster.map((p) => {
     const entries = entriesByPlayer.get(p.id) ?? [];
-    const totals = entries.length > 0 ? sumStatLines(entries.map((e) => e.stat)) : EMPTY_STAT_LINE;
+    // "Did Not Track" aware — Shots/Shot Attempts show NT, not 0, for a
+    // player never tracked for that field all season (see lib/stats.ts).
+    const { sums, trackedGames } = sumTrackedStatLines(entries);
     const scoring = scoringByPlayer.get(p.id) ?? { goals: 0, assists: 0 };
     return {
       player: p,
@@ -55,8 +57,8 @@ export default async function StatisticsPage() {
       assists: scoring.assists,
       points: scoring.goals + scoring.assists,
       plusMinus: p.position === "GOALIE" ? null : (plusMinusByPlayer.get(p.id) ?? 0),
-      shots: totals.shots,
-      shotAttempts: totals.shotAttempts,
+      shots: trackedGames.shots > 0 ? sums.shots : null,
+      shotAttempts: trackedGames.shotAttempts > 0 ? sums.shotAttempts : null,
     };
   });
 
@@ -107,8 +109,8 @@ export default async function StatisticsPage() {
                     <td className="py-2.5 px-2 text-right">{r.assists}</td>
                     <td className="py-2.5 px-2 text-right font-bold text-foreground">{r.points}</td>
                     <td className="py-2.5 px-2 text-right">{r.plusMinus !== null ? formatPlusMinus(r.plusMinus) : "—"}</td>
-                    <td className="py-2.5 px-2 text-right">{r.shots}</td>
-                    <td className="py-2.5 pl-2 pr-4 text-right">{r.shotAttempts}</td>
+                    <td className="py-2.5 px-2 text-right">{r.shots ?? "NT"}</td>
+                    <td className="py-2.5 pl-2 pr-4 text-right">{r.shotAttempts ?? "NT"}</td>
                   </tr>
                 ))}
               </tbody>

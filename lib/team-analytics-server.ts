@@ -2,7 +2,7 @@
 // comment for why Mini Game data is never queried here.
 
 import { prisma } from "@/lib/db";
-import { sumStatLines } from "@/lib/stats";
+import { sumTrackedStatLines } from "@/lib/stats";
 import type { TeamStatEntry } from "@/lib/team-analytics";
 
 export async function getTeamStatEntries(seasonId: string): Promise<TeamStatEntry[]> {
@@ -12,7 +12,9 @@ export async function getTeamStatEntries(seasonId: string): Promise<TeamStatEntr
     id: g.id,
     date: g.date,
     label: `vs ${g.opponent}`,
-    stat: sumStatLines(g.playerStats),
+    // Each player's row carries untrackedFields as a sibling, not nested —
+    // wrap it into the {stat, untrackedFields} shape sumTrackedStatLines expects.
+    stat: sumTrackedStatLines(g.playerStats.map((s) => ({ stat: s, untrackedFields: s.untrackedFields }))).sums,
   }));
 
   entries.sort((a, b) => a.date.getTime() - b.date.getTime());

@@ -9,6 +9,7 @@ import { parseIceTime, SITUATION_FIELDS, SITUATION_LABEL, type Situation } from 
 import { logActivity } from "@/lib/activity";
 import { resolveBlobReadWriteToken } from "@/lib/blob-token";
 import { setPlayerGameStatus, type PlayerGameStatus } from "@/lib/player-availability";
+import { NOT_TRACKED_TOGGLE_FIELDS } from "@/lib/stats";
 import type { ActionResult } from "./team";
 export type { ActionResult };
 
@@ -118,6 +119,22 @@ export async function saveGamePlayerStat(gameId: string, playerId: string, formD
     }
     data.plusMinus = plusMinus;
   }
+
+  // "Did Not Track" — a checked "nt_<field>" checkbox means that field was
+  // never recorded for this player in this game, distinct from a real 0.
+  // The stored number is forced to 0 (it's never read for a flagged field —
+  // see sumTrackedStatLines/trackedRatio in lib/stats.ts, every read path
+  // goes through those instead of the raw column) purely so a stale nonzero
+  // value from before the field was flagged can never leak into a sum if
+  // some future code path forgets to check untrackedFields first.
+  const untrackedFields: string[] = [];
+  for (const key of NOT_TRACKED_TOGGLE_FIELDS) {
+    if (formData.get(`nt_${key}`) === "on") {
+      untrackedFields.push(key);
+      data[key] = 0;
+    }
+  }
+  data.untrackedFields = untrackedFields;
 
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return { ok: false, error: "Game not found" };

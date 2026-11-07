@@ -9,7 +9,7 @@ import {
 } from "@/lib/player-analytics";
 import { getPlayerSituationTotals } from "@/lib/game-situations-server";
 import { count as situationCount } from "@/lib/game-situations";
-import { sumStatLines, zoneEntryPct, zoneExitPct, formatPct, formatChange, formatPlusMinus } from "@/lib/stats";
+import { sumTrackedStatLines, trackedZoneEntryPct, trackedZoneExitPct, formatPct, formatChange, formatPlusMinus } from "@/lib/stats";
 import { formatIceTime } from "@/lib/situation-stats";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,7 +21,20 @@ async function buildPlayerSummary(playerId: string) {
   const player = await prisma.player.findUnique({ where: { id: playerId } });
   if (!player) return null;
   const entries = await getPlayerStatEntries(playerId);
-  const totals = sumStatLines(entries.map((e) => e.stat));
+  // "Did Not Track" aware — a field never tracked this season is null
+  // (rendered as "—") rather than a misleading 0 (see lib/stats.ts).
+  const { sums, trackedGames } = sumTrackedStatLines(entries);
+  const trackedOrNull = (k: keyof typeof sums) => (trackedGames[k] > 0 ? sums[k] : null);
+  const totals = {
+    zoneEntryPct: trackedZoneEntryPct(entries),
+    zoneExitPct: trackedZoneExitPct(entries),
+    shotAttempts: trackedOrNull("shotAttempts"),
+    shots: trackedOrNull("shots"),
+    giveaways: trackedOrNull("giveaways"),
+    disruptions: trackedOrNull("disruptions"),
+    hits: trackedOrNull("hits"),
+    blocks: trackedOrNull("blocks"),
+  };
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
   const toi = await getPlayerToiSummary(playerId);
@@ -46,8 +59,8 @@ type Row = {
 const ROWS: Row[] = [
   { label: "Performance Index", format: (s) => s.index?.score ?? null },
   { label: "Recent Trend (%)", format: (s) => s.trend },
-  { label: "Zone Entry %", format: (s) => zoneEntryPct(s.totals), isPct: true },
-  { label: "Zone Exit %", format: (s) => zoneExitPct(s.totals), isPct: true },
+  { label: "Zone Entry %", format: (s) => s.totals.zoneEntryPct, isPct: true },
+  { label: "Zone Exit %", format: (s) => s.totals.zoneExitPct, isPct: true },
   { label: "Shot Attempts", format: (s) => s.totals.shotAttempts },
   // 5-on-5 + Power Play + Penalty Kill combined — see allSituationGoals/
   // allSituationAssists in buildPlayerSummary above.

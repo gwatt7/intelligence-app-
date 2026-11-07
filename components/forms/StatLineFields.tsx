@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Field, Input } from "@/components/forms/Field";
 import { formatIceTime } from "@/lib/situation-stats";
 
@@ -73,6 +74,46 @@ const GOALIE_FIELDS: FieldDef[] = [
   { key: "losses", label: "Losses" },
 ];
 
+// Exactly the fields a "Did Not Track" toggle applies to — Goals/Assists
+// are excluded (see lib/stats.ts's NOT_TRACKED_TOGGLE_FIELDS, the single
+// source of truth the server action reads the same list from).
+const NOT_TRACKABLE: ReadonlySet<string> = new Set([
+  ...TRANSITION_FIELDS.map((f) => f.key),
+  "shots",
+  "shotAttempts",
+  ...DEFENSE_FIELDS.map((f) => f.key),
+  ...FACEOFF_FIELDS.map((f) => f.key),
+  ...GOALIE_FIELDS.map((f) => f.key),
+]);
+
+/**
+ * One field's number input, plus (official Games only) a small "Did Not
+ * Track" checkbox beside it. Checking it disables and dims the input and
+ * swaps its value display to "NT" — the actual number submitted when
+ * checked doesn't matter (the server forces it to 0 and records the field
+ * name in untrackedFields instead; see saveGamePlayerStat), so the input is
+ * disabled only to make that visually unambiguous, not because the typed
+ * value is read.
+ */
+function TrackableInput({ fieldKey, defaultValue, initiallyUntracked }: { fieldKey: string; defaultValue: number; initiallyUntracked: boolean }) {
+  const [notTracked, setNotTracked] = useState(initiallyUntracked);
+  return (
+    <div className="flex items-end gap-1.5">
+      <div className="flex-1">
+        {notTracked ? (
+          <input type="text" value="NT" disabled className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-muted-2" />
+        ) : (
+          <Input id={fieldKey} name={fieldKey} type="number" min={0} defaultValue={defaultValue} />
+        )}
+      </div>
+      <label className="flex shrink-0 items-center gap-1 pb-2 text-[11px] text-muted-2" title="Did Not Track">
+        <input type="checkbox" name={`nt_${fieldKey}`} checked={notTracked} onChange={(e) => setNotTracked(e.target.checked)} className="h-3.5 w-3.5 accent-accent" />
+        NT
+      </label>
+    </div>
+  );
+}
+
 /**
  * One stat group — either the normal visible inputs, or (when `visible` is
  * false) the same fields as hidden inputs carrying their existing value
@@ -89,11 +130,15 @@ function FieldGroup({
   fields,
   defaults,
   visible,
+  untrackedFields,
+  showNotTracked,
 }: {
   title: string;
   fields: FieldDef[];
   defaults?: Partial<RawStatLine>;
   visible: boolean;
+  untrackedFields?: ReadonlySet<string>;
+  showNotTracked?: boolean;
 }) {
   if (!visible) {
     return (
@@ -108,11 +153,17 @@ function FieldGroup({
     <div>
       <p className="text-xs font-medium uppercase tracking-wide text-muted mb-2">{title}</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-        {fields.map((f) => (
-          <Field key={f.key} label={f.label} htmlFor={f.key}>
-            <Input id={f.key} name={f.key} type="number" min={0} defaultValue={defaults?.[f.key] ?? 0} />
-          </Field>
-        ))}
+        {fields.map((f) =>
+          showNotTracked && NOT_TRACKABLE.has(f.key) ? (
+            <Field key={f.key} label={f.label} htmlFor={f.key}>
+              <TrackableInput fieldKey={f.key} defaultValue={defaults?.[f.key] ?? 0} initiallyUntracked={!!untrackedFields?.has(f.key)} />
+            </Field>
+          ) : (
+            <Field key={f.key} label={f.label} htmlFor={f.key}>
+              <Input id={f.key} name={f.key} type="number" min={0} defaultValue={defaults?.[f.key] ?? 0} />
+            </Field>
+          )
+        )}
       </div>
     </div>
   );
@@ -126,6 +177,8 @@ export function StatLineFields({
   iceTimeSeconds,
   showPlusMinus,
   plusMinusValue,
+  showNotTracked,
+  untrackedFields,
 }: {
   defaults?: Partial<RawStatLine>;
   isGoalie?: boolean;
@@ -140,10 +193,15 @@ export function StatLineFields({
    * reasoning as showIceTime above. */
   showPlusMinus?: boolean;
   plusMinusValue?: number;
+  /** "Did Not Track" per-field toggles — official Games only, same reasoning as showIceTime above. */
+  showNotTracked?: boolean;
+  /** Which fields are currently flagged Did Not Track, so reopening a game keeps them checked. */
+  untrackedFields?: readonly string[];
 }) {
   // Transition/Offense/Defense are skater categories — a goalie's stat
   // line is Goaltending only, per the app's position-based stat rules.
   const isSkater = !isGoalie;
+  const untrackedSet = new Set(untrackedFields ?? []);
 
   return (
     <div className="space-y-5">
@@ -170,11 +228,11 @@ export function StatLineFields({
           </div>
         </div>
       )}
-      <FieldGroup title="Transition" fields={TRANSITION_FIELDS} defaults={defaults} visible={isSkater} />
-      <FieldGroup title="Offense" fields={OFFENSE_FIELDS} defaults={defaults} visible={isSkater} />
-      <FieldGroup title="Defense" fields={DEFENSE_FIELDS} defaults={defaults} visible={isSkater} />
-      <FieldGroup title="Faceoffs" fields={FACEOFF_FIELDS} defaults={defaults} visible={!!isForward} />
-      <FieldGroup title="Goaltending" fields={GOALIE_FIELDS} defaults={defaults} visible={!!isGoalie} />
+      <FieldGroup title="Transition" fields={TRANSITION_FIELDS} defaults={defaults} visible={isSkater} showNotTracked={showNotTracked} untrackedFields={untrackedSet} />
+      <FieldGroup title="Offense" fields={OFFENSE_FIELDS} defaults={defaults} visible={isSkater} showNotTracked={showNotTracked} untrackedFields={untrackedSet} />
+      <FieldGroup title="Defense" fields={DEFENSE_FIELDS} defaults={defaults} visible={isSkater} showNotTracked={showNotTracked} untrackedFields={untrackedSet} />
+      <FieldGroup title="Faceoffs" fields={FACEOFF_FIELDS} defaults={defaults} visible={!!isForward} showNotTracked={showNotTracked} untrackedFields={untrackedSet} />
+      <FieldGroup title="Goaltending" fields={GOALIE_FIELDS} defaults={defaults} visible={!!isGoalie} showNotTracked={showNotTracked} untrackedFields={untrackedSet} />
     </div>
   );
 }

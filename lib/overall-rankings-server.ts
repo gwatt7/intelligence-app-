@@ -9,7 +9,7 @@
 //     (PlayerSeasonStat, e.g. 2025-26) → those report cards
 
 import { prisma } from "@/lib/db";
-import { EMPTY_STAT_LINE, type RawStatLine } from "@/lib/stats";
+import { EMPTY_STAT_LINE, sumTrackedStatLines, type RawStatLine } from "@/lib/stats";
 import { getSeasonStatEntriesByPlayer } from "@/lib/player-analytics";
 import {
   applyMovement,
@@ -38,14 +38,18 @@ export interface OverallRankingsData {
 interface Entry {
   date: Date;
   stat: RawStatLine;
+  /** "Did Not Track" field names for this one game — always [] for Mini Games (no equivalent there). */
+  untrackedFields: readonly string[];
 }
 
 type Roster = { id: string; firstName: string; lastName: string; jerseyNumber: number; position: "FORWARD" | "DEFENSE" | "GOALIE" }[];
 
+// A key with zero tracked games across these entries is "not recorded"
+// (null) rather than a real 0 — same convention StatTotals already uses for
+// imported report cards, now driven by the actual per-game untrackedFields.
 function sumTotals(entries: Entry[]): StatTotals {
-  const t = Object.fromEntries(STAT_KEYS.map((k) => [k, 0])) as Record<StatKey, number>;
-  for (const e of entries) for (const k of STAT_KEYS) t[k] += e.stat[k];
-  return t;
+  const { sums, trackedGames } = sumTrackedStatLines(entries);
+  return Object.fromEntries(STAT_KEYS.map((k) => [k, trackedGames[k] > 0 ? sums[k] : null])) as StatTotals;
 }
 
 function samplesFromEntries(roster: Roster, byPlayer: Map<string, Entry[]>, period: RankingPeriod, before?: Date): PlayerSample[] {
@@ -65,7 +69,7 @@ function samplesFromEntries(roster: Roster, byPlayer: Map<string, Entry[]>, peri
 
 function group<T extends { playerId: string; date: Date }>(rows: T[], toStat: (r: T) => RawStatLine): Map<string, Entry[]> {
   const m = new Map<string, Entry[]>();
-  for (const r of rows) m.set(r.playerId, [...(m.get(r.playerId) ?? []), { date: r.date, stat: toStat(r) }]);
+  for (const r of rows) m.set(r.playerId, [...(m.get(r.playerId) ?? []), { date: r.date, stat: toStat(r), untrackedFields: [] }]);
   for (const list of m.values()) list.sort((a, b) => a.date.getTime() - b.date.getTime());
   return m;
 }
@@ -91,7 +95,7 @@ export async function getOverallRankings(seasonId: string, rankingGroup: Ranking
     byPlayer = new Map(
       [...entriesByPlayer.entries()].map(([playerId, entries]) => [
         playerId,
-        [...entries].sort((a, b) => a.date.getTime() - b.date.getTime()).map((e) => ({ date: e.date, stat: e.stat })),
+        [...entries].sort((a, b) => a.date.getTime() - b.date.getTime()).map((e) => ({ date: e.date, stat: e.stat, untrackedFields: e.untrackedFields })),
       ])
     );
   }

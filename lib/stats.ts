@@ -137,6 +137,176 @@ export function sumStatLines(lines: RawStatLine[]): RawStatLine {
   return total;
 }
 
+// ---------------------------------------------------------------------------
+// "Did Not Track" — official Games (GamePlayerStat) only. A field listed in
+// a game's untrackedFields was never recorded for that player in that game
+// — distinct from a real, recorded zero. The raw column is forced to 0 when
+// saved (see saveGamePlayerStat), so it must never be read directly for a
+// flagged field; everything below reads through these functions instead,
+// which skip that game's value for that field entirely rather than
+// counting it as 0. No Mini Game equivalent — MiniGamePlayerStat has no
+// untrackedFields column, so every Mini Game entry is always fully tracked.
+
+export const RAW_STAT_KEYS = Object.keys(EMPTY_STAT_LINE) as (keyof RawStatLine)[];
+
+/**
+ * Exactly the fields StatLineFields renders an input for and that get a
+ * "Did Not Track" toggle — Goals and Assists are deliberately excluded
+ * (they feed Points/Plus-Minus, which have their own, separate handling)
+ * as are goodOpportunities/badOpportunities/takeaways (RawStatLine fields
+ * with no actual input anywhere in the app).
+ */
+export const NOT_TRACKED_TOGGLE_FIELDS: (keyof RawStatLine)[] = [
+  "zoneEntries",
+  "successfulZoneEntries",
+  "zoneExits",
+  "successfulZoneExits",
+  "shots",
+  "shotAttempts",
+  "disruptions",
+  "hits",
+  "blocks",
+  "giveaways",
+  "faceoffsWon",
+  "faceoffsLost",
+  "shotsAgainst",
+  "goalsAgainst",
+  "saves",
+  "kills",
+  "freezes",
+  "freezeOpportunities",
+  "wins",
+  "losses",
+];
+
+export interface UntrackedAwareLine {
+  stat: RawStatLine;
+  /** RawStatLine key names not tracked for this one line — empty for Mini Games and for any line with nothing flagged. */
+  untrackedFields: readonly string[];
+}
+
+export interface TrackedTotals {
+  /** Summed only over the lines where each field was tracked. */
+  sums: RawStatLine;
+  /** How many lines had each field tracked — for "games with recorded data" and season averages. */
+  trackedGames: Record<keyof RawStatLine, number>;
+}
+
+/** Field-aware version of sumStatLines: a line with a field flagged untracked contributes nothing to that field's sum or tracked-game count, without affecting any of its other (tracked) fields. */
+export function sumTrackedStatLines(lines: readonly UntrackedAwareLine[]): TrackedTotals {
+  const sums = { ...EMPTY_STAT_LINE };
+  const trackedGames = Object.fromEntries(RAW_STAT_KEYS.map((k) => [k, 0])) as Record<keyof RawStatLine, number>;
+  for (const line of lines) {
+    for (const key of RAW_STAT_KEYS) {
+      if (line.untrackedFields.includes(key)) continue;
+      sums[key] += line.stat[key] ?? 0;
+      trackedGames[key]++;
+    }
+  }
+  return { sums, trackedGames };
+}
+
+/**
+ * A percentage built only from games where every field it depends on was
+ * tracked — if a game has the numerator tracked but the denominator
+ * flagged untracked (or vice versa), that whole game is excluded from the
+ * percentage rather than letting a real count divide by a missing one
+ * (which would silently distort the result). This is why percentages
+ * can't just reuse sumTrackedStatLines's per-field sums: a ratio's
+ * numerator and denominator must come from the same set of games.
+ */
+export function trackedRatio(lines: readonly UntrackedAwareLine[], numKeys: (keyof RawStatLine)[], denKeys: (keyof RawStatLine)[]): number | null {
+  const depKeys = [...new Set([...numKeys, ...denKeys])];
+  let num = 0;
+  let den = 0;
+  let anyTracked = false;
+  for (const line of lines) {
+    if (depKeys.some((k) => line.untrackedFields.includes(k))) continue;
+    num += numKeys.reduce((a, k) => a + line.stat[k], 0);
+    den += denKeys.reduce((a, k) => a + line.stat[k], 0);
+    anyTracked = true;
+  }
+  if (!anyTracked) return null;
+  return pct(num, den);
+}
+
+export function trackedZoneEntryPct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["successfulZoneEntries"], ["zoneEntries"]);
+}
+export function trackedZoneExitPct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["successfulZoneExits"], ["zoneExits"]);
+}
+export function trackedFaceoffPct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["faceoffsWon"], ["faceoffsWon", "faceoffsLost"]);
+}
+export function trackedSavePct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["saves"], ["shotsAgainst"]);
+}
+export function trackedFreezePct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["freezes"], ["freezeOpportunities"]);
+}
+export function trackedWinPct(lines: readonly UntrackedAwareLine[]): number | null {
+  return trackedRatio(lines, ["wins"], ["wins", "losses"]);
+}
+
+/** A composite's dependency fields, for both its value and its tracked-game count below — kept in one place so the two can never drift apart. */
+const DERIVED_STAT_DEPS: Record<string, (keyof RawStatLine)[]> = {
+  unsuccessfulZoneEntries: ["zoneEntries", "successfulZoneEntries"],
+  unsuccessfulZoneExits: ["zoneExits", "successfulZoneExits"],
+  totalFaceoffs: ["faceoffsWon", "faceoffsLost"],
+  zoneEntryPct: ["zoneEntries", "successfulZoneEntries"],
+  zoneExitPct: ["zoneExits", "successfulZoneExits"],
+  faceoffPct: ["faceoffsWon", "faceoffsLost"],
+  savePct: ["saves", "shotsAgainst"],
+  freezePct: ["freezes", "freezeOpportunities"],
+  winPct: ["wins", "losses"],
+  points: [], // goals/assists are never a "Did Not Track" toggle field
+};
+
+/** getStatValue, but excluding any line where a field the key depends on was flagged "Did Not Track" — for raw keys that means excluding lines where that one field is flagged. Returns null when nothing qualifies, same "not recorded" meaning as getStatValue, so callers render it as NT/—. */
+export function getTrackedStatValue(lines: readonly UntrackedAwareLine[], key: string): number | null {
+  switch (key) {
+    case "zoneEntryPct":
+      return trackedZoneEntryPct(lines);
+    case "zoneExitPct":
+      return trackedZoneExitPct(lines);
+    case "faceoffPct":
+      return trackedFaceoffPct(lines);
+    case "savePct":
+      return trackedSavePct(lines);
+    case "freezePct":
+      return trackedFreezePct(lines);
+    case "winPct":
+      return trackedWinPct(lines);
+    case "unsuccessfulZoneEntries":
+    case "unsuccessfulZoneExits":
+    case "totalFaceoffs":
+    case "points": {
+      const depKeys = DERIVED_STAT_DEPS[key];
+      let total = 0;
+      let anyTracked = false;
+      for (const line of lines) {
+        if (depKeys.some((k) => line.untrackedFields.includes(k))) continue;
+        total += getStatValue(line.stat, key) ?? 0;
+        anyTracked = true;
+      }
+      return anyTracked ? total : null;
+    }
+    default: {
+      const k = key as keyof RawStatLine;
+      const { sums, trackedGames } = sumTrackedStatLines(lines);
+      return trackedGames[k] > 0 ? sums[k] : null;
+    }
+  }
+}
+
+/** How many of `lines` had `key` (raw or derived) tracked, out of the total — for a "tracked in X/Y games" footnote. */
+export function trackedGameCountFor(lines: readonly UntrackedAwareLine[], key: string): { tracked: number; total: number } {
+  const depKeys = DERIVED_STAT_DEPS[key] ?? [key as keyof RawStatLine];
+  const tracked = depKeys.length === 0 ? lines.length : lines.filter((l) => !depKeys.some((k) => l.untrackedFields.includes(k))).length;
+  return { tracked, total: lines.length };
+}
+
 /** Percentage-point / percent change between two periods of the same metric. */
 export function change(current: number | null, baseline: number | null): number | null {
   if (current === null || baseline === null) return null;
@@ -212,14 +382,23 @@ export interface StatContribution {
  * (typically their most recent entry vs. the one before it), ranked by %
  * increase. Only real, computable increases are eligible — a stat with no
  * previous value ("New") never displays a fabricated percentage, and a
- * flat/declining stat is never shown as a "contribution."
+ * flat/declining stat is never shown as a "contribution." A key in
+ * excludeKeys (not tracked in the current and/or previous game — see "Did
+ * Not Track" above) is skipped entirely rather than compared against a
+ * meaningless forced-0 value.
  */
-export function topStatContributions(current: RawStatLine, previous: RawStatLine, limit = 3): StatContribution[] {
-  return CONTRIBUTION_STAT_KEYS.map(({ key, label }) => ({
-    key,
-    label,
-    progression: pctChange(current[key], previous[key]),
-  }))
+export function topStatContributions(
+  current: RawStatLine,
+  previous: RawStatLine,
+  limit = 3,
+  excludeKeys: ReadonlySet<string> = new Set()
+): StatContribution[] {
+  return CONTRIBUTION_STAT_KEYS.filter(({ key }) => !excludeKeys.has(key))
+    .map(({ key, label }) => ({
+      key,
+      label,
+      progression: pctChange(current[key], previous[key]),
+    }))
     .filter((c) => c.progression.type === "increase")
     .sort((a, b) => (b.progression.pct ?? 0) - (a.progression.pct ?? 0))
     .slice(0, limit);

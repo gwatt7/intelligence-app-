@@ -50,7 +50,7 @@ export function StatEntryList({
   // timeOnIceSeconds/plusMinus are optional here because they only exist on
   // GamePlayerStat (official Games) — Mini Games (also a StatEntryList
   // caller) never set them.
-  statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number }>;
+  statsByPlayer: Map<string, RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number; untrackedFields?: string[] }>;
   situational?: SituationalEntry;
   availability?: AvailabilityEntry;
 }) {
@@ -87,7 +87,7 @@ function PlayerRow({
 }: {
   saveAction: (playerId: string, formData: FormData) => Promise<ActionResult>;
   player: Player;
-  stat?: RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number };
+  stat?: RawStatLine & { timeOnIceSeconds?: number; plusMinus?: number; untrackedFields?: string[] };
   situational?: SituationalEntry;
   status: PlayerGameStatus;
   onStatusChange?: (status: PlayerGameStatus) => Promise<ActionResult>;
@@ -132,6 +132,9 @@ function PlayerRow({
                 {!!situational && !!stat!.timeOnIceSeconds && <span>TOI {formatIceTime(stat!.timeOnIceSeconds)}</span>}
                 {!!situational && player.position !== "GOALIE" && stat!.plusMinus !== undefined && (
                   <span>+/- {formatPlusMinus(stat!.plusMinus)}</span>
+                )}
+                {!!situational && !!stat!.untrackedFields?.length && (
+                  <Badge tone="warning">{stat!.untrackedFields.length} NT</Badge>
                 )}
                 <Badge tone="positive">Logged</Badge>
               </>
@@ -190,6 +193,8 @@ function PlayerRow({
             iceTimeSeconds={stat?.timeOnIceSeconds}
             showPlusMinus={!!situational}
             plusMinusValue={stat?.plusMinus}
+            showNotTracked={!!situational}
+            untrackedFields={stat?.untrackedFields}
           />
           <div className="flex items-center gap-3 mt-4">
             <Button type="submit" disabled={pending}>

@@ -12,7 +12,7 @@ import { PlusMinusCard } from "@/components/players/PlusMinusCard";
 import { getPlayerAvailabilitySummary } from "@/lib/player-availability";
 import { AvailabilityCard } from "@/components/players/AvailabilityCard";
 import { getPlayerMiniGameEntries, miniGameStatProgression, miniGameWeeklyTrend } from "@/lib/mini-game-analytics";
-import { sumStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
+import { sumStatLines, sumTrackedStatLines, zoneEntryPct, zoneExitPct, points, freezePct, winPct, formatPct } from "@/lib/stats";
 import { derivedCategories } from "@/lib/stats";
 import { TrendBadge } from "@/components/ui/Badge";
 import { StatCategoryCard } from "@/components/stats/StatCategoryCard";
@@ -81,7 +81,9 @@ export default async function PlayerProfilePage({
   const toiSummary = await getPlayerToiSummary(id);
   const availabilitySummary = await getPlayerAvailabilitySummary(id);
   const plusMinusSummary = player.position !== "GOALIE" ? await getPlayerPlusMinusSummary(id) : null;
-  const totals = sumStatLines(entries.map((e) => e.stat));
+  // "Did Not Track" aware — a field never tracked all season shows NT
+  // instead of 0 (see StatCategoryCard / lib/stats.ts).
+  const totals = sumTrackedStatLines(entries).sums;
   const index = performanceIndexForEntries(entries, player.position);
   const trend = recentTrendForEntries(entries, player.position);
 
@@ -208,14 +210,14 @@ export default async function PlayerProfilePage({
               {entries.length > 0 ? (
                 <>
                   {player.position === "GOALIE" ? (
-                    <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} />
+                    <StatCategoryCard title="Goaltending" items={derivedCategories.goaltending} stat={totals} entries={entries} />
                   ) : (
                     <>
-                      <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} />
-                      <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} />
-                      <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} />
+                      <StatCategoryCard title="Transition" items={derivedCategories.transition} stat={totals} entries={entries} />
+                      <StatCategoryCard title="Offense" items={derivedCategories.offense} stat={totals} entries={entries} />
+                      <StatCategoryCard title="Defense" items={derivedCategories.defense} stat={totals} entries={entries} />
                       {player.position === "FORWARD" && (
-                        <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} />
+                        <StatCategoryCard title="Faceoffs" items={derivedCategories.faceoffs} stat={totals} entries={entries} />
                       )}
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

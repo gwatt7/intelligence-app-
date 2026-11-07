@@ -7,7 +7,7 @@
 // query in this file.
 
 import { prisma } from "@/lib/db";
-import { RawStatLine, EMPTY_STAT_LINE, sumStatLines, change, topStatContributions, type StatContribution } from "@/lib/stats";
+import { RawStatLine, EMPTY_STAT_LINE, sumTrackedStatLines, change, topStatContributions, type StatContribution } from "@/lib/stats";
 import { calculatePerformanceIndex, PerformanceIndexBreakdown } from "@/lib/performance-index";
 import { getSeasonAvailabilityExclusions, getPlayerAvailabilityExclusions, isPlayedGame } from "@/lib/player-availability";
 
@@ -20,6 +20,8 @@ export interface StatEntry {
   source: StatSource;
   label: string; // e.g. "vs Ice Hawks"
   stat: RawStatLine;
+  /** "Did Not Track" field names for this one game (see lib/stats.ts) — empty for a synthetic dressed-zero entry, since nothing was explicitly flagged. */
+  untrackedFields: readonly string[];
 }
 
 /**
@@ -59,6 +61,7 @@ export async function getSeasonStatEntriesByPlayer(seasonId: string): Promise<Ma
         source: "GAME",
         label: `vs ${g.opponent}`,
         stat: row ?? EMPTY_STAT_LINE,
+        untrackedFields: row?.untrackedFields ?? [],
       });
     }
     if (entries.length > 0) byPlayer.set(p.id, entries);
@@ -93,6 +96,7 @@ export async function getPlayerStatEntries(playerId: string): Promise<StatEntry[
       source: "GAME",
       label: `vs ${g.opponent}`,
       stat: row ?? EMPTY_STAT_LINE,
+      untrackedFields: row?.untrackedFields ?? [],
     });
   }
 
@@ -105,7 +109,10 @@ export function performanceIndexForEntries(
   position: "FORWARD" | "DEFENSE" | "GOALIE"
 ): PerformanceIndexBreakdown | null {
   if (entries.length === 0) return null;
-  const totals = sumStatLines(entries.map((e) => e.stat));
+  // sumTrackedStatLines (not sumStatLines) so a field flagged "Did Not
+  // Track" in some games is summed only over the games it WAS tracked in,
+  // never counted as 0 for the games it wasn't — see lib/stats.ts.
+  const { sums: totals } = sumTrackedStatLines(entries);
   return calculatePerformanceIndex(position, totals, entries.length);
 }
 
@@ -119,19 +126,20 @@ export function recentTrendForEntries(
   const prior = entries.slice(0, -1);
 
   const latestIndex = calculatePerformanceIndex(position, latest.stat, 1).score;
-  const priorTotals = sumStatLines(prior.map((e) => e.stat));
+  const { sums: priorTotals } = sumTrackedStatLines(prior);
   const priorIndex = calculatePerformanceIndex(position, priorTotals, prior.length).score;
 
   return change(latestIndex, priorIndex);
 }
 
-/** A single player's top 3 official-Game stat contributions (most recent game vs. the one before it) — the "why" behind the Games Top Performer card, using the same shared topStatContributions formula the Mini Games side uses (see lib/stats.ts), applied only to this player's own GamePlayerStat entries. Empty when the player has fewer than 2 official games logged; never a fabricated percentage. */
+/** A single player's top 3 official-Game stat contributions (most recent game vs. the one before it) — the "why" behind the Games Top Performer card, using the same shared topStatContributions formula the Mini Games side uses (see lib/stats.ts), applied only to this player's own GamePlayerStat entries. Empty when the player has fewer than 2 official games logged; never a fabricated percentage. A stat "Did Not Track"-flagged in either game is excluded from the comparison rather than compared against a meaningless forced-0 value. */
 export async function getGameStatContributions(playerId: string): Promise<StatContribution[]> {
   const entries = await getPlayerStatEntries(playerId);
   if (entries.length < 2) return [];
-  const current = entries[entries.length - 1].stat;
-  const previous = entries[entries.length - 2].stat;
-  return topStatContributions(current, previous);
+  const currentEntry = entries[entries.length - 1];
+  const previousEntry = entries[entries.length - 2];
+  const excludeKeys = new Set([...currentEntry.untrackedFields, ...previousEntry.untrackedFields]);
+  return topStatContributions(currentEntry.stat, previousEntry.stat, 3, excludeKeys);
 }
 
 // ---------------------------------------------------------------------------

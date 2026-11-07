@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { sumStatLines, zoneEntryPct, zoneExitPct } from "@/lib/stats";
+import { sumTrackedStatLines, trackedZoneEntryPct, trackedZoneExitPct } from "@/lib/stats";
 import {
   getSeasonStatEntriesByPlayer,
   performanceIndexForEntries,
@@ -37,15 +37,20 @@ export async function buildRankings(seasonId: string) {
       .slice(0, 5);
   }
 
+  // sumTrackedStatLines (not sumStatLines) so a "Did Not Track"-flagged
+  // field never counts as 0 toward a counting-stat ranking. The two
+  // percentage rankings below use trackedZoneEntryPct/trackedZoneExitPct
+  // directly on each player's entries instead, since a percentage can't
+  // just reuse this flat sum — see lib/stats.ts's trackedRatio for why.
   const totalsByPlayer = new Map(
-    withData.map((p) => [p.id, sumStatLines((entriesByPlayer.get(p.id) ?? []).map((e) => e.stat))])
+    withData.map((p) => [p.id, sumTrackedStatLines(entriesByPlayer.get(p.id) ?? []).sums])
   );
 
   return {
     topPerformanceIndex: rank((p) => performanceIndexForEntries(entriesByPlayer.get(p.id) ?? [], p.position)?.score ?? null),
     mostImproved: rank((p) => recentTrendForEntries(entriesByPlayer.get(p.id) ?? [], p.position)),
-    bestZoneEntryPct: rank((p) => zoneEntryPct(totalsByPlayer.get(p.id)!)),
-    bestZoneExitPct: rank((p) => zoneExitPct(totalsByPlayer.get(p.id)!)),
+    bestZoneEntryPct: rank((p) => trackedZoneEntryPct(entriesByPlayer.get(p.id) ?? [])),
+    bestZoneExitPct: rank((p) => trackedZoneExitPct(entriesByPlayer.get(p.id) ?? [])),
     lowestGiveaways: rank((p) => totalsByPlayer.get(p.id)!.giveaways, false),
     mostShotAttempts: rank((p) => totalsByPlayer.get(p.id)!.shotAttempts),
     // Skaters only — goalies are never ranked by Plus/Minus (see item 5 of
