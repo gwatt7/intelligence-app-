@@ -2,6 +2,12 @@ import { Sidebar } from "@/components/nav/Sidebar";
 import { prisma } from "@/lib/db";
 import { getCurrentSeason } from "@/lib/season";
 
+// Every page under this layout reads live data from the database, so render
+// it per request rather than at build time. Railway's private database
+// network isn't reachable during the build step, so prerendering these pages
+// would fail the build there.
+export const dynamic = "force-dynamic";
+
 // Layout for the existing analytics dashboard and all its tabs (sidebar + page).
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   // Vercel sets these automatically at build time — surfacing them in the
