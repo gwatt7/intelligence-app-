@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/weekly-rankings",
-      "schedule": "0 5 * * 1"
-    }
-  ]
-}

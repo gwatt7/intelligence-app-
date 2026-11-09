@@ -1,0 +1,34 @@
+name: Weekly Rankings Cron
+
+# Replaces Vercel Cron (see the removed vercel.json) now that the app is
+# hosted on Railway, which has no equivalent built-in scheduler. Hits the
+# same /api/cron/weekly-rankings route the app has always had — that route
+# itself is platform-agnostic (just checks an optional CRON_SECRET bearer
+# token), so nothing server-side changed, only who triggers it.
+#
+# Fires Monday 05:00 UTC, same schedule as the old vercel.json entry. A run
+# that's early, late, or missed entirely is harmless and self-correcting:
+# see archiveCompletedWeeksForSeason()'s own doc comment in
+# lib/weekly-rankings.ts for why.
+#
+# Requires two repository secrets (Settings -> Secrets and variables ->
+# Actions):
+#   APP_URL     - e.g. https://your-app.up.railway.app (no trailing slash)
+#   CRON_SECRET - same value as the CRON_SECRET env var set on the Railway
+#                 service; omit this secret (and the Authorization header
+#                 below) entirely if CRON_SECRET isn't set on the app.
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch: {} # lets you trigger a run manually from the Actions tab
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call weekly-rankings cron endpoint
+        run: |
+          curl --fail --show-error --silent \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/weekly-rankings"
