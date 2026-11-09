@@ -28,7 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Call weekly-rankings cron endpoint
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
         run: |
+          # The app now archives weekly rankings on its own every hour (see
+          # lib/weekly-rankings-autorun.ts), so this job is only a backup.
+          # Skip quietly when the APP_URL secret isn't set.
+          if [ -z "$APP_URL" ]; then
+            echo "APP_URL secret not set; the app handles weekly rankings itself. Skipping."
+            exit 0
+          fi
           curl --fail --show-error --silent \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "${{ secrets.APP_URL }}/api/cron/weekly-rankings"
+            "$APP_URL/api/cron/weekly-rankings"

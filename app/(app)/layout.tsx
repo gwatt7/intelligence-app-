@@ -14,8 +14,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // sidebar makes it possible to tell, just by looking at the live site,
   // whether a given push actually made it into the deployment being served
   // (rather than guessing from the Vercel dashboard).
-  const buildSha = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7);
-  const buildEnv = process.env.VERCEL_ENV;
+  // Railway sets its own equivalents, so the label works on either host.
+  const buildSha = (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA)?.slice(0, 7);
+  const buildEnv = process.env.VERCEL_ENV ?? (process.env.RAILWAY_ENVIRONMENT_NAME ? `railway ${process.env.RAILWAY_ENVIRONMENT_NAME}` : undefined);
 
   // Real season/team data for the sidebar's bottom-left brand block — same
   // source every page already uses, not a separate/duplicated lookup.
