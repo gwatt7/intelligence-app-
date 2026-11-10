@@ -11,6 +11,12 @@
  * logs a warning and lets the deploy continue on the new database without
  * the old data.
  *
+ * COPY_REPLACE_EXISTING=true lets the copy replace data the fresh setup
+ * already created (e.g. the schedule seeded before the old database was
+ * reachable). After any successful copy a marker table is written, and the
+ * copy never runs again — so leaving either variable set can't wipe data
+ * entered later.
+ *
  * Every row of every table is copied inside one transaction, then the row
  * counts are checked against the source; any mismatch rolls everything back.
  *
@@ -20,6 +26,7 @@ import "dotenv/config";
 import { Client } from "pg";
 
 const BATCH_ROWS = 100;
+const MARKER = "_copied_from_old_database";
 
 type Column = { name: string; dataType: string };
 
@@ -41,9 +48,15 @@ async function main() {
   await target.connect();
 
   try {
+    const { rows: done } = await target.query(`SELECT to_regclass('public.${MARKER}') IS NOT NULL AS done`);
+    if (done[0].done) {
+      console.log("[copy] Data was already copied from the old database once; skipping. You can remove COPY_FROM_DATABASE_URL and COPY_REPLACE_EXISTING.");
+      return;
+    }
+    const replace = process.env.COPY_REPLACE_EXISTING === "true";
     const { rows: existing } = await target.query(`SELECT count(*)::int AS n FROM "Season"`);
-    if (existing[0].n > 0) {
-      console.log("[copy] Target database already has data; skipping the copy. You can remove COPY_FROM_DATABASE_URL.");
+    if (existing[0].n > 0 && !replace) {
+      console.log("[copy] Target database already has data; skipping the copy. Set COPY_REPLACE_EXISTING=true to replace it with the old database's data (one time only).");
       return;
     }
 
@@ -74,6 +87,12 @@ async function main() {
       await target.query("BEGIN");
       // Load rows in any order without foreign-key checks; counts are verified below.
       await target.query("SET LOCAL session_replication_role = replica");
+      if (replace && existing[0].n > 0) {
+        // One-time replace: clear what the fresh setup created. Same
+        // transaction as the copy, so a failed copy restores it.
+        console.log("[copy] COPY_REPLACE_EXISTING=true: replacing the new database's data with the old database's.");
+        await target.query(`TRUNCATE ${tables.map(q).join(", ")} CASCADE`);
+      }
 
       const copied: Record<string, number> = {};
       for (const table of tables) {
@@ -118,6 +137,10 @@ async function main() {
         const [{ n: t }] = (await target.query(`SELECT count(*)::int AS n FROM ${q(table)}`)).rows;
         if (s !== t) throw new Error(`[copy] Row count mismatch in ${table}: old ${s}, new ${t}. Nothing was saved.`);
       }
+
+      // Marks the copy as done so it can never run (or replace data) again.
+      await target.query(`CREATE TABLE ${MARKER} (copied_at timestamptz NOT NULL DEFAULT now())`);
+      await target.query(`INSERT INTO ${MARKER} DEFAULT VALUES`);
 
       await target.query("COMMIT");
       for (const [table, n] of Object.entries(copied)) console.log(`[copy] ${table}: ${n} row(s)`);
