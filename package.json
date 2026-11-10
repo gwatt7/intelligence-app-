@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "tsx scripts/release-stale-migration-lock.ts && prisma migrate deploy && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts && next build",
     "build:railway": "next build",
-    "db:setup": "tsx scripts/release-stale-migration-lock.ts && prisma migrate deploy && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts",
+    "db:setup": "tsx scripts/release-stale-migration-lock.ts && prisma migrate deploy && tsx scripts/copy-from-old-database.ts && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts",
     "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "import:uws-2025-2026": "tsx scripts/import-historical-season.ts",
@@ -18,7 +18,8 @@
     "archive:weekly-rankings": "tsx scripts/archive-weekly-rankings.ts",
     "cleanup:scheduled-games": "tsx scripts/cleanup-scheduled-games.ts",
     "import:2026-2027-schedule": "tsx scripts/import-2026-2027-schedule.ts",
-    "set:player-hero-images": "tsx scripts/set-player-hero-images.ts"
+    "set:player-hero-images": "tsx scripts/set-player-hero-images.ts",
+    "copy:from-old-database": "tsx scripts/copy-from-old-database.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
