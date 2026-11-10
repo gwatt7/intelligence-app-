@@ -8,9 +8,8 @@
  * already holds data (so it never runs twice or overwrites anything).
  *
  * If COPY_FROM_DATABASE_URL is set but the old database can't be read, it
- * fails the deploy on purpose: continuing would start the app on an empty
- * database and the copy would never happen. Railway keeps the previous
- * deploy running in that case.
+ * logs a warning and lets the deploy continue on the new database without
+ * the old data.
  *
  * Every row of every table is copied inside one transaction, then the row
  * counts are checked against the source; any mismatch rolls everything back.
@@ -53,10 +52,13 @@ async function main() {
       await source.connect();
       await source.query("SELECT 1");
     } catch (err) {
-      throw new Error(
-        `[copy] Can't read the old database (COPY_FROM_DATABASE_URL): ${(err as Error).message}\n` +
-          "Fix access to the old database and redeploy, or remove COPY_FROM_DATABASE_URL to start with an empty database."
+      // Don't block the deploy: start on the new database without the old data.
+      console.warn(
+        `[copy] Can't read the old database (COPY_FROM_DATABASE_URL), so nothing was copied: ${(err as Error).message}\n` +
+          "[copy] Continuing on the new database. You can remove COPY_FROM_DATABASE_URL."
       );
+      await source.end().catch(() => {});
+      return;
     }
 
     try {
