@@ -15,7 +15,8 @@
  * forward from 2025-2026) and set as the current season. If it already
  * exists — e.g. a coach created it by hand from the "+ New Season" button
  * before this script existed — its team info and current-season flag are
- * left exactly as they are; only missing players are backfilled in.
+ * left exactly as they are. Players are carried forward only while the new
+ * season has none, so roster edits (number changes, removals) stick.
  *
  * Idempotent — safe to re-run as part of every `npm run build`.
  *
@@ -67,9 +68,13 @@ async function main() {
     seasonCreated = true;
   }
 
+  // Carry the roster forward only while the new season has no players yet.
+  // After that the coach owns the roster: a changed jersey number or a
+  // removed player must not be re-added from last season on the next deploy.
   const existingTargetPlayers = await prisma.player.findMany({ where: { seasonId: newSeason.id } });
   const existingJerseys = new Set(existingTargetPlayers.map((p) => p.jerseyNumber));
-  const missingPlayers = sourcePlayers.filter((p) => !existingJerseys.has(p.jerseyNumber));
+  const missingPlayers =
+    existingTargetPlayers.length === 0 ? sourcePlayers.filter((p) => !existingJerseys.has(p.jerseyNumber)) : [];
 
   if (missingPlayers.length > 0) {
     await prisma.player.createMany({
