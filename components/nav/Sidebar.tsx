@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords, ListOrdered, BarChart3 } from "lucide-react";
+import { Home, Users, User, Gamepad2, BookOpen, TrendingUp, Trophy, Swords, ListOrdered, BarChart3, Network } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
 
@@ -11,6 +11,7 @@ const TABS = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/team", label: "Team", icon: Users },
   { href: "/players", label: "Players", icon: User },
+  { href: "/lineup", label: "Lineup Builder", icon: Network },
   { href: "/statistics", label: "Statistics", icon: BarChart3 },
   { href: "/mini-games", label: "Mini Games", icon: Gamepad2 },
   { href: "/games", label: "Games", icon: BookOpen },
