@@ -2,7 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { updatePlayerBio, type ActionResult } from "@/lib/actions/players";
-import { Field, Input } from "@/components/forms/Field";
+import { Field, Input, Select } from "@/components/forms/Field";
+import { SPECIFIC_POSITIONS, type SpecificPosition } from "@/lib/positions";
 import { Button } from "@/components/ui/Button";
 
 const initialState: ActionResult = { ok: true };
@@ -12,6 +13,9 @@ export interface PlayerBio {
   height: string | null;
   weight: number | null;
   classYear: string | null;
+  primaryPosition: SpecificPosition | null;
+  secondaryPosition: SpecificPosition | null;
+  shoots: "LEFT" | "RIGHT" | null;
 }
 
 export function PlayerBioForm({ playerId, bio }: { playerId: string; bio: PlayerBio }) {
@@ -47,6 +51,33 @@ export function PlayerBioForm({ playerId, bio }: { playerId: string; bio: Player
       </Field>
       <Field label="Class / Year" htmlFor="classYear">
         <Input id="classYear" name="classYear" defaultValue={bio.classYear ?? ""} placeholder="Sophomore" />
+      </Field>
+      <Field label="Position" htmlFor="primaryPosition">
+        <Select id="primaryPosition" name="primaryPosition" defaultValue={bio.primaryPosition ?? ""}>
+          <option value="">Not set</option>
+          {SPECIFIC_POSITIONS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label} ({p.value})
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Can Also Play" htmlFor="secondaryPosition">
+        <Select id="secondaryPosition" name="secondaryPosition" defaultValue={bio.secondaryPosition ?? ""}>
+          <option value="">None</option>
+          {SPECIFIC_POSITIONS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label} ({p.value})
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Shoots" htmlFor="shoots">
+        <Select id="shoots" name="shoots" defaultValue={bio.shoots ?? ""}>
+          <option value="">Not set</option>
+          <option value="LEFT">Left</option>
+          <option value="RIGHT">Right</option>
+        </Select>
       </Field>
       <div className="col-span-2 sm:col-span-4 flex items-center gap-3">
         <Button type="submit" disabled={pending} className="!px-3 !py-1.5 text-xs">

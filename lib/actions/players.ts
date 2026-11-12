@@ -107,6 +107,9 @@ export async function updatePlayerBio(playerId: string, formData: FormData): Pro
     height: formData.get("height") || undefined,
     weight: formData.get("weight") || undefined,
     classYear: formData.get("classYear") || undefined,
+    primaryPosition: formData.get("primaryPosition") || undefined,
+    secondaryPosition: formData.get("secondaryPosition") || undefined,
+    shoots: formData.get("shoots") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid info" };
@@ -122,11 +125,19 @@ export async function updatePlayerBio(playerId: string, formData: FormData): Pro
       height: parsed.data.height ?? null,
       weight: parsed.data.weight ?? null,
       classYear: parsed.data.classYear ?? null,
+      primaryPosition: parsed.data.primaryPosition ?? null,
+      // A second spot equal to the primary one adds nothing; store it as unset.
+      secondaryPosition:
+        parsed.data.secondaryPosition && parsed.data.secondaryPosition !== parsed.data.primaryPosition
+          ? parsed.data.secondaryPosition
+          : null,
+      shoots: parsed.data.shoots ?? null,
     },
   });
 
   revalidatePath(`/players/${playerId}`);
   revalidatePath("/players");
+  revalidatePath("/team");
   return { ok: true };
 }
 

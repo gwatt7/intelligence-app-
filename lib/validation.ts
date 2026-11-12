@@ -26,6 +26,10 @@ export const playerBioSchema = z.object({
   height: z.string().trim().max(20, "Keep it under 20 characters").optional(),
   weight: z.coerce.number().int().min(0, "Must be zero or greater").max(400, "That doesn't look right").optional(),
   classYear: z.string().trim().max(30, "Keep it under 30 characters").optional(),
+  // Empty select ("Not set") arrives as undefined and clears the field.
+  primaryPosition: z.enum(["C", "LW", "RW", "LD", "RD", "G"]).optional(),
+  secondaryPosition: z.enum(["C", "LW", "RW", "LD", "RD", "G"]).optional(),
+  shoots: z.enum(["LEFT", "RIGHT"]).optional(),
 });
 
 const nonNegativeInt = z.coerce.number().int().min(0, "Must be zero or greater");

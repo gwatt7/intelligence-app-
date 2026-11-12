@@ -6,6 +6,7 @@ import { PlayerPhotoUpload } from "@/components/players/PlayerPhotoUpload";
 import { PlayerBackgroundPhotoUpload } from "@/components/players/PlayerBackgroundPhotoUpload";
 import { PlayerBioForm, type PlayerBio } from "@/components/players/PlayerBioForm";
 import { lightCardStyle } from "@/components/players/lightCardStyle";
+import { SPECIFIC_POSITION_LABEL, type SpecificPosition } from "@/lib/positions";
 
 const POSITION_LABEL = { FORWARD: "Forward", DEFENSE: "Defense", GOALIE: "Goalie" } as const;
 
@@ -43,13 +44,21 @@ interface HeroPlayer {
   height: string | null;
   weight: number | null;
   classYear: string | null;
+  primaryPosition: SpecificPosition | null;
+  secondaryPosition: SpecificPosition | null;
 }
 
 /** "Hometown · Position · #XX · Height · Weight · Class" — only the parts that are actually filled in, so it stays small and clean rather than showing placeholder dashes. Position and jersey # are always shown since every player has them. */
 function buildInfoLine(player: HeroPlayer): string {
   const parts: string[] = [];
   if (player.hometown) parts.push(player.hometown);
-  parts.push(POSITION_LABEL[player.position]);
+  // Specific position when set (e.g. "Center / Right Wing"), else the broad one.
+  if (player.primaryPosition) {
+    const second = player.secondaryPosition ? ` / ${SPECIFIC_POSITION_LABEL[player.secondaryPosition]}` : "";
+    parts.push(`${SPECIFIC_POSITION_LABEL[player.primaryPosition]}${second}`);
+  } else {
+    parts.push(POSITION_LABEL[player.position]);
+  }
   parts.push(`#${player.jerseyNumber}`);
   if (player.height) parts.push(player.height);
   if (player.weight) parts.push(`${player.weight} lbs`);
@@ -63,6 +72,9 @@ export function PlayerProfileHero({ player }: { player: HeroPlayer }) {
     height: player.height,
     weight: player.weight,
     classYear: player.classYear,
+    primaryPosition: player.primaryPosition,
+    secondaryPosition: player.secondaryPosition,
+    shoots: player.shoots,
   };
 
   // Only a real, computed reading flips the scheme — a photo saved before
