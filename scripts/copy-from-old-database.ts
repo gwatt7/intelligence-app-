@@ -40,7 +40,7 @@ async function main() {
     console.log("[copy] COPY_FROM_DATABASE_URL not set; nothing to copy.");
     return;
   }
-  const targetUrl = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
+  const targetUrl = process.env.DATABASE_URL;
   if (!targetUrl) throw new Error("[copy] DATABASE_URL is not set.");
   if (targetUrl === sourceUrl) throw new Error("[copy] COPY_FROM_DATABASE_URL is the same as DATABASE_URL.");
 

@@ -8,13 +8,11 @@ export default defineConfig({
   migrations: {
     path: "prisma/migrations",
   },
-  // Prisma CLI only (migrate deploy in the build). Migrations need a direct,
-  // non-pooled connection: Prisma's migration lock doesn't work reliably
-  // through Neon's connection pooler (it caused "advisory lock" build
-  // failures). Vercel's Neon integration provides DATABASE_URL_UNPOOLED;
-  // without it this falls back to DATABASE_URL. The app itself still uses
-  // DATABASE_URL (see lib/db.ts).
+  // Prisma CLI only (migrate deploy). Uses the same DATABASE_URL as the app
+  // (lib/db.ts), so migrations always reach the database the app reads.
+  // Railway Postgres is a direct connection, so no separate unpooled URL is
+  // needed (that was only for Neon's connection pooler).
   datasource: {
-    url: process.env["DATABASE_URL_UNPOOLED"] || process.env["POSTGRES_URL_NON_POOLING"] || process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL"],
   },
 });

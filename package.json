@@ -11,7 +11,7 @@
     "build": "tsx scripts/release-stale-migration-lock.ts && prisma migrate deploy && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts && next build",
     "build:railway": "next build",
     "db:setup": "tsx scripts/release-stale-migration-lock.ts && prisma migrate deploy && tsx scripts/copy-from-old-database.ts && tsx scripts/import-historical-season.ts && tsx scripts/create-2026-2027-season.ts && tsx scripts/cleanup-scheduled-games.ts && tsx scripts/import-2026-2027-schedule.ts && tsx scripts/set-player-hero-images.ts",
-    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "start": "prisma migrate deploy && next start -H 0.0.0.0 -p ${PORT:-3000}",
     "lint": "eslint",
     "import:uws-2025-2026": "tsx scripts/import-historical-season.ts",
     "create:2026-2027": "tsx scripts/create-2026-2027-season.ts",

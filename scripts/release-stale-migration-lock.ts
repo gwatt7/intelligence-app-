@@ -21,7 +21,7 @@ const PRISMA_MIGRATE_LOCK_KEY = 72707369; // fits in 32 bits → pg_locks.classi
 const STALE_AFTER_SECONDS = Number(process.env.STALE_LOCK_SECONDS ?? 60);
 
 async function main() {
-  const url = process.env.DATABASE_URL_UNPOOLED || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL;
   if (!url) {
     console.log("[migration-lock] No database URL set; skipping.");
     return;
