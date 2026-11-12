@@ -17,14 +17,27 @@ const MAX_PHOTO_DATA_URI_LENGTH = 2_000_000;
 // larger, so they get a bit more headroom here for the same reason.
 const MAX_HERO_IMAGE_DATA_URI_LENGTH = 4_000_000;
 
+/** Stores unset positions as null, and drops a second position equal to the primary one. */
+function withPositions<T extends { primaryPosition?: string; secondaryPosition?: string }>(data: T) {
+  const primaryPosition = data.primaryPosition ?? null;
+  const secondaryPosition =
+    data.secondaryPosition && data.secondaryPosition !== data.primaryPosition ? data.secondaryPosition : null;
+  return { ...data, shoots: (data as { shoots?: string }).shoots ?? null, primaryPosition, secondaryPosition } as Omit<T, "primaryPosition" | "secondaryPosition"> & {
+    primaryPosition: T["primaryPosition"] | null;
+    secondaryPosition: T["secondaryPosition"] | null;
+  };
+}
+
 export async function createPlayer(seasonId: string, formData: FormData): Promise<ActionResult> {
   const parsed = playerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),
     jerseyNumber: formData.get("jerseyNumber"),
     position: formData.get("position"),
-    shoots: formData.get("shoots"),
+    shoots: formData.get("shoots") || undefined,
     status: formData.get("status") || "ACTIVE",
+    primaryPosition: formData.get("primaryPosition") || undefined,
+    secondaryPosition: formData.get("secondaryPosition") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid player" };
@@ -37,7 +50,7 @@ export async function createPlayer(seasonId: string, formData: FormData): Promis
     return { ok: false, error: `Jersey #${parsed.data.jerseyNumber} is already taken` };
   }
 
-  const player = await prisma.player.create({ data: { ...parsed.data, seasonId } });
+  const player = await prisma.player.create({ data: { ...withPositions(parsed.data), seasonId } });
   await logActivity(
     seasonId,
     "PLAYER_UPDATED",
@@ -56,8 +69,10 @@ export async function updatePlayer(playerId: string, formData: FormData): Promis
     lastName: formData.get("lastName"),
     jerseyNumber: formData.get("jerseyNumber"),
     position: formData.get("position"),
-    shoots: formData.get("shoots"),
+    shoots: formData.get("shoots") || undefined,
     status: formData.get("status") || "ACTIVE",
+    primaryPosition: formData.get("primaryPosition") || undefined,
+    secondaryPosition: formData.get("secondaryPosition") || undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid player" };
@@ -73,7 +88,7 @@ export async function updatePlayer(playerId: string, formData: FormData): Promis
     if (dupe) return { ok: false, error: `Jersey #${parsed.data.jerseyNumber} is already taken` };
   }
 
-  await prisma.player.update({ where: { id: playerId }, data: parsed.data });
+  await prisma.player.update({ where: { id: playerId }, data: withPositions(parsed.data) });
   await logActivity(
     player.seasonId,
     "PLAYER_UPDATED",

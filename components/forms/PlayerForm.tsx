@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { createPlayer, updatePlayer, type ActionResult } from "@/lib/actions/players";
 import { Field, Input, Select } from "@/components/forms/Field";
 import { Button } from "@/components/ui/Button";
+import { SPECIFIC_POSITIONS, type SpecificPosition } from "@/lib/positions";
 
 const initialState: ActionResult = { ok: true };
 
@@ -14,6 +15,8 @@ type PlayerDefaults = {
   position: "FORWARD" | "DEFENSE" | "GOALIE";
   shoots: "LEFT" | "RIGHT" | null;
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
+  primaryPosition?: SpecificPosition | null;
+  secondaryPosition?: SpecificPosition | null;
 };
 
 export function PlayerForm({
@@ -34,7 +37,7 @@ export function PlayerForm({
   }, initialState);
 
   return (
-    <form action={formAction} className="grid grid-cols-2 sm:grid-cols-6 gap-3 items-end">
+    <form action={formAction} className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-end">
       <Field label="First Name" htmlFor="firstName" required>
         <Input id="firstName" name="firstName" defaultValue={defaults?.firstName} required />
       </Field>
@@ -59,8 +62,29 @@ export function PlayerForm({
           <option value="GOALIE">Goalie</option>
         </Select>
       </Field>
-      <Field label="Shoots" htmlFor="shoots" required>
-        <Select id="shoots" name="shoots" defaultValue={defaults?.shoots ?? "LEFT"}>
+      <Field label="Specific Position" htmlFor="primaryPosition">
+        <Select id="primaryPosition" name="primaryPosition" defaultValue={defaults?.primaryPosition ?? ""}>
+          <option value="">Not set</option>
+          {SPECIFIC_POSITIONS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label} ({p.value})
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Can Also Play" htmlFor="secondaryPosition">
+        <Select id="secondaryPosition" name="secondaryPosition" defaultValue={defaults?.secondaryPosition ?? ""}>
+          <option value="">None</option>
+          {SPECIFIC_POSITIONS.map((p) => (
+            <option key={p.value} value={p.value}>
+              {p.label} ({p.value})
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Shoots" htmlFor="shoots">
+        <Select id="shoots" name="shoots" defaultValue={defaults?.shoots ?? ""}>
+          <option value="">Not set</option>
           <option value="LEFT">Left</option>
           <option value="RIGHT">Right</option>
         </Select>
@@ -72,7 +96,7 @@ export function PlayerForm({
           <option value="UNAVAILABLE">Unavailable</option>
         </Select>
       </Field>
-      <div className="col-span-2 sm:col-span-6 flex items-center gap-3">
+      <div className="col-span-2 sm:col-span-4 flex items-center gap-3">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : playerId ? "Save Player" : "Add Player"}
         </Button>

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { Table, THead, TBody, Tr, Th, Td } from "@/components/ui/Table";
 import { EmptyState } from "@/components/ui/EmptyState";
 import Link from "next/link";
+import { SPECIFIC_POSITION_LABEL, type SpecificPosition } from "@/lib/positions";
 
 type Player = {
   id: string;
@@ -17,6 +18,8 @@ type Player = {
   position: "FORWARD" | "DEFENSE" | "GOALIE";
   shoots: "LEFT" | "RIGHT" | null;
   status: "ACTIVE" | "INJURED" | "UNAVAILABLE";
+  primaryPosition: SpecificPosition | null;
+  secondaryPosition: SpecificPosition | null;
 };
 
 const POSITION_LABEL: Record<Player["position"], string> = {
@@ -82,7 +85,11 @@ export function RosterSection({ seasonId, players }: { seasonId: string; players
                       {p.firstName} {p.lastName}
                     </Link>
                   </Td>
-                  <Td className="text-muted">{POSITION_LABEL[p.position]}</Td>
+                  <Td className="text-muted">
+                    {p.primaryPosition
+                      ? `${SPECIFIC_POSITION_LABEL[p.primaryPosition]}${p.secondaryPosition ? ` / ${p.secondaryPosition}` : ""}`
+                      : POSITION_LABEL[p.position]}
+                  </Td>
                   <Td className="text-muted">{p.shoots ? (p.shoots === "LEFT" ? "Left" : "Right") : "—"}</Td>
                   <Td>
                     <StatusBadge status={p.status} />

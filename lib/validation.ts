@@ -17,8 +17,11 @@ export const playerSchema = z.object({
   lastName: z.string().trim().min(1, "Last name is required"),
   jerseyNumber: z.coerce.number().int().min(0, "Jersey number can't be negative").max(99, "Jersey number must be 0-99"),
   position: z.enum(["FORWARD", "DEFENSE", "GOALIE"]),
-  shoots: z.enum(["LEFT", "RIGHT"]),
+  shoots: z.enum(["LEFT", "RIGHT"]).optional(),
   status: z.enum(["ACTIVE", "INJURED", "UNAVAILABLE"]).default("ACTIVE"),
+  // Specific position; empty select ("Not set") arrives as undefined.
+  primaryPosition: z.enum(["C", "LW", "RW", "LD", "RD", "G"]).optional(),
+  secondaryPosition: z.enum(["C", "LW", "RW", "LD", "RD", "G"]).optional(),
 });
 
 export const playerBioSchema = z.object({
